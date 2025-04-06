@@ -4,11 +4,14 @@ use models::{
     OrganizationMemberSummary, Role,
 };
 
+use super::*;
 use crate::service::login_service::LoginService;
 
 #[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     lang: Language,
+    #[allow(dead_code)]
+    pub parent_ctrl: ParentController,
 
     pub members: Resource<Vec<OrganizationMemberSummary>>,
     pub committees: Signal<Vec<DeliberationUserCreateRequest>>,
@@ -43,6 +46,7 @@ impl Controller {
         let ctrl = Self {
             lang,
             members,
+            parent_ctrl: use_context(),
             nav: use_navigator(),
             committees: use_signal(move || vec![]),
         };
