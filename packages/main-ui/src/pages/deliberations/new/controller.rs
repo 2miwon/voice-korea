@@ -20,15 +20,19 @@ use serde::{Deserialize, Serialize};
 pub struct Controller {
     lang: Language,
     popup_service: Signal<PopupService>,
-    current_step: Signal<CurrentStep>,
+    current_step: DeliberationNewStep,
     user: LoginService,
 
     deliberation_requests: Signal<DeliberationCreateRequest>,
 }
 
-#[derive(Debug, Clone, PartialEq, Copy)]
-pub enum CurrentStep {
-    SettingInfo,          // Setting Deliberation Overview
+#[derive(
+    Debug, Clone, PartialEq, Copy, serde::Serialize, serde::Deserialize, EnumProp, Default,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum DeliberationNewStep {
+    #[default]
+    SettingInfo, // Setting Deliberation Overview
     CompositionCommittee, // Composition Deliberation Committee
     CompositionPanel,     // Composition Participant Panel
     DeliberationSchedule, // Deliberation Procedure and Schedule
@@ -37,16 +41,32 @@ pub enum CurrentStep {
     EditContent,
 }
 
+impl From<Route> for DeliberationNewStep {
+    fn from(route: Route) -> Self {
+        match route {
+            Route::DeliberationNewPage { .. } => Self::SettingInfo,
+            Route::CompositionCommitee { .. } => Self::CompositionCommittee,
+            Route::CompositionPanel { .. } => Self::CompositionPanel,
+            Route::CompositionDeliberation { .. } => Self::DeliberationSchedule,
+            Route::Preview { .. } => Self::Preview,
+
+            _ => DeliberationNewStep::SettingInfo,
+        }
+    }
+}
+
 impl Controller {
     pub fn new(lang: dioxus_translate::Language) -> std::result::Result<Self, RenderError> {
         let user: LoginService = use_context();
         let popup_service: PopupService = use_context();
+        let route = use_route::<Route>();
+        let current_step = route.clone().into();
 
         let ctrl = Self {
             lang,
             user,
+            current_step,
             popup_service: use_signal(|| popup_service),
-            current_step: use_signal(|| CurrentStep::SettingInfo),
             deliberation_requests: use_signal(|| DeliberationCreateRequest::default()),
         };
         use_context_provider(|| ctrl);
@@ -58,16 +78,16 @@ impl Controller {
         self.deliberation_requests.set(req);
     }
 
-    pub fn get_current_step(&self) -> CurrentStep {
-        (self.current_step)()
+    pub fn get_current_step(&self) -> DeliberationNewStep {
+        self.current_step
     }
 
     pub fn use_service() -> Self {
         use_context()
     }
 
-    pub fn change_step(&mut self, step: CurrentStep) {
-        self.current_step.set(step);
+    pub fn change_step(&mut self, step: DeliberationNewStep) {
+        // self.current_step.set(step);
     }
 
     pub async fn create_metadata(&self, file: File) -> Result<ResourceFile> {

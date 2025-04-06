@@ -1,28 +1,23 @@
-#![allow(dead_code, unused)]
+#![allow(unused_variables)]
+use super::*;
+use bdk::prelude::*;
+use controller::*;
+use i18n::*;
+
 use crate::{
     components::{
         calendar::Calendar,
-        icons::{ArrowRight, BottomDropdownArrow, CalendarIcon, MenuDial, TopDropdownArrow, Trash},
+        icons::{ArrowRight, BottomDropdownArrow, CalendarIcon, MenuDial, TopDropdownArrow},
     },
-    pages::deliberations::new::{
-        controller::CurrentStep,
-        step::{
-            basic_info::BasicInfo, deliberation::Deliberation, discussion::Discussion,
-            recommendation::Recommendation, sample_survey::SampleSurvey, vote::Vote,
-        },
-    },
+    pages::deliberations::new::controller::DeliberationNewStep,
 };
 
 use by_components::icons::edit::Edit1;
-use by_macros::DioxusController;
 use chrono::{TimeZone, Utc};
-use dioxus::prelude::*;
 use dioxus_logger::tracing;
-use dioxus_translate::{translate, Language};
 use models::{
     deliberation::DeliberationCreateRequest, prelude::step_type::StepType, step::StepCreateRequest,
 };
-use std::str::FromStr;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct OrganizationDeliberationProcedureTranslate {
@@ -58,17 +53,17 @@ pub enum DeliberationStep {
 #[component]
 pub fn CompositionDeliberation(
     lang: Language,
-    visibility: bool,
+    // req: DeliberationCreateRequest,
 
-    req: DeliberationCreateRequest,
-
-    onprev: EventHandler<(DeliberationCreateRequest, CurrentStep)>,
-    onnext: EventHandler<(DeliberationCreateRequest, CurrentStep)>,
+    // onprev: EventHandler<(DeliberationCreateRequest, DeliberationNewStep)>,
+    // onnext: EventHandler<(DeliberationCreateRequest, DeliberationNewStep)>,
 ) -> Element {
     let mut ctrl = Controller::new(lang)?;
     let mut deliberation_step = use_signal(|| DeliberationStep::None);
-    let deliberation_sequences = ctrl.get_deliberation_sequences();
     let check_sequence = ctrl.check_deliberation_info();
+
+    // FIXME: correct
+    let req = DeliberationCreateRequest::default();
 
     use_effect({
         let req = req.clone();
@@ -82,15 +77,11 @@ pub fn CompositionDeliberation(
     });
 
     rsx! {
-        div {
-            class: format!(
-                "flex flex-col w-full justify-start items-start {}",
-                if !visibility { "hidden" } else { "" },
-            ),
+        div { class: "flex flex-col w-full justify-start items-start",
 
             CompositionSchedule {
                 lang,
-                deliberation_sequences: ctrl.get_deliberation_sequences(),
+                deliberation_sequences: ctrl.deliberation_sequences(),
                 check_sequence,
                 deliberation_step: deliberation_step(),
 
@@ -103,26 +94,8 @@ pub fn CompositionDeliberation(
                 ondelete: move |index: usize| {
                     let _ = ctrl.delete_deliberation_info(index);
                 },
-                onprev: {
-                    let new_req = {
-                        let mut r = req.clone();
-                        r = ctrl.change_deliberation_sequences(req.clone());
-                        r
-                    };
-                    move |step: CurrentStep| {
-                        onprev.call((new_req.clone(), step));
-                    }
-                },
-                onnext: {
-                    let new_req = {
-                        let mut r = req.clone();
-                        r = ctrl.change_deliberation_sequences(req.clone());
-                        r
-                    };
-                    move |step: CurrentStep| {
-                        onnext.call((new_req.clone(), step));
-                    }
-                },
+                onprev: move |step: DeliberationNewStep| {},
+                onnext: move |step: DeliberationNewStep| {},
                 change_deliberation_step: move |step| {
                     deliberation_step.set(step);
                 },
@@ -132,19 +105,11 @@ pub fn CompositionDeliberation(
                 lang,
                 visibility: deliberation_step() == DeliberationStep::BasicInfo,
                 req: req.clone(),
-                onprev: {
-                    let req = req.clone();
-                    move |(req, step): (DeliberationCreateRequest, DeliberationStep)| {
-                        deliberation_step.set(step);
-                        onprev.call((req.clone(), CurrentStep::DeliberationSchedule));
-                    }
+                onprev: move |(req, step): (DeliberationCreateRequest, DeliberationStep)| {
+                    deliberation_step.set(step);
                 },
-                onnext: {
-                    let req = req.clone();
-                    move |(req, step): (DeliberationCreateRequest, DeliberationStep)| {
-                        deliberation_step.set(step);
-                        onnext.call((req.clone(), CurrentStep::DeliberationSchedule));
-                    }
+                onnext: move |(req, step): (DeliberationCreateRequest, DeliberationStep)| {
+                    deliberation_step.set(step);
                 },
             }
 
@@ -152,57 +117,33 @@ pub fn CompositionDeliberation(
                 lang,
                 visibility: deliberation_step() == DeliberationStep::SampleSurvey,
                 req: req.clone(),
-                onprev: {
-                    let req = req.clone();
-                    move |(req, step): (DeliberationCreateRequest, DeliberationStep)| {
-                        deliberation_step.set(step);
-                        onprev.call((req.clone(), CurrentStep::DeliberationSchedule));
-                    }
+                onprev: move |(req, step): (DeliberationCreateRequest, DeliberationStep)| {
+                    deliberation_step.set(step);
                 },
-                onnext: {
-                    let req = req.clone();
-                    move |(req, step): (DeliberationCreateRequest, DeliberationStep)| {
-                        deliberation_step.set(step);
-                        onnext.call((req.clone(), CurrentStep::DeliberationSchedule));
-                    }
+                onnext: move |(req, step): (DeliberationCreateRequest, DeliberationStep)| {
+                    deliberation_step.set(step);
                 },
             }
 
             Deliberation {
                 lang,
                 visibility: deliberation_step() == DeliberationStep::Deliberation,
-                onprev: {
-                    let req = req.clone();
-                    move |step: DeliberationStep| {
-                        deliberation_step.set(step);
-                        onprev.call((req.clone(), CurrentStep::DeliberationSchedule));
-                    }
+                onprev: move |step: DeliberationStep| {
+                    deliberation_step.set(step);
                 },
-                onnext: {
-                    let req = req.clone();
-                    move |step: DeliberationStep| {
-                        deliberation_step.set(step);
-                        onnext.call((req.clone(), CurrentStep::DeliberationSchedule));
-                    }
+                onnext: move |step: DeliberationStep| {
+                    deliberation_step.set(step);
                 },
             }
 
             Discussion {
                 lang,
                 visibility: deliberation_step() == DeliberationStep::Discussion,
-                onprev: {
-                    let req = req.clone();
-                    move |step: DeliberationStep| {
-                        deliberation_step.set(step);
-                        onprev.call((req.clone(), CurrentStep::DeliberationSchedule));
-                    }
+                onprev: move |step: DeliberationStep| {
+                    deliberation_step.set(step);
                 },
-                onnext: {
-                    let req = req.clone();
-                    move |step: DeliberationStep| {
-                        deliberation_step.set(step);
-                        onnext.call((req.clone(), CurrentStep::DeliberationSchedule));
-                    }
+                onnext: move |step: DeliberationStep| {
+                    deliberation_step.set(step);
                 },
             }
 
@@ -213,34 +154,21 @@ pub fn CompositionDeliberation(
                     let req = req.clone();
                     move |step: DeliberationStep| {
                         deliberation_step.set(step);
-                        onprev.call((req.clone(), CurrentStep::DeliberationSchedule));
                     }
                 },
-                onnext: {
-                    let req = req.clone();
-                    move |step: DeliberationStep| {
-                        deliberation_step.set(step);
-                        onnext.call((req.clone(), CurrentStep::DeliberationSchedule));
-                    }
+                onnext: move |step: DeliberationStep| {
+                    deliberation_step.set(step);
                 },
             }
 
             Recommendation {
                 lang,
                 visibility: deliberation_step() == DeliberationStep::Recommendation,
-                onprev: {
-                    let req = req.clone();
-                    move |step: DeliberationStep| {
-                        deliberation_step.set(step);
-                        onprev.call((req.clone(), CurrentStep::DeliberationSchedule));
-                    }
+                onprev: move |step: DeliberationStep| {
+                    deliberation_step.set(step);
                 },
-                onnext: {
-                    let req = req.clone();
-                    move |step: DeliberationStep| {
-                        deliberation_step.set(step);
-                        onnext.call((req.clone(), CurrentStep::DeliberationSchedule));
-                    }
+                onnext: move |step: DeliberationStep| {
+                    deliberation_step.set(step);
                 },
             }
         }
@@ -257,8 +185,8 @@ pub fn CompositionSchedule(
     onadd: EventHandler<MouseEvent>,
     onupdate: EventHandler<(usize, StepCreateRequest)>,
     ondelete: EventHandler<usize>,
-    onprev: EventHandler<CurrentStep>,
-    onnext: EventHandler<CurrentStep>,
+    onprev: EventHandler<DeliberationNewStep>,
+    onnext: EventHandler<DeliberationNewStep>,
     change_deliberation_step: EventHandler<DeliberationStep>,
 ) -> Element {
     let tr: CompositionDeliberationTranslate = translate(&lang);
@@ -275,7 +203,7 @@ pub fn CompositionSchedule(
                 lang,
                 change_deliberation_step: move |step: DeliberationStep| {
                     change_deliberation_step.call(step);
-                    onnext.call(CurrentStep::EditContent);
+                    onnext.call(DeliberationNewStep::EditContent);
                 },
                 onadd,
                 ondelete,
@@ -309,7 +237,7 @@ pub fn CompositionSchedule(
                 div {
                     class: "flex flex-row w-70 h-55 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                     onclick: move |_| {
-                        onprev.call(CurrentStep::CompositionPanel);
+                        onprev.call(DeliberationNewStep::CompositionPanel);
                     },
                     "{tr.backward}"
                 }
@@ -324,7 +252,7 @@ pub fn CompositionSchedule(
                     onclick: {
                         move |_| {
                             if check_sequence {
-                                onnext.call(CurrentStep::Preview);
+                                onnext.call(DeliberationNewStep::Preview);
                             } else {
                                 tracing::error!("opinion info is empty");
                             }
@@ -558,7 +486,7 @@ pub fn OrganizationDeliberationProcedure(
                 div { class: "flex flex-col w-full",
                     div { class: "flex flex-row w-full h-1 bg-period-border-gray mt-10 mb-20" }
                     div { class: "flex flex-col w-full justify-start items-start ",
-                        for (index , sequence) in deliberation_sequences.iter().enumerate() {
+                        for (_index , sequence) in deliberation_sequences.iter().enumerate() {
                             div { class: "flex flex-row w-full justify-start items-center mb-20 gap-10",
                                 MenuDial { width: "24", height: "24" }
                                 div { class: "flex flex-row w-full focus:outline-none h-55 justify-start items-center bg-background-gray rounded-sm px-15",
@@ -607,226 +535,5 @@ pub fn OrganizationDeliberationProcedure(
                 }
             }
         }
-    }
-}
-
-#[derive(Debug, Clone, Copy, DioxusController)]
-pub struct Controller {
-    lang: Language,
-    deliberation_sequences: Signal<Vec<StepCreateRequest>>,
-}
-
-impl Controller {
-    pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
-        let tr: CompositionDeliberationTranslate = translate(&lang);
-        let ctrl = Self {
-            lang,
-            deliberation_sequences: use_signal(|| {
-                vec![
-                    StepCreateRequest {
-                        step_type: StepType::GeneralPost,
-                        name: tr.basic_information.to_string(),
-                        started_at: 0,
-                        ended_at: 0,
-                    },
-                    StepCreateRequest {
-                        step_type: StepType::SampleSurvey,
-                        name: tr.sample_survey.to_string(),
-                        started_at: 0,
-                        ended_at: 0,
-                    },
-                    StepCreateRequest {
-                        step_type: StepType::Post,
-                        name: tr.deliberation.to_string(),
-                        started_at: 0,
-                        ended_at: 0,
-                    },
-                    StepCreateRequest {
-                        step_type: StepType::VideoConference,
-                        name: tr.discussion.to_string(),
-                        started_at: 0,
-                        ended_at: 0,
-                    },
-                    StepCreateRequest {
-                        step_type: StepType::Survey,
-                        name: tr.vote.to_string(),
-                        started_at: 0,
-                        ended_at: 0,
-                    },
-                    StepCreateRequest {
-                        step_type: StepType::Report,
-                        name: tr.final_recommendation.to_string(),
-                        started_at: 0,
-                        ended_at: 0,
-                    },
-                ]
-            }),
-        };
-
-        Ok(ctrl)
-    }
-
-    pub fn update_deliberation_info(&mut self, index: usize, opinion: StepCreateRequest) {
-        let mut sequences = self.get_deliberation_sequences();
-        sequences[index] = opinion;
-        self.deliberation_sequences.set(sequences);
-    }
-
-    pub fn delete_deliberation_info(&mut self, index: usize) {
-        let mut sequences = self.get_deliberation_sequences();
-        sequences.remove(index);
-        self.deliberation_sequences.set(sequences);
-    }
-
-    pub fn add_deliberation_info(&mut self) {
-        let mut sequences = self.get_deliberation_sequences();
-        sequences.push(StepCreateRequest {
-            step_type: StepType::GeneralPost,
-            name: "".to_string(),
-            started_at: 0,
-            ended_at: 0,
-        });
-        self.deliberation_sequences.set(sequences);
-    }
-
-    pub fn check_deliberation_info(&self) -> bool {
-        let sequences = &self.get_deliberation_sequences();
-
-        for sequence in sequences {
-            if sequence.started_at == 0 || sequence.ended_at == 0 {
-                return false;
-            }
-
-            if sequence.started_at > sequence.ended_at {
-                return false;
-            }
-        }
-
-        true
-    }
-
-    pub fn set_deliberation_sequences(&mut self, steps: Vec<StepCreateRequest>) {
-        self.deliberation_sequences.set(steps);
-    }
-
-    pub fn get_deliberation_sequences(&self) -> Vec<StepCreateRequest> {
-        (self.deliberation_sequences)()
-    }
-
-    pub fn change_deliberation_sequences(
-        &self,
-        req: DeliberationCreateRequest,
-    ) -> DeliberationCreateRequest {
-        let mut req = req;
-        req.steps = self.get_deliberation_sequences();
-
-        let deliberation_time = self.get_deliberation_time(req.clone().steps);
-        req.started_at = deliberation_time.0;
-        req.ended_at = deliberation_time.1;
-
-        req
-    }
-
-    pub fn get_deliberation_time(&self, steps: Vec<StepCreateRequest>) -> (i64, i64) {
-        let started_at = steps.iter().map(|s| s.started_at).min().unwrap_or(0);
-        let ended_at = steps.iter().map(|s| s.ended_at).max().unwrap_or(0);
-
-        (started_at, ended_at)
-    }
-}
-
-translate! {
-    CompositionDeliberationTranslate;
-
-    organization_and_period_title: {
-        ko: "공론 절차 구성 및 기간",
-        en: "Organization and period of public deliberation procedures"
-    }
-
-    duration_per_procedure: {
-        ko: "절차별 기간",
-        en: "Duration per procedure"
-    }
-    duration_per_procedure_description: {
-        ko: "공론의 방식과 순서를 정해주세요.",
-        en: "Please decide the method and order of public discussion."
-    }
-    no_contents: {
-        ko: "내용 없음",
-        en: "No Contents"
-    }
-    required_period_selection: {
-        ko: "기간 선택 필요",
-        en: "Period selection required"
-    }
-    starting_day: {
-        ko: "시작하는 날",
-        en: "Starting day"
-    }
-    last_day: {
-        ko: "마지막 날",
-        en: "Last day"
-    }
-
-    basic_information: {
-        ko: "기본 정보",
-        en: "Basic Information"
-    }
-    sample_survey: {
-        ko: "표본 조사",
-        en: "Sample Survey"
-    }
-    deliberation: {
-        ko: "숙의",
-        en: "Deliberation"
-    }
-    discussion: {
-        ko: "토론",
-        en: "Discussion"
-    }
-    vote: {
-        ko: "투표",
-        en: "Vote"
-    }
-    final_recommendation: {
-        ko: "최종 권고안",
-        en: "Final Recommendation"
-    }
-
-    organization_of_procedures: {
-        ko: "공론 절차 구성",
-        en: "Organization of public opinion procedures"
-    }
-    organization_of_procedures_description: {
-        ko: "공론의 방식과 순서를 정해주세요.",
-        en: "Please decide the method and order of public discussion."
-    }
-    no_selection: {
-        ko: "선택 없음",
-        en: "No Selection"
-    }
-    edit: {
-        ko: "편집",
-        en: "Edit"
-    }
-    remove: {
-        ko: "삭제",
-        en: "Remove"
-    }
-    to_public_opinion_management_list: {
-        ko: "공론관리 목록으로",
-        en: "To public opinion management list"
-    }
-    backward: {
-        ko: "뒤로",
-        en: "Backward"
-    }
-    temporary_save: {
-        ko: "임시저장",
-        en: "Temporary Save"
-    }
-    next: {
-        ko: "다음으로",
-        en: "Next"
     }
 }

@@ -1,128 +1,100 @@
-#![allow(non_snake_case)]
-use crate::pages::deliberations::new::i18n::DeliberationNewTranslate;
-use crate::pages::deliberations::new::step::composition_commitee::CompositionCommitee;
-use crate::pages::deliberations::new::step::composition_deliberation::CompositionDeliberation;
-use crate::pages::deliberations::new::step::composition_panel::CompositionPanel;
-use crate::pages::deliberations::new::step::preview::Preview;
-use crate::pages::deliberations::new::step::setting_info::SettingDeliberation;
+use super::i18n::*;
+#[allow(non_snake_case)]
 use crate::{
-    components::{icons::ArrowLeft, stepper::Stepper},
-    pages::deliberations::new::controller::{Controller, CurrentStep},
+    components::{block_header::BlockHeader, dropdown::Dropdown, section::Section},
     routes::Route,
 };
+use bdk::prelude::*;
+use models::ProjectArea;
 
-use dioxus::prelude::*;
-use dioxus_translate::{translate, Language};
-use models::deliberation::DeliberationCreateRequest;
-use models::Role;
-
+// TODO: implement setting deliberation
 #[component]
-pub fn OpinionCreatePage(lang: Language) -> Element {
-    let tr: DeliberationNewTranslate = translate(&lang.clone());
-    let mut ctrl = Controller::new(lang)?;
-
-    let step = ctrl.get_current_step();
-
-    let req = ctrl.deliberation_requests();
+pub fn DeliberationNewPage(lang: Language) -> Element {
+    let tr: SettingDeliberationTranslate = translate(&lang);
+    let nav = use_navigator();
 
     rsx! {
-        div { class: "flex flex-col w-full justify-start items-start",
-            div {
-                class: format!(
-                    "flex flex-col w-full justify-start items-start {}",
-                    if step == CurrentStep::EditContent { "hidden" } else { "" },
-                ),
-                div { class: "text-header-gray font-medium text-sm mb-10",
-                    "{tr.organization_management} / {tr.public_opinion_management}"
+        div { class: format!("flex flex-col w-full justify-start items-start"),
+            div { class: "font-medium text-base text-text-black mb-10", "{tr.overview}" }
+            div { class: "flex flex-col w-full justify-start items-start rounded-lg bg-white px-40 py-20 mb-20 gap-10",
+                BlockHeader {
+                    required: false,
+                    header: tr.title.to_string(),
+                    description: tr.description.to_string(),
                 }
-                div { class: "flex flex-row w-full justify-start items-center mb-25",
-                    Link { class: "mr-6", to: Route::DeliberationPage { lang },
-                        ArrowLeft { width: "24", height: "24", color: "#3a3a3a" }
-                    }
-                    div { class: "text-header-black font-semibold text-[28px] mr-20",
-                        "{tr.start_public_opinion}"
+                Section { required: true, title: tr.proj_title.to_string(),
+                    div { class: "flex flex-row w-full focus:outline-none justify-start items-center bg-background-gray rounded-[4px] h-54",
+                        div { class: "flex px-15 w-full",
+                            input {
+                                class: "flex flex-row w-full justify-start items-center bg-transparent focus:outline-none",
+                                r#type: "text",
+                                placeholder: tr.proj_title_placeholder,
+                                oninput: move |_| {}, // TODO: implement oninput
+                            }
+                        }
                     }
                 }
-
-                div { class: "flex flex-col w-full justify-start items-center mt-20 mb-80",
-                    div { class: "flex flex-row w-full justify-center items-center",
-                        Stepper {
-                            current_step: if step == CurrentStep::SettingInfo { 1 } else if step == CurrentStep::CompositionCommittee { 2 } else if step == CurrentStep::CompositionPanel { 3 } else if step == CurrentStep::DeliberationSchedule || step == CurrentStep::EditContent { 4 } else { 5 },
-                            steps: vec![
-                                tr.setup_deliberation_outline.to_string(),
-                                tr.composition_of_deliberation.to_string(),
-                                tr.composition_of_panel.to_string(),
-                                tr.deliberation_procedures_and_schedule.to_string(),
-                                tr.final_review.to_string(),
-                            ],
+                Section { required: true, title: tr.proj_desc.to_string(),
+                    div { class: "flex flex-row w-full focus:outline-none justify-start items-start bg-background-gray rounded-[4px] h-248",
+                        div { class: "flex px-15 py-10 w-full h-full justify-start items-start",
+                            textarea {
+                                class: "flex w-full h-full justify-start items-start bg-transparent focus:outline-none m-10 break-words whitespace-normal",
+                                placeholder: tr.proj_desc_placeholder,
+                                oninput: move |_| {}, // TODO: implement oninput
+                            }
+                        }
+                    }
+                }
+                Section { required: true, title: tr.deliberation_field.to_string(),
+                    div { class: "flex w-full",
+                        Dropdown {
+                            id: "deliberation fields",
+                            items: ProjectArea::variants(&lang),
+                            hint: tr.deliberation_field_hint,
+                            onselect: move |_| {}, // TODO: implement onselect
+                        }
+                    }
+                }
+                Section { required: true, title: tr.thumbnail.to_string(),
+                    div { class: "flex flex-col w-full focus:outline-none justify-center items-center",
+                        div { class: "flex flex-row gap-20 px-15 w-full h-54 bg-background-gray rounded-sm justify-center items-center",
+                            div {
+                                class: "flex w-[130px] h-[40px] border bg-white border-[#2a60d3] rounded-sm text-active text-center font-semibold text-sm justify-center items-center",
+                                onclick: move |_| {},
+                                "{tr.upload_directly}"
+                            }
+                            input {
+                                class: "flex flex-row w-full justify-start items-center bg-transparent focus:outline-none",
+                                r#type: "text",
+                                placeholder: tr.no_file,
+                                readonly: true,
+                                oninput: move |_| {}, // TODO: implement oninput
+                            }
+                        }
+                        p { class: "text-text-gray text-start w-full text-sm font-normal",
+                            "{tr.upload_desc}"
                         }
                     }
                 }
             }
-
-            SettingDeliberation {
-                lang,
-                visibility: step == CurrentStep::SettingInfo,
-                onstep: move |step: CurrentStep| {
-                    ctrl.change_step(step);
-                },
-            }
-
-            CompositionCommitee {
-                lang,
-                visibility: step == CurrentStep::CompositionCommittee,
-                roles: vec![
-                    Role::Admin,
-                    Role::DeliberationAdmin,
-                    Role::Analyst,
-                    Role::Moderator,
-                    Role::Speaker,
-                ],
-                req: req.clone(),
-                onprev: move |(req, step): (DeliberationCreateRequest, CurrentStep)| {
-                    ctrl.change_request(req);
-                    ctrl.change_step(step);
-                },
-                onnext: move |(req, step): (DeliberationCreateRequest, CurrentStep)| {
-                    ctrl.change_request(req);
-                    ctrl.change_step(step);
-                },
-            }
-
-            CompositionPanel {
-                lang,
-                visibility: step == CurrentStep::CompositionPanel,
-                req: req.clone(),
-                onprev: move |(req, step): (DeliberationCreateRequest, CurrentStep)| {
-                    ctrl.change_request(req);
-                    ctrl.change_step(step);
-                },
-                onnext: move |(req, step): (DeliberationCreateRequest, CurrentStep)| {
-                    ctrl.change_request(req);
-                    ctrl.change_step(step);
-                },
-            }
-
-            CompositionDeliberation {
-                lang,
-                visibility: step == CurrentStep::DeliberationSchedule || step == CurrentStep::EditContent,
-                req: req.clone(),
-                onprev: move |(req, step): (DeliberationCreateRequest, CurrentStep)| {
-                    ctrl.change_request(req);
-                    ctrl.change_step(step);
-                },
-                onnext: move |(req, step): (DeliberationCreateRequest, CurrentStep)| {
-                    ctrl.change_request(req);
-                    ctrl.change_step(step);
-                },
-            }
-
-            Preview {
-                lang,
-                visibility: step == CurrentStep::Preview,
-                onstep: move |step: CurrentStep| {
-                    ctrl.change_step(step);
-                },
+            div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
+                Link {
+                    class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                    to: Route::DeliberationPage { lang },
+                    "{tr.go_to_deliberation_management_list}"
+                }
+                div {
+                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                    onclick: move |_| {},
+                    "{tr.temporary_save}"
+                }
+                div {
+                    class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
+                    onclick: move |_| {
+                        nav.push(Route::CompositionCommitee { lang });
+                    },
+                    "{tr.next}"
+                }
             }
         }
     }

@@ -1,6 +1,6 @@
+#[allow(non_snake_case)]
 use crate::{
     components::{block_header::BlockHeader, dropdown::Dropdown, section::Section},
-    pages::deliberations::new::controller::CurrentStep,
     routes::Route,
 };
 use bdk::prelude::*;
@@ -8,19 +8,12 @@ use models::ProjectArea;
 
 // TODO: implement setting deliberation
 #[component]
-pub fn SettingDeliberation(
-    lang: Language,
-    visibility: bool,
-    onstep: EventHandler<CurrentStep>,
-) -> Element {
+pub fn SettingDeliberation(lang: Language) -> Element {
     let tr: SettingDeliberationTranslate = translate(&lang);
+    let nav = use_navigator();
 
     rsx! {
-        div {
-            class: format!(
-                "flex flex-col w-full justify-start items-start {}",
-                if !visibility { "hidden" } else { "" },
-            ),
+        div { class: format!("flex flex-col w-full justify-start items-start"),
             div { class: "font-medium text-base text-text-black mb-10", "{tr.overview}" }
             div { class: "flex flex-col w-full justify-start items-start rounded-lg bg-white px-40 py-20 mb-20 gap-10",
                 BlockHeader {
@@ -97,7 +90,7 @@ pub fn SettingDeliberation(
                 div {
                     class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
                     onclick: move |_| {
-                        onstep.call(CurrentStep::CompositionCommittee);
+                        nav.push(Route::CompositionCommitee { lang });
                     },
                     "{tr.next}"
                 }

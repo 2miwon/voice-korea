@@ -17,7 +17,7 @@ use crate::{
     utils::time::current_timestamp,
 };
 
-use super::composition_deliberation::DeliberationStep;
+use super::*;
 
 // TODO: implement sample survey
 #[component]
@@ -358,7 +358,7 @@ pub fn Introduction(
 }
 
 #[derive(Debug, Clone, Copy, DioxusController)]
-pub struct Controller {
+struct Controller {
     lang: Language,
     sample_survey: Signal<DeliberationSampleSurveyCreateRequest>,
 

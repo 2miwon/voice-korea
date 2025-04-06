@@ -23,13 +23,7 @@ use crate::{
     utils::time::current_timestamp,
 };
 
-use super::composition_deliberation::DeliberationStep;
-
-#[derive(Clone, PartialEq)]
-pub enum DocumentTabType {
-    DirectUpload,
-    Import,
-}
+use super::*;
 
 // TODO: implement basic info
 #[component]
@@ -136,7 +130,7 @@ pub fn BasicInfo(
             div { class: "flex flex-col w-full justify-start items-start",
                 div { class: "font-medium text-base text-text-black mb-10", "{tr.post_setting}" }
                 div { class: "flex flex-col w-full justify-start items-start gap-20",
-                    Introduction {
+                    BasicInfoIntroduction {
                         lang,
                         basic_info: basic_info.clone(),
                         set_basic_info: move |info| {
@@ -387,13 +381,13 @@ pub fn BasicMember(
 }
 
 #[component]
-pub fn Introduction(
+pub fn BasicInfoIntroduction(
     lang: Language,
 
     basic_info: DeliberationBasicInfoCreateRequest,
     set_basic_info: EventHandler<DeliberationBasicInfoCreateRequest>,
 ) -> Element {
-    let tr: IntroductionTranslate = translate(&lang);
+    let tr: BasicInfoIntroductionTranslate = translate(&lang);
 
     rsx! {
         ExpandableCard {
@@ -466,7 +460,7 @@ pub fn Introduction(
 }
 
 #[derive(Debug, Clone, Copy, DioxusController)]
-pub struct Controller {
+struct Controller {
     lang: Language,
 
     pub members: Resource<Vec<OrganizationMemberSummary>>,
@@ -697,7 +691,7 @@ impl Controller {
 }
 
 translate! {
-    IntroductionTranslate;
+    BasicInfoIntroductionTranslate;
 
     input_introduction_title: {
         ko: "소개글 입력",

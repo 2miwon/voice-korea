@@ -3,7 +3,7 @@ use bdk::prelude::*;
 
 use crate::components::icons::ArrowLeft;
 
-use super::composition_deliberation::DeliberationStep;
+use super::*;
 
 // TODO: implement recommendation
 #[component]
@@ -68,7 +68,7 @@ pub fn Recommendation(
 }
 
 #[derive(Debug, Clone, Copy, DioxusController)]
-pub struct Controller {
+struct Controller {
     lang: Language,
 }
 
