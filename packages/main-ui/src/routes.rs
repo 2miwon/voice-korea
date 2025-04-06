@@ -43,8 +43,16 @@ pub enum Route {
                 CompositionCommitee { lang: Language },
                 #[route("/deliberations/new/panels")]
                 CompositionPanel { lang: Language },
-                #[route("/deliberations/new/schedule")]
-                CompositionDeliberation { lang: Language },
+
+                #[nest("/deliberations/new/details")]
+                #[layout(DeliberationDetailSettingLayout)]
+                    #[route("/basic-info")]
+                    DeliberationBasicInfoSettingPage { lang: Language },
+                    #[route("/sample-survey")]
+                    DeliberationSampleSurveySettingPage { lang: Language },
+                #[end_layout]
+                #[end_nest]
+
                 #[route("/deliberations/new/review")]
                 Preview { lang: Language },
             #[end_layout]

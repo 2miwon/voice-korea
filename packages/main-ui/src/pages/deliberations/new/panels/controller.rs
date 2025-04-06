@@ -51,7 +51,7 @@ impl Controller {
 
     pub fn next(&self) {
         self.nav
-            .push(Route::CompositionDeliberation { lang: self.lang });
+            .push(Route::DeliberationBasicInfoSettingPage { lang: self.lang });
     }
 
     pub fn add_selected_panel(&mut self, panel: PanelV2Summary) {

@@ -47,7 +47,6 @@ impl From<Route> for DeliberationNewStep {
             Route::DeliberationNewPage { .. } => Self::SettingInfo,
             Route::CompositionCommitee { .. } => Self::CompositionCommittee,
             Route::CompositionPanel { .. } => Self::CompositionPanel,
-            Route::CompositionDeliberation { .. } => Self::DeliberationSchedule,
             Route::Preview { .. } => Self::Preview,
 
             _ => DeliberationNewStep::SettingInfo,
