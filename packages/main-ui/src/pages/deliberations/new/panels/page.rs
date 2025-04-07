@@ -48,8 +48,8 @@ pub fn CompositionPanel(lang: Language) -> Element {
                 div {
                     class: "flex flex-row w-70 h-55 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                     onclick: move |_| {
-                        ctrl.back();
                         ctrl.save_deliberation();
+                        ctrl.back();
                     },
                     {tr.backward}
                 }
@@ -61,8 +61,8 @@ pub fn CompositionPanel(lang: Language) -> Element {
                 div {
                     class: "cursor-pointer flex flex-row w-110 h-55 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
                     onclick: move |_| {
-                        ctrl.next();
                         ctrl.save_deliberation();
+                        ctrl.next();
                     },
                     {tr.next}
                 }
