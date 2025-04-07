@@ -38,7 +38,7 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
                     div { class: "flex flex-row w-full focus:outline-none justify-start items-start bg-background-gray rounded-[4px] h-248",
                         div { class: "flex px-15 py-10 w-full h-full justify-start items-start",
                             textarea {
-                                class: "flex w-full h-full justify-start items-start bg-transparent focus:outline-none m-10 break-words whitespace-normal",
+                                class: "flex w-full h-full justify-start items-start bg-transparent focus:outline-none my-10 break-words whitespace-normal",
                                 placeholder: tr.proj_desc_placeholder,
                                 oninput: move |_| {}, // TODO: implement oninput
                             }
