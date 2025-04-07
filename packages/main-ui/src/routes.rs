@@ -50,6 +50,12 @@ pub enum Route {
                     DeliberationBasicInfoSettingPage { lang: Language },
                     #[route("/sample-survey")]
                     DeliberationSampleSurveySettingPage { lang: Language },
+                    #[route("/deliberation")]
+                    DeliberationSettingPage { lang: Language },
+                    #[route("/discussions")]
+                    DeliberationDiscussionSettingPage { lang: Language },
+                    #[route("/votes")]
+                    DeliberationVoteSettingPage { lang: Language },
                 #[end_layout]
                 #[end_nest]
 

@@ -14,9 +14,9 @@ pub use step::*;
 
 // Children pages
 mod committees;
+mod details;
 mod panels;
-mod schedules;
 
 pub use committees::*;
+pub use details::*;
 pub use panels::*;
-pub use schedules::*;
