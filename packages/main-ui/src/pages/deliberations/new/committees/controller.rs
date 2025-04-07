@@ -96,10 +96,9 @@ impl Controller {
     }
 
     pub fn save_deliberation(&mut self) {
-        let parent_ctrl = self.parent_ctrl;
-        let mut req = parent_ctrl.deliberation_requests();
-        req.roles = self.committees().iter().map(|v| v.clone()).collect();
-        self.parent_ctrl.change_request(req);
+        let mut parent_ctrl = self.parent_ctrl;
+        let roles = self.committees().iter().map(|v| v.clone()).collect();
+        parent_ctrl.save_committees(roles);
     }
 
     pub fn add_committee(&mut self, committee: DeliberationUserCreateRequest) {

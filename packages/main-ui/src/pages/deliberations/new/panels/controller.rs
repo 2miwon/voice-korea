@@ -74,10 +74,9 @@ impl Controller {
     }
 
     pub fn save_deliberation(&mut self) {
-        let parent_ctrl = self.parent_ctrl;
-        let mut req = parent_ctrl.deliberation_requests();
-        req.panel_ids = self.selected_panels().iter().map(|v| v.id).collect();
-        self.parent_ctrl.change_request(req);
+        let mut parent_ctrl = self.parent_ctrl;
+        let panel_ids = self.selected_panels().iter().map(|v| v.id).collect();
+        parent_ctrl.save_panels(panel_ids);
     }
 
     pub fn add_selected_panel(&mut self, panel: PanelV2Summary) {

@@ -1,6 +1,6 @@
 use bdk::prelude::*;
 use by_macros::DioxusController;
-use models::{step::StepCreateRequest, *};
+use models::{deliberation_user::DeliberationUserCreateRequest, step::StepCreateRequest, *};
 
 use crate::{
     config,
@@ -155,6 +155,18 @@ impl Controller {
         let ended_at = steps.iter().map(|s| s.ended_at).max().unwrap_or(0);
 
         (started_at, ended_at)
+    }
+
+    pub fn save_panels(&mut self, panel_ids: Vec<i64>) {
+        self.deliberation_requests.with_mut(|req| {
+            req.panel_ids = panel_ids;
+        });
+    }
+
+    pub fn save_committees(&mut self, roles: Vec<DeliberationUserCreateRequest>) {
+        self.deliberation_requests.with_mut(|req| {
+            req.roles = roles;
+        });
     }
 
     pub fn save_basic_info(&mut self, basic_info: DeliberationBasicInfoCreateRequest) {
