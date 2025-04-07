@@ -2,11 +2,10 @@ use bdk::prelude::*;
 use models::{deliberation_user::DeliberationUserCreateRequest, *};
 
 use super::*;
-use crate::{config, service::login_service::LoginService};
+use crate::{config, routes::Route, service::login_service::LoginService};
 
-#[derive(Debug, Clone, Copy, DioxusController)]
+#[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
-    #[allow(dead_code)]
     lang: Language,
 
     pub members: Resource<Vec<OrganizationMemberSummary>>,
@@ -19,8 +18,8 @@ pub struct Controller {
     pub search_keyword: Signal<String>,
     #[allow(dead_code)]
     pub documents: Signal<Vec<ResourceFile>>,
-    #[allow(dead_code)]
     pub parent: DeliberationNewController,
+    pub nav: Navigator,
 }
 
 impl Controller {
@@ -162,6 +161,7 @@ impl Controller {
             metadatas,
             surveys,
             parent: use_context(),
+            nav: use_navigator(),
 
             search_keyword,
 
@@ -287,5 +287,22 @@ impl Controller {
                 vec![file],
             )
             .await
+    }
+
+    pub fn back(&mut self) {
+        self.parent.save_basic_info(self.basic_info());
+        self.nav
+            .replace(Route::CompositionPanel { lang: self.lang });
+    }
+
+    pub async fn temp_save(&mut self) {
+        self.parent.save_basic_info(self.basic_info());
+        self.parent.temporary_save().await;
+    }
+
+    pub fn next(&mut self) {
+        self.parent.save_basic_info(self.basic_info());
+        self.nav
+            .push(Route::DeliberationSampleSurveySettingPage { lang: self.lang });
     }
 }
