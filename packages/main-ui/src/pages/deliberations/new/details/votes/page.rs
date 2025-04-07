@@ -52,7 +52,7 @@ pub fn DeliberationVoteSettingPage(lang: Language) -> Element {
                     }
 
                     div { class: "flex flex-col w-full justify-start items-start gap-10",
-                        div { class: "font-medium text-base text-text-black", "투표 항목" }
+                        div { class: "font-medium text-base text-text-black", {tr.voting_items} }
                         QuestionList {
                             lang,
 
