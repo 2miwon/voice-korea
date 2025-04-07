@@ -31,7 +31,7 @@ impl From<Route> for DeliberationNewStep {
             Route::CompositionPanel { .. } => Self::CompositionPanel,
             Route::Preview { .. } => Self::Preview,
 
-            _ => DeliberationNewStep::SettingInfo,
+            _ => DeliberationNewStep::DeliberationSchedule,
         }
     }
 }
@@ -197,5 +197,67 @@ impl Controller {
         self.deliberation_requests.with_mut(|req| {
             req.final_surveys = vec![final_survey];
         });
+    }
+
+    pub async fn temporary_save(&self) {
+        let DeliberationCreateRequest {
+            started_at,
+            ended_at,
+            thumbnail_image,
+            title,
+            description,
+            project_area,
+            resource_ids,
+            survey_ids,
+            roles,
+            panel_ids,
+            steps,
+            elearning,
+            basic_infos,
+            sample_surveys,
+            contents,
+            deliberation_discussions,
+            final_surveys,
+            drafts,
+        } = self.deliberation_requests();
+        let org = self.user.get_selected_org();
+        if org.is_none() {
+            btracing::e!(self.lang, ApiError::OrganizationNotFound);
+            return;
+        }
+
+        let org_id = org.unwrap().id;
+
+        match Deliberation::get_client(config::get().api_url)
+            .create(
+                org_id,
+                started_at,
+                ended_at,
+                thumbnail_image,
+                title,
+                description,
+                project_area,
+                resource_ids,
+                survey_ids,
+                roles,
+                panel_ids,
+                steps,
+                elearning,
+                basic_infos,
+                sample_surveys,
+                contents,
+                deliberation_discussions,
+                final_surveys,
+                drafts,
+            )
+            .await
+        {
+            Ok(_) => {
+                tracing::debug!("success to create deliberation");
+            }
+            Err(e) => {
+                btracing::error!("failed to create deliberation: {}", e.translate(&self.lang));
+            }
+        }
     }
 }
