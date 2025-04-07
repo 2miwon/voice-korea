@@ -16,13 +16,11 @@ use deliberation_user::{DeliberationUser, DeliberationUserCreateRequest};
 use discussion_resources::DiscussionResource;
 use discussions::Discussion;
 use models::{
-    areas::area::Area,
     deliberation::{
         Deliberation, DeliberationAction, DeliberationCreateRequest, DeliberationGetResponse,
         DeliberationParam, DeliberationQuery, DeliberationQueryActionType, DeliberationRepository,
         DeliberationSummary,
     },
-    deliberation_areas::deliberation_area::DeliberationArea,
     deliberation_basic_info_members::deliberation_basic_info_member::DeliberationBasicInfoMember,
     deliberation_basic_info_resources::deliberation_basic_info_resource::DeliberationBasicInfoResource,
     deliberation_basic_info_surveys::deliberation_basic_info_survey::DeliberationBasicInfoSurvey,
@@ -123,8 +121,6 @@ impl DeliberationController {
         let ds = DeliberationSurvey::get_repository(self.pool.clone());
         let pd = PanelDeliberation::get_repository(self.pool.clone());
         let s = SurveyV2::get_repository(self.pool.clone());
-        let deliberation_area = DeliberationArea::get_repository(self.pool.clone());
-        let area_repo = Area::get_repository(self.pool.clone());
 
         let basic_info = DeliberationBasicInfo::get_repository(self.pool.clone());
         let basic_info_member = DeliberationBasicInfoMember::get_repository(self.pool.clone());
@@ -179,18 +175,6 @@ impl DeliberationController {
             du.insert_with_tx(&mut *tx, user_id, org_id, deliberation.id, role)
                 .await?
                 .ok_or(ApiError::DeliberationUserException)?;
-        }
-
-        for area in project_areas.clone() {
-            let a = area_repo
-                .insert_with_tx(&mut *tx, area)
-                .await?
-                .ok_or(ApiError::DeliberationAreaException)?;
-
-            let _ = deliberation_area
-                .insert_with_tx(&mut *tx, a.id, deliberation.id)
-                .await?
-                .ok_or(ApiError::DeliberationAreaException)?;
         }
 
         for resource_id in resource_ids {

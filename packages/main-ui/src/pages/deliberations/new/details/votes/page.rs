@@ -3,7 +3,8 @@ use bdk::prelude::*;
 use crate::{
     components::icons::ArrowLeft,
     pages::deliberations::new::details::votes::components::{
-        introduction::Introduction, member::FinalSurveyMember, reward::FinalSurveyReward,
+        introduction::Introduction, member::FinalSurveyMember, question::QuestionList,
+        reward::FinalSurveyReward,
     },
 };
 
@@ -68,7 +69,15 @@ pub fn DeliberationVoteSettingPage(lang: Language) -> Element {
                     }
 
                     div { class: "flex flex-col w-full justify-start items-start gap-10",
-                        div { class: "font-medium text-base text-text-black", "설문 항목" }
+                        div { class: "font-medium text-base text-text-black", "투표 항목" }
+                        QuestionList {
+                            lang,
+
+                            final_survey: ctrl.get_final_survey(),
+                            set_final_survey: move |survey| {
+                                ctrl.set_final_survey(survey);
+                            },
+                        }
                     }
                 }
                 div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",

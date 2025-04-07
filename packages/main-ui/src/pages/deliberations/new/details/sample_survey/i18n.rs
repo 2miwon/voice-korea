@@ -59,6 +59,19 @@ translate! {
 }
 
 translate! {
+    QuestionListTranslate;
+
+    input_title_hint: {
+        ko: "제목을 입력해주세요.",
+        en: "Please enter a title."
+    }
+    add_question: {
+        ko: "새로운 질문을 추가해주세요.",
+        en: "Please add a new question."
+    }
+}
+
+translate! {
     IntroductionTranslate;
 
     input_introduction_title: {

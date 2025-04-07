@@ -7,3 +7,6 @@ pub mod preview_component;
 pub mod role_dropdown;
 pub mod survey_dropdown;
 pub mod upload_material;
+
+pub mod objective;
+pub mod subjective;
