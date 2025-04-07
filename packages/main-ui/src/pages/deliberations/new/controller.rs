@@ -202,25 +202,19 @@ impl Controller {
         });
     }
 
-    pub fn update_overview_deliberation_requests(
+    pub fn save_overview(
         &mut self,
         title: String,
         description: String,
         thumbnail_image: String,
-        project_areas_string: Vec<String>,
+        project_areas: Vec<ProjectArea>,
     ) {
         self.deliberation_requests.with_mut(|req| {
-            req.thumbnail_image = thumbnail_image;
             req.title = title;
             req.description = description;
+            req.thumbnail_image = thumbnail_image;
         });
-
-        self.project_areas.set(
-            project_areas_string
-                .iter()
-                .map(|s| s.parse().unwrap_or_default())
-                .collect(),
-        );
+        self.project_areas.set(project_areas.clone());
     }
 
     pub async fn temporary_save(&self) {
@@ -286,6 +280,129 @@ impl Controller {
             }
         }
 
-        // TODO: update project areas in DB
+        // TODO: update deliberation_areas in DB
+    }
+}
+
+#[derive(Clone, Copy, DioxusController)]
+pub struct OverviewController {
+    #[allow(dead_code)]
+    lang: Language,
+
+    pub parent: Controller,
+    pub nav: Navigator,
+
+    pub title: Signal<String>,
+    pub description: Signal<String>,
+    pub thumbnail_image: Signal<String>,
+    pub fields: Signal<Vec<String>>,
+}
+
+impl OverviewController {
+    pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
+        let title = use_signal(|| String::new());
+        let description = use_signal(|| String::new());
+        let thumbnail_image = use_signal(|| String::new());
+        let fields = use_signal(|| vec![]);
+
+        let mut ctrl = Self {
+            lang,
+            parent: use_context(),
+            nav: use_navigator(),
+            title,
+            description,
+            thumbnail_image,
+            fields,
+        };
+
+        use_effect({
+            let req = ctrl.parent.deliberation_requests();
+            move || {
+                ctrl.title.set(req.title.clone());
+                ctrl.description.set(req.description.clone());
+                ctrl.thumbnail_image.set(req.thumbnail_image.clone());
+                let project_areas = req
+                    .project_areas
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect::<Vec<String>>();
+                tracing::debug!("project_areas: {:?}", project_areas);
+                ctrl.fields.set(project_areas.clone());
+            }
+        });
+
+        Ok(ctrl)
+    }
+
+    pub fn update_deliberation_requests(&mut self) {
+        let project_areas: Vec<ProjectArea> = self
+            .fields
+            .iter()
+            .map(|s| s.parse().unwrap_or_default())
+            .collect();
+
+        self.parent.save_overview(
+            self.title(),
+            self.description(),
+            self.thumbnail_image(),
+            project_areas,
+        );
+    }
+
+    pub fn back(&mut self) {
+        self.update_deliberation_requests();
+        self.nav
+            .replace(Route::DeliberationPage { lang: self.lang });
+    }
+
+    pub async fn temp_save(&mut self) {
+        self.update_deliberation_requests();
+        self.parent.temporary_save().await;
+    }
+
+    pub fn next(&mut self) {
+        self.update_deliberation_requests();
+        self.nav
+            .push(Route::DeliberationSettingPage { lang: self.lang });
+    }
+
+    pub fn get_file_name(&self) -> String {
+        let url = self.thumbnail_image();
+        if url.is_empty() {
+            return String::new();
+        }
+        url.split('/').last().unwrap_or_default().to_string()
+    }
+
+    pub fn validation_check(&self) -> bool {
+        if self.title().is_empty() {
+            btracing::e!(
+                self.lang,
+                ApiError::ValidationError("Project title is required.".to_string())
+            );
+            return false;
+        }
+        if self.description().is_empty() {
+            btracing::e!(
+                self.lang,
+                ApiError::ValidationError("Project description is required.".to_string())
+            );
+            return false;
+        }
+        if self.thumbnail_image().is_empty() {
+            btracing::e!(
+                self.lang,
+                ApiError::ValidationError("Project thumbnail image is required.".to_string())
+            );
+            return false;
+        }
+        if self.fields().is_empty() {
+            btracing::e!(
+                self.lang,
+                ApiError::ValidationError("Project area is required.".to_string())
+            );
+            return false;
+        }
+        true
     }
 }
