@@ -16,7 +16,9 @@ pub use step::*;
 mod committees;
 mod details;
 mod panels;
+mod preview;
 
 pub use committees::*;
 pub use details::*;
 pub use panels::*;
+pub use preview::*;
