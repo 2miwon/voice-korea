@@ -2,7 +2,9 @@ use bdk::prelude::*;
 use models::{deliberation_user::DeliberationUserCreateRequest, *};
 
 use super::*;
-use crate::{config, routes::Route, service::login_service::LoginService};
+use crate::{
+    config, routes::Route, service::login_service::LoginService, utils::time::current_timestamp,
+};
 
 #[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
@@ -103,58 +105,7 @@ impl Controller {
             }
         })?;
 
-        //     use_effect({
-        //     let mut basic_info = req
-        //         .basic_infos
-        //         .get(0)
-        //         .unwrap_or(&DeliberationBasicInfoCreateRequest::default())
-        //         .clone();
-
-        //     let started_at = if basic_info.started_at == 0 {
-        //         current_timestamp()
-        //     } else {
-        //         basic_info.started_at
-        //     };
-
-        //     let ended_at = if basic_info.ended_at == 0 {
-        //         current_timestamp()
-        //     } else {
-        //         basic_info.ended_at
-        //     };
-
-        //     let v: Vec<OrganizationMemberSummary> = total_committees
-        //         .clone()
-        //         .into_iter()
-        //         .filter(|member| {
-        //             basic_info
-        //                 .clone()
-        //                 .users
-        //                 .iter()
-        //                 .any(|id| id.clone() == member.id)
-        //         })
-        //         .collect();
-
-        //     let r: Vec<ResourceFile> = metadatas
-        //         .clone()
-        //         .into_iter()
-        //         .filter(|resource| {
-        //             basic_info
-        //                 .clone()
-        //                 .resources
-        //                 .iter()
-        //                 .any(|id| id.clone() == resource.id)
-        //         })
-        //         .map(|v| v.into())
-        //         .collect();
-
-        //     move || {
-        //         basic_info.started_at = started_at;
-        //         basic_info.ended_at = ended_at;
-        //         ctrl.basic_info.set(basic_info.clone());
-        //     }
-        // });
-
-        let ctrl = Self {
+        let mut ctrl = Self {
             lang,
             basic_info,
             members,
@@ -169,8 +120,32 @@ impl Controller {
             committee_members: use_signal(|| vec![]),
         };
 
-        // FIXME: anti-pattern
-        // ctrl.committee_members.set(req.roles.clone());
+        use_effect({
+            let req = ctrl.parent.deliberation_requests();
+            let mut basic_info = req
+                .basic_infos
+                .get(0)
+                .unwrap_or(&DeliberationBasicInfoCreateRequest::default())
+                .clone();
+            let current_timestamp = current_timestamp();
+            let committees = req.roles.clone();
+
+            move || {
+                let started_at = basic_info.clone().started_at;
+                let ended_at = basic_info.clone().ended_at;
+
+                if started_at == 0 {
+                    basic_info.started_at = current_timestamp;
+                }
+
+                if ended_at == 0 {
+                    basic_info.ended_at = current_timestamp;
+                }
+
+                ctrl.basic_info.set(basic_info.clone());
+                ctrl.committee_members.set(committees.clone());
+            }
+        });
 
         Ok(ctrl)
     }
