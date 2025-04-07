@@ -4,7 +4,7 @@ use bdk::prelude::*;
 use controller::*;
 use i18n::*;
 
-use models::{deliberation_user::DeliberationUserCreateRequest, OrganizationMemberSummary, Role};
+use models::deliberation_user::DeliberationUserCreateRequest;
 
 use crate::pages::deliberations::new::components::role_dropdown::RoleDropdown;
 
@@ -91,23 +91,4 @@ pub fn CompositionCommitee(lang: Language) -> Element {
             }
         }
     }
-}
-
-pub fn get_role_list(
-    members: Vec<OrganizationMemberSummary>,
-    committees: Vec<DeliberationUserCreateRequest>,
-    role: Role,
-) -> Vec<OrganizationMemberSummary> {
-    let user_ids: Vec<i64> = committees
-        .iter()
-        .filter(|committee| committee.role == role)
-        .map(|committee| committee.user_id)
-        .collect();
-
-    let members = members
-        .into_iter()
-        .filter(|member| user_ids.contains(&member.user_id))
-        .collect();
-
-    members
 }

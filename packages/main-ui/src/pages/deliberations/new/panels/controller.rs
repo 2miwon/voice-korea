@@ -1,11 +1,14 @@
 use bdk::prelude::*;
 use models::*;
 
+use super::*;
 use crate::{routes::Route, service::login_service::LoginService};
 
 #[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     lang: Language,
+    #[allow(dead_code)]
+    pub parent_ctrl: ParentController,
 
     panels: Resource<Vec<PanelV2Summary>>,
     pub selected_panels: Signal<Vec<PanelV2Summary>>,
@@ -35,12 +38,28 @@ impl Controller {
             }
         })?;
 
-        let ctrl = Self {
+        let mut ctrl = Self {
             lang,
             panels,
             nav: use_navigator(),
+
+            parent_ctrl: use_context(),
             selected_panels: use_signal(|| vec![]),
         };
+
+        use_effect({
+            let req = ctrl.parent_ctrl.deliberation_requests();
+            let panels = panels().unwrap_or_default();
+            move || {
+                let selected_panels: Vec<PanelV2Summary> = panels
+                    .iter()
+                    .filter(|panel| req.panel_ids.contains(&panel.id))
+                    .cloned()
+                    .collect();
+
+                ctrl.selected_panels.set(selected_panels);
+            }
+        });
 
         Ok(ctrl)
     }
@@ -52,6 +71,13 @@ impl Controller {
     pub fn next(&self) {
         self.nav
             .push(Route::DeliberationBasicInfoSettingPage { lang: self.lang });
+    }
+
+    pub fn save_deliberation(&mut self) {
+        let parent_ctrl = self.parent_ctrl;
+        let mut req = parent_ctrl.deliberation_requests();
+        req.panel_ids = self.selected_panels().iter().map(|v| v.id).collect();
+        self.parent_ctrl.change_request(req);
     }
 
     pub fn add_selected_panel(&mut self, panel: PanelV2Summary) {

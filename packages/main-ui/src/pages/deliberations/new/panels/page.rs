@@ -3,7 +3,7 @@ use bdk::prelude::*;
 use controller::*;
 use i18n::*;
 
-use models::{deliberation::DeliberationCreateRequest, PanelV2Summary};
+use models::PanelV2Summary;
 
 use crate::{
     components::icons::Clear,
@@ -13,47 +13,21 @@ use crate::{
 };
 
 #[component]
-pub fn CompositionPanel(
-    lang: Language,
-    // visibility: bool,
-    // req: DeliberationCreateRequest,
-
-    // onprev: EventHandler<(DeliberationCreateRequest, DeliberationNewStep)>,
-    // onnext: EventHandler<(DeliberationCreateRequest, DeliberationNewStep)>,
-) -> Element {
+pub fn CompositionPanel(lang: Language) -> Element {
     let mut ctrl = Controller::new(lang)?;
     let tr: CompositionPanelTranslate = translate(&lang);
-    let selected_option = use_signal(move || tr.proportional_people_allocated.to_string());
-
-    // FIXME: correct this
-    let req = DeliberationCreateRequest::default();
 
     let panels = ctrl.panels()?;
-
-    use_effect({
-        let panels = panels.clone();
-        let req = req.clone();
-        move || {
-            let selected_panels: Vec<PanelV2Summary> = panels
-                .iter()
-                .filter(|panel| req.panel_ids.contains(&panel.id))
-                .cloned()
-                .collect();
-
-            ctrl.selected_panels.set(selected_panels);
-        }
-    });
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
             div { class: "flex flex-row w-full justify-between items-center h-40 mb-15",
                 div { class: "font-medium text-base text-text-black mb-10",
-                    "{tr.participant_panel_composition}"
+                    {tr.participant_panel_composition}
                 }
             }
             SettingPanel {
                 lang,
-                selected_option,
                 panels,
                 selected_panels: ctrl.selected_panels(),
                 add_panel: move |panel: PanelV2Summary| {
@@ -75,20 +49,22 @@ pub fn CompositionPanel(
                     class: "flex flex-row w-70 h-55 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                     onclick: move |_| {
                         ctrl.back();
+                        ctrl.save_deliberation();
                     },
-                    "{tr.backward}"
+                    {tr.backward}
                 }
                 div {
                     class: "flex flex-row w-105 h-55 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                     onclick: move |_| {},
-                    "{tr.temporary_save}"
+                    {tr.temporary_save}
                 }
                 div {
                     class: "cursor-pointer flex flex-row w-110 h-55 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
                     onclick: move |_| {
                         ctrl.next();
+                        ctrl.save_deliberation();
                     },
-                    "{tr.next}"
+                    {tr.next}
                 }
             }
         }
@@ -98,7 +74,6 @@ pub fn CompositionPanel(
 #[component]
 pub fn SettingPanel(
     lang: Language,
-    selected_option: Signal<String>,
 
     panels: Vec<PanelV2Summary>,
     selected_panels: Vec<PanelV2Summary>,
@@ -110,9 +85,9 @@ pub fn SettingPanel(
     let tr: SettingTotalPanelTranslate = translate(&lang);
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start rounded-lg bg-white px-40 py-24",
-            div { class: "font-bold text-text-black text-lg mb-3", "{tr.setting_total_panel_title}" }
+            div { class: "font-bold text-text-black text-lg mb-3", {tr.setting_total_panel_title} }
             div { class: "font-normal text-text-gray text-sm mb-20",
-                "{tr.setting_total_panel_description}"
+                {tr.setting_total_panel_description}
             }
 
             PanelDropdown {
@@ -130,7 +105,7 @@ pub fn SettingPanel(
             div { class: "flex flex-col w-full justify-start items-start gap-10",
                 for (i , sp) in selected_panels.clone().iter().enumerate() {
                     PanelSettingInput {
-                        label: "{sp.name}",
+                        label: sp.name.clone(),
                         unit: tr.unit,
                         value: sp.user_count as i64,
                         oninput: move |value: i64| {
