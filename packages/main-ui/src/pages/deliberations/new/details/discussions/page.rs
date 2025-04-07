@@ -1,6 +1,10 @@
 use bdk::prelude::*;
+use models::DeliberationDiscussionCreateRequest;
 
-use crate::pages::deliberations::new::details::discussions::components::introduction::Introduction;
+use crate::pages::deliberations::new::details::discussions::components::{
+    discussion_group::DiscussionGroup, document::Document, introduction::Introduction,
+    member::DiscussionMember,
+};
 
 use super::*;
 use controller::*;
@@ -20,7 +24,33 @@ pub fn DeliberationDiscussionSettingPage(lang: Language) -> Element {
                 div { class: "flex flex-col w-full justify-start items-start gap-20",
                     Introduction {
                         lang,
-                        discussion,
+                        discussion: discussion.clone(),
+                        set_discussion: move |disc| {
+                            ctrl.set_discussion(disc);
+                        },
+                    }
+
+                    Document {
+                        lang,
+                        discussion: discussion.clone(),
+                        set_discussion: move |disc| {
+                            ctrl.set_discussion(disc);
+                        },
+                    }
+
+                    DiscussionMember {
+                        lang,
+                        total_committees: ctrl.get_committees(),
+                        selected_committees: ctrl.get_selected_committee(),
+                        discussion: discussion.clone(),
+                        set_discussion: move |info: DeliberationDiscussionCreateRequest| {
+                            ctrl.set_discussion(info.clone());
+                        },
+                    }
+
+                    DiscussionGroup {
+                        lang,
+                        discussion: discussion.clone(),
                         set_discussion: move |disc| {
                             ctrl.set_discussion(disc);
                         },
