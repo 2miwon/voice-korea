@@ -4,6 +4,8 @@ use models::{deliberation_user::DeliberationUserCreateRequest, *};
 use super::*;
 use crate::{config, service::login_service::LoginService};
 
+use crate::routes::Route;
+
 #[derive(Debug, Clone, Copy, DioxusController)]
 pub struct Controller {
     #[allow(dead_code)]
@@ -287,5 +289,10 @@ impl Controller {
                 vec![file],
             )
             .await
+    }
+
+    pub fn go_to_voting(&mut self) {
+        let nav = use_navigator();
+        nav.push(Route::DeliberationVoteSettingPage { lang: self.lang });
     }
 }

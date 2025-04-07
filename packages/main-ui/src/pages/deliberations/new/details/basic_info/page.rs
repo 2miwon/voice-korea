@@ -94,6 +94,14 @@ pub fn DeliberationBasicInfoSettingPage(lang: Language) -> Element {
                         onclick: move |_| {},
                         "{tr.next}"
                     }
+                    // this line remove when voting page is implemented
+                    div {
+                        class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white ml-20",
+                        onclick: move |_| {
+                            ctrl.go_to_voting();
+                        },
+                        "투표 페이지 이동"
+                    }
                 }
             }
         }
