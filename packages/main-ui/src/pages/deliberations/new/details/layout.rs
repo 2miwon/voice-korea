@@ -16,7 +16,7 @@ pub fn DeliberationDetailSettingLayout(lang: Language) -> Element {
             div { class: "w-full flex flex-row",
                 for n in DeliberationDetailSettingStep::VARIANTS {
                     button {
-                        class: "border-b-[1px] !px-20 !py-10 min-w-150 aria-active:!border-b-[5px] aria-active:!border-primary hover:!border-b-[5px] hover:!border-label-black",
+                        class: "border-b-[1px] !px-20 !py-10 min-w-150 aria-active:!border-b-[5px] aria-active:!border-primary hover:!border-b-[5px] hover:!border-primary/10",
                         "aria-active": ctrl.current_step == *n,
                         onclick: move |_| {
                             ctrl.goto_step(n);
