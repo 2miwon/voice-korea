@@ -59,7 +59,7 @@ translate! {
 }
 
 translate! {
-    RewardTranslate;
+    FinalSurveyRewardTranslate;
 
     title: {
         ko: "예상 소요 시간 및 리워드",

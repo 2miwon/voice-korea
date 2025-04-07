@@ -3,7 +3,7 @@ use models::DeliberationFinalSurveyCreateRequest;
 
 use crate::{
     components::expandable_card::ExpandableCard,
-    pages::deliberations::new::details::votes::i18n::RewardTranslate,
+    pages::deliberations::new::details::votes::i18n::FinalSurveyRewardTranslate,
 };
 
 #[component]
@@ -12,7 +12,7 @@ pub fn FinalSurveyReward(
     final_survey: DeliberationFinalSurveyCreateRequest,
     set_final_survey: EventHandler<DeliberationFinalSurveyCreateRequest>,
 ) -> Element {
-    let tr: RewardTranslate = translate(&lang);
+    let tr: FinalSurveyRewardTranslate = translate(&lang);
     rsx! {
         ExpandableCard { required: false, header: tr.title, description: tr.description,
             div { class: "flex flex-row w-full justify-start items-center gap-100",
