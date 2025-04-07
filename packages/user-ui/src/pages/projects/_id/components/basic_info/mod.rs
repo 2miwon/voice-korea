@@ -1,53 +1,44 @@
-#![allow(non_snake_case, dead_code, unused_variables)]
 use by_components::icons::upload_download::Download2;
 use by_macros::*;
 use dioxus::prelude::*;
 use dioxus_translate::*;
-use models::{deliberation_content::DeliberationContent, Tab};
+use models::{
+    deliberation_basic_info::DeliberationBasicInfo, DeliberationBasicInfoQuery,
+    DeliberationBasicInfoSummary, QueryResponse, Tab,
+};
 
 use crate::{
     components::icons::triangle::{TriangleDown, TriangleUp},
     utils::time::formatted_timestamp,
 };
-
 #[component]
-pub fn Deliberation(
+pub fn BasicInfo(
     lang: Language,
     project_id: ReadOnlySignal<i64>,
     #[props(extends = GlobalAttributes)] attributes: Vec<Attribute>,
     children: Element,
 ) -> Element {
     let ctrl = Controller::new(lang, project_id)?;
-    let deliberation = ctrl.deliberation()?;
+    let basic_info = ctrl.basic_info()?;
 
-    let steps = deliberation.clone().steps;
-
-    let mut start_date = 0;
-    let mut end_date = 0;
-
-    if steps.len() == 5 {
-        start_date = steps[2].started_at;
-        end_date = steps[2].ended_at;
-    }
-
-    let tr: DeliberationTranslate = translate(&lang);
-    let tab_title: &str = Tab::Deliberation.translate(&lang);
+    let tr: BasicInfoTranslate = translate(&lang);
     let mut clicked1 = use_signal(|| true);
+    let tab_title: &str = Tab::BasicInfo.translate(&lang);
 
     rsx! {
         div {
-            id: "deliberation",
+            id: "basic-info",
             class: "max-[1000px]:px-30 flex flex-col w-full h-fit bg-box-gray gap-20",
             ..attributes,
             // header
-            div { class: "w-full flex flex-row max-[500px]:flex-col max-[500px]:items-start max-[500px]:justify-start max-[500px]:gap-5 justify-between items-center mt-28",
+            div { class: "w-full flex max-[500px]:flex-col max-[500px]:items-start max-[500px]:justify-start max-[500px]:gap-5 flex-row justify-between items-center mt-28",
                 div { class: " font-semibold text-xl", "{tab_title}" }
                 div { class: "font-medium text-[15px] text-black",
                     {
                         format!(
                             "{} ~ {}",
-                            formatted_timestamp(lang, start_date),
-                            formatted_timestamp(lang, end_date),
+                            formatted_timestamp(lang, basic_info.started_at),
+                            formatted_timestamp(lang, basic_info.ended_at),
                         )
                     }
                 }
@@ -75,13 +66,13 @@ pub fn Deliberation(
                         //line
                         hr { class: "w-full h-1 mt-12 mb-12 border-line-gray" }
                         div { class: "w-full justify-start mt-15 mb-20 font-bold text-lg",
-                            "{deliberation.title}"
+                            "{basic_info.title}"
                         }
                         div { class: "w-full flex justify-start text-[15px]",
-                            "{deliberation.description}"
+                            "{basic_info.description}"
                         }
                         div { class: "w-full mt-20 flex flex-row justify-start gap-40",
-                            for member in deliberation.members {
+                            for member in basic_info.members {
                                 div { class: "flex flex-row justify-start gap-8",
                                     img { class: "w-40 h-40 bg-profile-gray rounded-full" }
                                     div { class: "flex flex-col justify-center",
@@ -94,17 +85,16 @@ pub fn Deliberation(
                         }
                     }
                 }
-
                 //Related Data
-                div { class: "w-full flex flex-col rounded-[8px] mb-40 bg-white justify-start items-center py-14 px-20",
+                div { class: "w-full flex flex-col rounded-lg mb-40 bg-white justify-start items-center py-14 px-20",
                     // title and button
                     div { class: "w-full flex justify-start items-center gap-13",
                         div { class: "w-180 flex flex-row items-center text-base font-bold",
-                            span { "{tr.deliberation_materials_title}" }
+                            span { "{tr.related_materials_title}" }
                         }
                         //file
                         div { class: "flex flex-wrap flex-1 justify-start items-center gap-8",
-                            for resource in deliberation.resources {
+                            for resource in basic_info.resources {
                                 div {
                                     class: "cursor-pointer flex flex-row justify-start items-center rounded-[100px] bg-light-gray gap-4 px-12 py-4",
                                     onclick: {
@@ -140,27 +130,39 @@ pub fn Deliberation(
 pub struct Controller {
     #[allow(dead_code)]
     lang: Language,
-    project_id: ReadOnlySignal<i64>,
+    deliberation_id: ReadOnlySignal<i64>,
 
-    deliberation: Resource<DeliberationContent>,
+    basic_info: Resource<DeliberationBasicInfoSummary>,
 }
 
 impl Controller {
     pub fn new(
         lang: Language,
-        project_id: ReadOnlySignal<i64>,
+        deliberation_id: ReadOnlySignal<i64>,
     ) -> std::result::Result<Self, RenderError> {
-        let deliberation = use_server_future(move || async move {
-            DeliberationContent::get_client(&crate::config::get().api_url)
-                .read(project_id())
-                .await
-                .unwrap_or_default()
+        let basic_info = use_server_future(move || {
+            let deliberation_id = deliberation_id();
+            async move {
+                let res = DeliberationBasicInfo::get_client(&crate::config::get().api_url)
+                    .query(deliberation_id, DeliberationBasicInfoQuery::default())
+                    .await;
+                match res {
+                    Ok(v) => {
+                        if v.total_count == 1 {
+                            v.items[0].clone()
+                        } else {
+                            DeliberationBasicInfoSummary::default()
+                        }
+                    }
+                    _ => DeliberationBasicInfoSummary::default(),
+                }
+            }
         })?;
 
         let ctrl = Self {
             lang,
-            project_id,
-            deliberation,
+            deliberation_id,
+            basic_info,
         };
 
         Ok(ctrl)
@@ -192,20 +194,20 @@ impl Controller {
 }
 
 translate! {
-    DeliberationTranslate;
+    BasicInfoTranslate;
 
     main_title: {
-        ko: "주요 내용",
-        en: "Highlights"
+        ko: "소개글",
+        en: "Introduction"
     }
 
-    e_learning_title: {
-        ko: "e-Learning",
-        en: "e-Learning"
+    public_opinion_committee_title: {
+        ko: "공론 위원회",
+        en: "Public opinion committee"
     }
 
-    deliberation_materials_title: {
-        ko: "숙의 자료",
-        en: "Deliberation materials"
+    related_materials_title: {
+        ko: "관련 자료",
+        en: "Related materials"
     }
 }

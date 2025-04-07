@@ -7,10 +7,12 @@ use crate::pages::projects::_id::components::sample_survey::{get_survey_status, 
 use crate::{
     components::icons::left_arrow::LeftArrow,
     pages::projects::_id::components::{
-        multiple_objective::MultipleObjective, sample_survey::SampleSurveyTranslate,
-        single_objective::SingleObjective, subjective::Subjective,
+        multiple_objective::MultipleObjective, single_objective::SingleObjective,
+        subjective::Subjective,
     },
 };
+
+use super::i18n::SampleSurveyTranslate;
 
 #[component]
 pub fn MySampleSurvey(

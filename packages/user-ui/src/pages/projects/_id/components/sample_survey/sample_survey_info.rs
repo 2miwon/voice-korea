@@ -2,23 +2,23 @@
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_translate::{translate, Language};
-use models::{deliberation_survey::DeliberationSurvey, Tab};
+use models::{DeliberationSampleSurveySummary, Tab};
 
 use crate::{
     components::icons::{
         right_arrow::RightArrow,
         triangle::{TriangleDown, TriangleUp},
     },
-    pages::projects::_id::components::sample_survey::{SampleSurveyTranslate, SurveyStatus},
+    pages::projects::_id::components::sample_survey::{i18n::SampleSurveyTranslate, SurveyStatus},
     utils::time::{current_timestamp, formatted_timestamp},
 };
 
-use super::sample_survey::SurveyStep;
+use super::SurveyStep;
 
 #[component]
 pub fn SampleSurveyInfo(
     lang: Language,
-    survey: DeliberationSurvey,
+    sample_survey: DeliberationSampleSurveySummary,
     survey_completed: bool,
     start_date: i64,
     end_date: i64,
@@ -29,16 +29,16 @@ pub fn SampleSurveyInfo(
     let status = get_survey_status(start_date, end_date);
     let tr: SampleSurveyTranslate = translate(&lang);
 
-    let title = if survey.surveys.is_empty() {
+    let title = if sample_survey.surveys.is_empty() {
         "".to_string()
     } else {
-        survey.surveys[0].name.clone()
+        sample_survey.surveys[0].name.clone()
     };
 
-    let description = if survey.surveys.is_empty() {
+    let description = if sample_survey.surveys.is_empty() {
         "".to_string()
     } else {
-        survey.surveys[0].description.clone()
+        sample_survey.surveys[0].description.clone()
     };
 
     rsx! {
@@ -88,7 +88,7 @@ pub fn SampleSurveyInfo(
                             }
                             div { class: "w-full flex justify-start text-[15px]", "{description}" }
                             div { class: "w-full mt-20 flex flex-row justify-start gap-40",
-                                for member in survey.members {
+                                for member in sample_survey.members {
                                     div { class: "flex flex-row justify-start gap-8",
                                         img { class: "w-40 h-40 bg-profile-gray rounded-full" }
                                         div { class: "flex flex-col justify-start",
@@ -126,7 +126,7 @@ pub fn SampleSurveyInfo(
 
             div { class: "flex flex-row w-full justify-center mb-40",
                 div {
-                    style: if survey.surveys.is_empty() || survey_completed { "display: none;" } else { "" },
+                    style: if sample_survey.surveys.is_empty() || survey_completed { "display: none;" } else { "" },
                     class: format!(
                         "flex flex-row px-15 py-13 {} rounded-lg font-bold text-white text-base",
                         if status == SurveyStatus::InProgress {
