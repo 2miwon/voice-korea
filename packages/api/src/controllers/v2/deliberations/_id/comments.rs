@@ -295,6 +295,7 @@ mod deliberation_comment_tests {
                 vec![],
                 vec![],
                 vec![],
+                vec![],
             )
             .await;
         assert!(res.is_ok());

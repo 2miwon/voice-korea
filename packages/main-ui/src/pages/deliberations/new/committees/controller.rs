@@ -86,11 +86,18 @@ impl Controller {
         Ok(ctrl)
     }
 
-    pub fn back(&self) {
+    pub fn back(&mut self) {
+        self.save_deliberation();
         self.nav.go_back();
     }
 
-    pub fn next(&self) {
+    pub async fn temp_save(&mut self) {
+        self.save_deliberation();
+        self.parent_ctrl.temporary_save().await;
+    }
+
+    pub fn next(&mut self) {
+        self.save_deliberation();
         self.nav
             .push(crate::routes::Route::CompositionPanel { lang: self.lang });
     }
