@@ -3,10 +3,11 @@ use bdk::prelude::*;
 use validator::Validate;
 
 use crate::deliberation_user::DeliberationUser;
+use crate::Question;
 use crate::SurveyV2;
 
 #[derive(Validate)]
-#[api_model(base = "/v2/deliberations/:deliberation-id/sample-surveys", table = deliberation_sample_surveys, action = [create(users = Vec<i64>, surveys = Vec<i64>)])]
+#[api_model(base = "/v2/deliberations/:deliberation-id/sample-surveys", table = deliberation_sample_surveys, action = [create(users = Vec<i64>, surveys = Vec<Question>)])]
 pub struct DeliberationSampleSurvey {
     #[api_model(summary, primary_key)]
     pub id: i64,

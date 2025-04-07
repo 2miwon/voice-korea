@@ -267,6 +267,7 @@ mod tests {
                 vec![],
                 vec![],
                 vec![],
+                vec![],
             )
             .await;
         assert!(res.is_ok());
@@ -304,6 +305,7 @@ mod tests {
                 format!("title"),
                 format!("test description"),
                 ProjectArea::City,
+                vec![],
                 vec![],
                 vec![],
                 vec![],
@@ -378,6 +380,7 @@ mod tests {
                 format!("title"),
                 format!("test description"),
                 ProjectArea::City,
+                vec![],
                 vec![],
                 vec![],
                 vec![],

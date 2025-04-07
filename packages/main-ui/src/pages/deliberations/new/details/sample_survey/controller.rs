@@ -5,13 +5,17 @@ use models::{
     deliberation_user::DeliberationUserCreateRequest, *,
 };
 
-use crate::service::login_service::LoginService;
+use crate::{routes::Route, service::login_service::LoginService, utils::time::current_timestamp};
 
-#[derive(Debug, Clone, Copy, DioxusController)]
+use super::DeliberationNewController;
+
+#[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     #[allow(dead_code)]
     lang: Language,
     sample_survey: Signal<DeliberationSampleSurveyCreateRequest>,
+    pub parent: DeliberationNewController,
+    pub nav: Navigator,
 
     pub members: Resource<Vec<OrganizationMemberSummary>>,
     pub committee_members: Signal<Vec<DeliberationUserCreateRequest>>,
@@ -43,42 +47,43 @@ impl Controller {
             }
         })?;
 
-        // use_effect({
-        //     let mut sample = req
-        //         .sample_surveys
-        //         .get(0)
-        //         .unwrap_or(&DeliberationSampleSurveyCreateRequest::default())
-        //         .clone();
-
-        //     let started_at = if sample.started_at == 0 {
-        //         current_timestamp()
-        //     } else {
-        //         sample.started_at
-        //     };
-
-        //     let ended_at = if sample.ended_at == 0 {
-        //         current_timestamp()
-        //     } else {
-        //         sample.ended_at
-        //     };
-
-        //     move || {
-        //         sample.started_at = started_at;
-        //         sample.ended_at = ended_at;
-        //         ctrl.sample_survey.set(sample.clone());
-        //     }
-        // });
-
-        let ctrl = Self {
+        let mut ctrl = Self {
             lang,
             sample_survey,
+            parent: use_context(),
+            nav: use_navigator(),
 
             members,
             committee_members: use_signal(|| vec![]),
         };
 
-        // FIXME: anti-pattern
-        // ctrl.committee_members.set(req.roles.clone());
+        use_effect({
+            let req = ctrl.parent.deliberation_requests();
+            let mut sample_surveys = req
+                .sample_surveys
+                .get(0)
+                .unwrap_or(&DeliberationSampleSurveyCreateRequest::default())
+                .clone();
+            let current_timestamp = current_timestamp();
+            let committees = req.roles.clone();
+
+            move || {
+                let started_at = sample_surveys.clone().started_at;
+                let ended_at = sample_surveys.clone().ended_at;
+
+                if started_at == 0 {
+                    sample_surveys.started_at = current_timestamp;
+                }
+
+                if ended_at == 0 {
+                    sample_surveys.ended_at = current_timestamp;
+                }
+
+                ctrl.sample_survey.set(sample_surveys.clone());
+                ctrl.committee_members.set(committees.clone());
+            }
+        });
+
         Ok(ctrl)
     }
 
@@ -116,5 +121,22 @@ impl Controller {
             .into_iter()
             .filter(|member| roles.iter().any(|id| id.clone() == member.id))
             .collect()
+    }
+
+    pub fn back(&mut self) {
+        self.parent.save_sample_survey(self.sample_survey());
+        self.nav
+            .replace(Route::DeliberationBasicInfoSettingPage { lang: self.lang });
+    }
+
+    pub async fn temp_save(&mut self) {
+        self.parent.save_sample_survey(self.sample_survey());
+        self.parent.temporary_save().await;
+    }
+
+    pub fn next(&mut self) {
+        self.parent.save_sample_survey(self.sample_survey());
+        self.nav
+            .push(Route::DeliberationSettingPage { lang: self.lang });
     }
 }

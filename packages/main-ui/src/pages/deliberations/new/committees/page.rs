@@ -77,7 +77,9 @@ pub fn CompositionCommitee(lang: Language) -> Element {
                 }
                 div {
                     class: "flex flex-row w-105 h-55 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
-                    onclick: move |_| {},
+                    onclick: move |_| async move {
+                        ctrl.temp_save().await;
+                    },
                     {tr.temporary_save}
                 }
                 div {

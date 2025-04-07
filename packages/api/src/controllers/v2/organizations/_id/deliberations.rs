@@ -91,6 +91,7 @@ impl DeliberationController {
             started_at,
             ended_at,
             project_area,
+            project_areas,
             title,
             description,
             panel_ids,
@@ -119,6 +120,7 @@ impl DeliberationController {
         let dr = DeliberationResource::get_repository(self.pool.clone());
         let ds = DeliberationSurvey::get_repository(self.pool.clone());
         let pd = PanelDeliberation::get_repository(self.pool.clone());
+        let s = SurveyV2::get_repository(self.pool.clone());
 
         let basic_info = DeliberationBasicInfo::get_repository(self.pool.clone());
         let basic_info_member = DeliberationBasicInfoMember::get_repository(self.pool.clone());
@@ -297,8 +299,8 @@ impl DeliberationController {
                     &mut *tx,
                     started_at,
                     ended_at,
-                    title,
-                    description,
+                    title.clone(),
+                    description.clone(),
                     deliberation.id,
                     estimate_time,
                     point,
@@ -313,12 +315,35 @@ impl DeliberationController {
                     .ok_or(ApiError::DeliberationSampleSurveyException)?;
             }
 
-            for survey_id in surveys {
-                let _ = sample_survey_survey
-                    .insert_with_tx(&mut *tx, survey_id, sample.id)
-                    .await?
-                    .ok_or(ApiError::DeliberationSampleSurveyException)?;
-            }
+            let survey = s
+                .insert_with_tx(
+                    &mut *tx,
+                    title,
+                    ProjectType::Deliberation,
+                    project_areas
+                        .clone()
+                        .get(0)
+                        .unwrap_or(&ProjectArea::Economy)
+                        .clone(),
+                    ProjectStatus::InProgress,
+                    started_at,
+                    ended_at,
+                    description,
+                    0, //FIXME: fix quota
+                    org_id,
+                    surveys,
+                    vec![], //FIXME: fix panel count
+                    estimate_time,
+                    point,
+                    None,
+                )
+                .await?
+                .ok_or(ApiError::DeliberationSampleSurveyException)?;
+
+            let _ = sample_survey_survey
+                .insert_with_tx(&mut *tx, survey.id, sample.id)
+                .await?
+                .ok_or(ApiError::DeliberationSampleSurveyException)?;
         }
 
         for DeliberationContentCreateRequest {
@@ -462,8 +487,8 @@ impl DeliberationController {
                     &mut *tx,
                     started_at,
                     ended_at,
-                    title,
-                    description,
+                    title.clone(),
+                    description.clone(),
                     deliberation.id,
                     estimate_time,
                     point,
@@ -478,12 +503,35 @@ impl DeliberationController {
                     .ok_or(ApiError::DeliberationFinalSurveyException)?;
             }
 
-            for survey_id in surveys {
-                let _ = final_survey
-                    .insert_with_tx(&mut *tx, survey_id, d.id)
-                    .await?
-                    .ok_or(ApiError::DeliberationFinalSurveyException)?;
-            }
+            let survey = s
+                .insert_with_tx(
+                    &mut *tx,
+                    title,
+                    ProjectType::Deliberation,
+                    project_areas
+                        .clone()
+                        .get(0)
+                        .unwrap_or(&ProjectArea::Economy)
+                        .clone(),
+                    ProjectStatus::InProgress,
+                    started_at,
+                    ended_at,
+                    description,
+                    0, //FIXME: fix quota
+                    org_id,
+                    surveys,
+                    vec![], //FIXME: fix panel count
+                    estimate_time,
+                    point,
+                    None,
+                )
+                .await?
+                .ok_or(ApiError::DeliberationFinalSurveyException)?;
+
+            let _ = final_survey
+                .insert_with_tx(&mut *tx, survey.id, d.id)
+                .await?
+                .ok_or(ApiError::DeliberationFinalSurveyException)?;
         }
 
         for DeliberationDraftCreateRequest {
@@ -712,6 +760,7 @@ mod tests {
                 format!("test deliberation {now}"),
                 "test description".to_string(),
                 ProjectArea::City,
+                vec![],
                 vec![],
                 vec![],
                 vec![],

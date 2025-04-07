@@ -137,6 +137,9 @@ pub enum ApiError {
     )]
     DeliberationStepException,
 
+    #[translate(ko = "분야를 확인해주세요.", en = "Please check deliberation areas.")]
+    DeliberationAreaException,
+
     #[translate(
         ko = "첨부자료를 찾을 수 없습니다.",
         en = "Cannot find the attached file."
