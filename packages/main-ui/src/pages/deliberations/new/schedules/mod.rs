@@ -2,23 +2,19 @@ mod controller;
 mod i18n;
 mod layout;
 mod models;
-// mod page;
 
 pub use layout::*;
 pub(self) use models::*;
-// pub use page::*;
 
 // children pages
 mod basic_info;
-// mod deliberation;
-// mod discussion;
-// mod recommendation;
+mod deliberation;
+mod discussions;
 mod sample_survey;
-// mod vote;
+mod votes;
 
 pub use basic_info::*;
-// pub use deliberation::*;
-// pub use discussion::*;
-// pub use recommendation::*;
+pub use deliberation::*;
+pub use discussions::*;
 pub use sample_survey::*;
-// pub use vote::*;
+pub use votes::*;
