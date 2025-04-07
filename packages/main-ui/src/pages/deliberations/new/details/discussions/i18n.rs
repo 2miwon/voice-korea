@@ -28,13 +28,32 @@ translate! {
         ko: "공론 시작하기",
         en: "Start Deliberation"
     }
-    post_setting: {
-        ko: "게시글 설정",
-        en: "Post Setting"
+    discussion_setting: {
+        ko: "온라인 토론 설정",
+        en: "Online Discussion Setting"
     }
 
     discussion: {
         ko: "토론",
         en: "Discussion"
+    }
+}
+
+translate! {
+    IntroductionTranslate;
+
+    input_introduction_title: {
+        ko: "소개글 입력",
+        en: "Input Introduction"
+    }
+
+    input_introduction_description: {
+        ko: "공론의 주제와 목적에 대해 설명해주세요. 참여자들이 더 쉽게 이해하고 적극적으로 참여할 수 있을 것입니다.",
+        en: "Please explain the topic and purpose of the public discussion. This will make it easier for participants to understand and participate actively."
+    }
+
+    input_title_hint: {
+        ko: "제목을 입력해주세요.",
+        en: "Please enter a title."
     }
 }

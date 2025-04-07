@@ -1,10 +1,7 @@
 use bdk::prelude::*;
 
-use crate::{
-    components::icons::ArrowLeft,
-    pages::deliberations::new::details::sample_survey::components::{
-        introduction::Introduction, member::SampleSurveyMember, reward::SampleSurveyReward,
-    },
+use crate::pages::deliberations::new::details::sample_survey::components::{
+    introduction::Introduction, member::SampleSurveyMember, reward::SampleSurveyReward,
 };
 
 use super::*;
@@ -19,19 +16,8 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
-
-            div { class: "text-header-gray font-medium text-sm mb-10",
-                "{tr.organization_management} / {tr.deliberation_management} / {tr.start_deliberation}"
-            }
-            div { class: "flex flex-row w-full justify-start items-center mb-25 gap-10",
-                div { onclick: move |_| {},
-                    ArrowLeft { width: "24", height: "24", color: "#3a3a3a" }
-                }
-                div { class: "text-header-black font-semibold text-[28px] mr-20", "{tr.sample_survey}" }
-            }
-
             div { class: "flex flex-col w-full justify-start items-start",
-                div { class: "font-medium text-base text-text-black mb-10", "{tr.input_introduction}" }
+                div { class: "font-medium text-base text-text-black mb-10", {tr.input_introduction} }
                 div { class: "flex flex-col w-full justify-start items-start gap-20",
                     Introduction {
                         lang,
@@ -65,21 +51,21 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
                         onclick: move |_| {
                             ctrl.back();
                         },
-                        "{tr.backward}"
+                        {tr.backward}
                     }
                     div {
                         class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                         onclick: move |_| async move {
                             ctrl.temp_save().await;
                         },
-                        "{tr.temporary_save}"
+                        {tr.temporary_save}
                     }
                     div {
                         class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
                         onclick: move |_| {
                             ctrl.next();
                         },
-                        "{tr.next}"
+                        {tr.next}
                     }
                 }
             }
