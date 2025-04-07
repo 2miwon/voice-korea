@@ -45,8 +45,8 @@ pub fn BasicInfo(
                     {
                         format!(
                             "{} ~ {}",
-                            formatted_timestamp(start_date),
-                            formatted_timestamp(end_date),
+                            formatted_timestamp(lang, start_date),
+                            formatted_timestamp(lang, end_date),
                         )
                     }
                 }
