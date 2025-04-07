@@ -33,34 +33,42 @@ pub fn DeliberationVoteSettingPage(lang: Language) -> Element {
             }
 
             div { class: "flex flex-col w-full justify-start items-start",
-                div { class: "font-medium text-base text-text-black mb-10", {tr.vote_setting} }
                 div { class: "flex flex-col w-full justify-start items-start gap-20",
-                    Introduction {
-                        lang,
-                        final_survey: ctrl.get_final_survey(),
-                        set_final_survey: move |survey| {
-                            ctrl.set_final_survey(survey);
-                        },
+                    div { class: "flex flex-col w-full justify-start items-start gap-10",
+                        div { class: "font-medium text-base text-text-black", {tr.vote_setting} }
+                        div { class: "flex flex-col w-full justify-start items-start gap-20",
+                            Introduction {
+                                lang,
+                                final_survey: ctrl.get_final_survey(),
+                                set_final_survey: move |survey| {
+                                    ctrl.set_final_survey(survey);
+                                },
+                            }
+
+                            FinalSurveyReward {
+                                lang,
+                                final_survey: ctrl.get_final_survey(),
+                                set_final_survey: move |survey| {
+                                    ctrl.set_final_survey(survey);
+                                },
+                            }
+
+                            FinalSurveyMember {
+                                lang,
+
+                                final_survey: ctrl.get_final_survey(),
+                                set_final_survey: move |survey| {
+                                    ctrl.set_final_survey(survey);
+                                },
+
+                                total_committees: ctrl.get_committees(),
+                                selected_committees: ctrl.get_selected_committee(),
+                            }
+                        }
                     }
 
-                    FinalSurveyReward {
-                        lang,
-                        final_survey: ctrl.get_final_survey(),
-                        set_final_survey: move |survey| {
-                            ctrl.set_final_survey(survey);
-                        },
-                    }
-
-                    FinalSurveyMember {
-                        lang,
-
-                        final_survey: ctrl.get_final_survey(),
-                        set_final_survey: move |survey| {
-                            ctrl.set_final_survey(survey);
-                        },
-
-                        total_committees: ctrl.get_committees(),
-                        selected_committees: ctrl.get_selected_committee(),
+                    div { class: "flex flex-col w-full justify-start items-start gap-10",
+                        div { class: "font-medium text-base text-text-black", "설문 항목" }
                     }
                 }
                 div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",

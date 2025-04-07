@@ -9,6 +9,7 @@ use deliberation_resources::deliberation_resource::DeliberationResource;
 use discussions::Discussion;
 use models::{
     areas::area::Area, deliberation::Deliberation,
+    deliberation_areas::deliberation_area::DeliberationArea,
     deliberation_basic_infos::deliberation_basic_info::DeliberationBasicInfo,
     deliberation_report::DeliberationReport, deliberation_response::DeliberationResponse,
     deliberation_user::DeliberationUser, deliberation_vote::DeliberationVote,
@@ -95,6 +96,7 @@ async fn migration(pool: &sqlx::Pool<sqlx::Postgres>) -> Result<()> {
         PanelV2,
         SurveyV2,
         Area,
+        DeliberationArea,
         DeliberationBasicInfo,
         DeliberationBasicInfoMember,
         DeliberationBasicInfoResource,

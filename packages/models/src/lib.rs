@@ -40,6 +40,8 @@ pub mod deliberation_final_survey_members;
 pub mod deliberation_final_survey_surveys;
 pub mod deliberation_final_surveys;
 
+pub mod deliberation_areas;
+
 pub mod elearnings;
 
 pub mod deliberation_comments;
