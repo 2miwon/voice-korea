@@ -9,11 +9,13 @@ use crate::{
         right_arrow::RightArrow,
         triangle::{TriangleDown, TriangleUp},
     },
-    pages::projects::_id::components::sample_survey::{i18n::SampleSurveyTranslate, SurveyStatus},
     utils::time::{current_timestamp, formatted_timestamp},
 };
 
-use super::SurveyStep;
+use super::{
+    i18n::SampleSurveyTranslate,
+    sample_survey::{SurveyStatus, SurveyStep},
+};
 
 #[component]
 pub fn SampleSurveyInfo(

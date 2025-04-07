@@ -1,39 +1,38 @@
-#![allow(non_snake_case, dead_code, unused_variables)]
-use dioxus::prelude::*;
-use dioxus_translate::{translate, Language};
+use bdk::prelude::*;
 use models::{response::Answer, Question, SurveyV2};
 
 use crate::{
     components::icons::left_arrow::LeftArrow,
     pages::projects::_id::components::{
-        final_survey::FinalSurveyTranslate, multiple_objective::MultipleObjective,
-        single_objective::SingleObjective, subjective::Subjective,
+        multiple_objective::MultipleObjective, single_objective::SingleObjective,
+        subjective::Subjective,
     },
 };
 
+use super::i18n::FinalSurveyTranslate;
+
 #[component]
-pub fn FinalSurveyQuestion(
+pub fn MyFinalSurvey(
     lang: Language,
     survey: SurveyV2,
     answers: Vec<Answer>,
     onprev: EventHandler<MouseEvent>,
-    onsend: EventHandler<MouseEvent>,
     onchange: EventHandler<(usize, Answer)>,
 ) -> Element {
     let tr: FinalSurveyTranslate = translate(&lang);
-    let survey_title = survey.name;
-
     rsx! {
-        div { class: "max-[1000px]:px-30 flex flex-col w-full justify-start items-start gap-10 mt-28",
-            div { class: "flex flex-row w-full justify-start items-center gap-8 mb-10",
-                div {
-                    class: "cursor-pointer w-24 h-24",
-                    onclick: move |e: Event<MouseData>| {
-                        onprev.call(e);
-                    },
-                    LeftArrow { stroke: "black" }
+        div { class: "flex flex-col w-full gap-[10px] mb-[40px] mt-[28px]",
+            div { class: "flex flex-row w-full justify-between items-center mb-[10px]",
+                div { class: "flex flex-row justify-start items-center gap-[8px]",
+                    div {
+                        class: "cursor-pointer w-[24px] h-[24px]",
+                        onclick: move |e: Event<MouseData>| {
+                            onprev.call(e);
+                        },
+                        LeftArrow { stroke: "black" }
+                    }
+                    div { class: "font-semibold text-[#222222] text-[20px]", "{tr.title}" }
                 }
-                div { class: "font-semibold text-text-black text-20", "{survey_title}" }
             }
 
             for (i , question) in survey.questions.iter().enumerate() {
@@ -50,6 +49,7 @@ pub fn FinalSurveyQuestion(
                                 question: v.clone(),
                                 answer,
                                 onchange: move |e| { onchange.call((i, Answer::SingleChoice { answer: e })) },
+                                blocked: true,
                             }
                         }
                     }
@@ -73,6 +73,7 @@ pub fn FinalSurveyQuestion(
                                             },
                                         ))
                                 },
+                                blocked: true,
                             }
                         }
                     }
@@ -91,6 +92,7 @@ pub fn FinalSurveyQuestion(
                                 onchange: move |e| {
                                     onchange.call((i, Answer::ShortAnswer { answer: e }));
                                 },
+                                blocked: true,
                             }
                         }
                     }
@@ -109,19 +111,10 @@ pub fn FinalSurveyQuestion(
                                 onchange: move |e| {
                                     onchange.call((i, Answer::Subjective { answer: e }));
                                 },
+                                blocked: true,
                             }
                         }
                     }
-                }
-            }
-
-            div { class: "flex flex-row w-full justify-center items-center mb-40",
-                div {
-                    class: "cursor-pointer flex flex-row justify-center items-center w-200 py-13 font-bold text-white text-base bg-button-primary rounded-lg",
-                    onclick: move |e: Event<MouseData>| {
-                        onsend.call(e);
-                    },
-                    "{tr.submit}"
                 }
             }
         }

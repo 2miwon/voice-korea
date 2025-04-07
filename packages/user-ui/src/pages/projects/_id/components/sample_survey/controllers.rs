@@ -12,7 +12,7 @@ use crate::{
     service::user_service::UserService,
 };
 
-use super::{i18n::RemoveSurveyModalTranslate, SurveyStep};
+use super::{i18n::RemoveSurveyModalTranslate, sample_survey::SurveyStep};
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct SampleSurveyResponses {
@@ -74,7 +74,6 @@ impl Controller {
         };
 
         use_effect(move || {
-            let survey = ctrl.sample_survey().unwrap_or_default();
             let mut answers = vec![];
             let mut completed = false;
             let mut response_id = 0;

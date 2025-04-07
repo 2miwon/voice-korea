@@ -1,4 +1,5 @@
 #![allow(unused_variables, unused)]
+use crate::deliberation_report::DeliberationReport;
 use crate::deliberation_response::DeliberationResponse;
 use crate::deliberation_user::DeliberationUser;
 use crate::ResourceFile;
@@ -47,4 +48,7 @@ pub struct DeliberationDraft {
     #[api_model(summary, one_to_many = deliberation_responses, foreign_key = deliberation_id, reference_key = deliberation_id)]
     #[serde(default)]
     pub responses: Vec<DeliberationResponse>,
+
+    #[api_model(summary, one_to_many = deliberation_reports, foreign_key = deliberation_id)]
+    pub reports: Vec<DeliberationReport>,
 }

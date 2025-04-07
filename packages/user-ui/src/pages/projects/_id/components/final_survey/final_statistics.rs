@@ -8,10 +8,10 @@ use models::ParsedQuestion;
 
 use crate::{
     components::icons::left_arrow::LeftArrow,
-    pages::projects::_id::components::final_survey::FinalSurveyTranslate,
+    pages::projects::_id::components::final_survey::i18n::FinalSurveyTranslate,
 };
 
-use super::final_survey::FinalSurveyResponses;
+use super::controllers::FinalSurveyResponses;
 
 #[component]
 pub fn FinalStatistics(

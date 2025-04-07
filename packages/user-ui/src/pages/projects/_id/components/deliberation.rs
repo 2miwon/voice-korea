@@ -1,9 +1,11 @@
-#![allow(non_snake_case, dead_code, unused_variables)]
 use by_components::icons::upload_download::Download2;
 use by_macros::*;
 use dioxus::prelude::*;
 use dioxus_translate::*;
-use models::{deliberation_content::DeliberationContent, Tab};
+use models::{
+    deliberation_content::DeliberationContent, DeliberationContentQuery,
+    DeliberationContentSummary, Tab,
+};
 
 use crate::{
     components::icons::triangle::{TriangleDown, TriangleUp},
@@ -19,16 +21,6 @@ pub fn Deliberation(
 ) -> Element {
     let ctrl = Controller::new(lang, project_id)?;
     let deliberation = ctrl.deliberation()?;
-
-    let steps = deliberation.clone().steps;
-
-    let mut start_date = 0;
-    let mut end_date = 0;
-
-    if steps.len() == 5 {
-        start_date = steps[2].started_at;
-        end_date = steps[2].ended_at;
-    }
 
     let tr: DeliberationTranslate = translate(&lang);
     let tab_title: &str = Tab::Deliberation.translate(&lang);
@@ -46,8 +38,8 @@ pub fn Deliberation(
                     {
                         format!(
                             "{} ~ {}",
-                            formatted_timestamp(lang, start_date),
-                            formatted_timestamp(lang, end_date),
+                            formatted_timestamp(lang, deliberation.started_at),
+                            formatted_timestamp(lang, deliberation.ended_at),
                         )
                     }
                 }
@@ -138,34 +130,41 @@ pub fn Deliberation(
 
 #[derive(Debug, Clone, Copy, DioxusController)]
 pub struct Controller {
-    #[allow(dead_code)]
+    #[allow(unused)]
     lang: Language,
-    project_id: ReadOnlySignal<i64>,
+    #[allow(unused)]
+    deliberation_id: ReadOnlySignal<i64>,
 
-    deliberation: Resource<DeliberationContent>,
+    deliberation: Resource<DeliberationContentSummary>,
 }
 
 impl Controller {
     pub fn new(
         lang: Language,
-        project_id: ReadOnlySignal<i64>,
+        deliberation_id: ReadOnlySignal<i64>,
     ) -> std::result::Result<Self, RenderError> {
         let deliberation = use_server_future(move || async move {
-            DeliberationContent::get_client(&crate::config::get().api_url)
-                .read(project_id())
+            let res = DeliberationContent::get_client(&crate::config::get().api_url)
+                .query(deliberation_id(), DeliberationContentQuery::default())
                 .await
-                .unwrap_or_default()
+                .unwrap_or_default();
+            if res.items.is_empty() {
+                DeliberationContentSummary::default()
+            } else {
+                res.items[0].clone()
+            }
         })?;
 
         let ctrl = Self {
             lang,
-            project_id,
+            deliberation_id,
             deliberation,
         };
 
         Ok(ctrl)
     }
 
+    #[allow(unused)]
     pub async fn download_file(&self, name: String, url: Option<String>) {
         if url.is_none() {
             return;

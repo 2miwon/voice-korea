@@ -1,24 +1,22 @@
-#![allow(non_snake_case, dead_code, unused_variables)]
-use dioxus::prelude::*;
-use dioxus_logger::tracing;
-use dioxus_translate::{translate, Language};
-use models::{deliberation_survey::DeliberationSurvey, Tab};
+use bdk::prelude::*;
+
+use models::{DeliberationFinalSurveySummary, Tab};
 
 use crate::{
     components::icons::{
         right_arrow::RightArrow,
         triangle::{TriangleDown, TriangleUp},
     },
-    pages::projects::_id::components::final_survey::{FinalSurveyStatus, FinalSurveyTranslate},
     utils::time::{current_timestamp, formatted_timestamp},
 };
 
-use super::final_survey::FinalSurveyStep;
+use super::controllers::{FinalSurveyStatus, FinalSurveyStep};
+use super::i18n::FinalSurveyTranslate;
 
 #[component]
 pub fn FinalSurveyInfo(
     lang: Language,
-    survey: DeliberationSurvey,
+    survey: DeliberationFinalSurveySummary,
     start_date: i64,
     end_date: i64,
     survey_completed: bool,

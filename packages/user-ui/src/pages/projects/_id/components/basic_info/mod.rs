@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 use dioxus_translate::*;
 use models::{
     deliberation_basic_info::DeliberationBasicInfo, DeliberationBasicInfoQuery,
-    DeliberationBasicInfoSummary, QueryResponse, Tab,
+    DeliberationBasicInfoSummary, Tab,
 };
 
 use crate::{
@@ -130,6 +130,7 @@ pub fn BasicInfo(
 pub struct Controller {
     #[allow(dead_code)]
     lang: Language,
+    #[allow(dead_code)]
     deliberation_id: ReadOnlySignal<i64>,
 
     basic_info: Resource<DeliberationBasicInfoSummary>,
@@ -167,7 +168,7 @@ impl Controller {
 
         Ok(ctrl)
     }
-
+    #[allow(unused)]
     pub async fn download_file(&self, name: String, url: Option<String>) {
         if url.is_none() {
             return;

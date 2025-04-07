@@ -2,6 +2,7 @@
 use bdk::prelude::*;
 use validator::Validate;
 
+use crate::deliberation_response::DeliberationResponse;
 use crate::deliberation_user::DeliberationUser;
 use crate::SurveyV2;
 
@@ -44,4 +45,11 @@ pub struct DeliberationFinalSurvey {
     #[api_model(summary, many_to_many = deliberation_final_survey_surveys, foreign_table_name = surveys, foreign_primary_key = survey_id, foreign_reference_key = final_survey_id)]
     #[serde(default)]
     pub surveys: Vec<SurveyV2>,
+
+    #[api_model(summary, one_to_many = deliberation_responses, foreign_key = deliberation_id)]
+    #[serde(default)]
+    pub responses: Vec<DeliberationResponse>,
+    // NOTE: skipped data for chart, responses per question types
+    #[api_model(summary, one_to_many = deliberation_responses, foreign_key = deliberation_id, aggregator = count)]
+    pub response_count: i64,
 }

@@ -2,7 +2,7 @@ use bdk::prelude::*;
 use by_components::icons::validations::Extra;
 use models::{response::Answer, Question, SurveyV2};
 
-use crate::pages::projects::_id::components::sample_survey::{get_survey_status, SurveyStatus};
+use super::sample_survey::{get_survey_status, SurveyStatus};
 
 use crate::{
     components::icons::left_arrow::LeftArrow,
