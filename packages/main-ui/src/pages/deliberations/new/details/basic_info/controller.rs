@@ -1,9 +1,7 @@
 use bdk::prelude::*;
-use models::{
-    deliberation_basic_infos::deliberation_basic_info::DeliberationBasicInfoCreateRequest,
-    deliberation_user::DeliberationUserCreateRequest, *,
-};
+use models::{deliberation_user::DeliberationUserCreateRequest, *};
 
+use super::*;
 use crate::{config, service::login_service::LoginService};
 
 #[derive(Debug, Clone, Copy, DioxusController)]
@@ -21,6 +19,8 @@ pub struct Controller {
     pub search_keyword: Signal<String>,
     #[allow(dead_code)]
     pub documents: Signal<Vec<ResourceFile>>,
+    #[allow(dead_code)]
+    pub parent: DeliberationNewController,
 }
 
 impl Controller {
@@ -161,6 +161,7 @@ impl Controller {
             members,
             metadatas,
             surveys,
+            parent: use_context(),
 
             search_keyword,
 
