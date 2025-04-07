@@ -1,10 +1,13 @@
 use bdk::prelude::*;
 use models::{
-    deliberation_user::DeliberationUserCreateRequest, DeliberationDiscussionCreateRequest,
-    OrganizationMember, OrganizationMemberQuery, OrganizationMemberSummary,
+    deliberation_user::DeliberationUserCreateRequest, DeliberationDiscussionCreateRequest, File,
+    OrganizationMember, OrganizationMemberQuery, OrganizationMemberSummary, ResourceFile,
+    ResourceFileQuery, ResourceFileSummary,
 };
 
-use crate::{routes::Route, service::login_service::LoginService, utils::time::current_timestamp};
+use crate::{
+    config, routes::Route, service::login_service::LoginService, utils::time::current_timestamp,
+};
 
 use super::DeliberationNewController;
 
@@ -18,6 +21,7 @@ pub struct Controller {
     pub nav: Navigator,
 
     pub members: Resource<Vec<OrganizationMemberSummary>>,
+    pub metadatas: Resource<Vec<ResourceFileSummary>>,
     pub committee_members: Signal<Vec<DeliberationUserCreateRequest>>,
 }
 
@@ -46,6 +50,26 @@ impl Controller {
             }
         })?;
 
+        let metadatas = use_server_future(move || {
+            let page = 1;
+            let size = 100;
+            async move {
+                let client = ResourceFile::get_client(&config::get().api_url);
+                let org_id = user.get_selected_org();
+                if org_id.is_none() {
+                    tracing::error!("Organization ID is missing");
+                    return vec![];
+                }
+
+                let query = ResourceFileQuery::new(size).with_page(page);
+                client
+                    .query(org_id.unwrap().id, query)
+                    .await
+                    .unwrap_or_default()
+                    .items
+            }
+        })?;
+
         let mut ctrl = Self {
             lang,
             parent: use_context(),
@@ -53,6 +77,7 @@ impl Controller {
             discussion,
 
             members,
+            metadatas,
             committee_members: use_signal(|| vec![]),
         };
 
@@ -102,6 +127,18 @@ impl Controller {
         d
     }
 
+    pub fn get_selected_resources(&self) -> Vec<ResourceFile> {
+        let metadatas = self.metadatas().unwrap_or_default();
+        let resources = self.discussion().resources;
+
+        metadatas
+            .clone()
+            .into_iter()
+            .filter(|resource| resources.iter().any(|id| id.clone() == resource.id))
+            .map(|v| v.into())
+            .collect()
+    }
+
     pub fn get_selected_committee(&self) -> Vec<OrganizationMemberSummary> {
         let total_committees = self.members().unwrap_or_default();
         let discussion = self.discussion();
@@ -115,6 +152,51 @@ impl Controller {
 
     pub fn set_discussion(&mut self, info: DeliberationDiscussionCreateRequest) {
         self.discussion.set(info);
+    }
+
+    pub fn remove_resource(&mut self, id: i64) {
+        let mut discussion = self.discussion();
+        discussion
+            .resources
+            .retain(|resource_id| !(resource_id.clone() == id));
+        self.set_discussion(discussion);
+    }
+
+    pub fn clear_resource(&mut self) {
+        let mut discussion = self.discussion();
+        discussion.resources = vec![];
+        self.set_discussion(discussion);
+    }
+
+    pub async fn create_metadata(&mut self, file: File) {
+        let user: LoginService = use_context();
+        let org = user.get_selected_org();
+        if org.is_none() {
+            btracing::error!("This service requires login.");
+            return;
+        }
+        let org_id = org.unwrap().id;
+        let client = models::ResourceFile::get_client(&config::get().api_url);
+
+        let file = client
+            .create(
+                org_id,
+                file.name.clone(),
+                None,
+                None,
+                None,
+                None,
+                None,
+                vec![file],
+            )
+            .await
+            .unwrap_or_default();
+
+        let mut discussion = self.discussion();
+        discussion.resources.push(file.id);
+        self.set_discussion(discussion);
+
+        self.metadatas.restart();
     }
 
     pub fn back(&mut self) {

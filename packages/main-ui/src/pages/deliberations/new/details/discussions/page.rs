@@ -1,5 +1,5 @@
 use bdk::prelude::*;
-use models::DeliberationDiscussionCreateRequest;
+use models::{DeliberationDiscussionCreateRequest, File};
 
 use crate::pages::deliberations::new::details::discussions::components::{
     discussion_group::DiscussionGroup, document::Document, introduction::Introduction,
@@ -36,6 +36,17 @@ pub fn DeliberationDiscussionSettingPage(lang: Language) -> Element {
                         set_discussion: move |disc| {
                             ctrl.set_discussion(disc);
                         },
+
+                        create_metadata: move |file: File| async move {
+                            ctrl.create_metadata(file).await;
+                        },
+                        remove_resource: move |id: i64| {
+                            ctrl.remove_resource(id);
+                        },
+                        clear_resource: move |_| {
+                            ctrl.clear_resource();
+                        },
+                        selected_resources: ctrl.get_selected_resources(),
                     }
 
                     DiscussionMember {
