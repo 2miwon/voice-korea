@@ -1,30 +1,12 @@
-#![allow(dead_code, unused)]
 use bdk::prelude::*;
 use by_macros::DioxusController;
-use models::{
-    deliberation::{Deliberation, DeliberationCreateRequest},
-    step::StepCreateRequest,
-    step_type::StepType,
-    *,
-};
+use models::{step::StepCreateRequest, *};
 
 use crate::{
     config,
     routes::Route,
     service::{login_service::LoginService, popup_service::PopupService},
 };
-
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Copy, DioxusController)]
-pub struct Controller {
-    lang: Language,
-    popup_service: Signal<PopupService>,
-    current_step: DeliberationNewStep,
-    user: LoginService,
-
-    deliberation_requests: Signal<DeliberationCreateRequest>,
-}
 
 #[derive(
     Debug, Clone, PartialEq, Copy, serde::Serialize, serde::Deserialize, EnumProp, Default,
@@ -54,8 +36,19 @@ impl From<Route> for DeliberationNewStep {
     }
 }
 
+#[derive(Debug, Clone, Copy, DioxusController)]
+pub struct Controller {
+    #[allow(dead_code)]
+    lang: Language,
+    popup_service: Signal<PopupService>,
+    current_step: DeliberationNewStep,
+    user: LoginService,
+
+    deliberation_requests: Signal<DeliberationCreateRequest>,
+}
+
 impl Controller {
-    pub fn new(lang: dioxus_translate::Language) -> std::result::Result<Self, RenderError> {
+    pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
         let user: LoginService = use_context();
         let popup_service: PopupService = use_context();
         let route = use_route::<Route>();
@@ -83,10 +76,6 @@ impl Controller {
 
     pub fn use_service() -> Self {
         use_context()
-    }
-
-    pub fn change_step(&mut self, step: DeliberationNewStep) {
-        // self.current_step.set(step);
     }
 
     pub async fn create_metadata(&self, file: File) -> Result<ResourceFile> {
@@ -166,5 +155,35 @@ impl Controller {
         let ended_at = steps.iter().map(|s| s.ended_at).max().unwrap_or(0);
 
         (started_at, ended_at)
+    }
+
+    pub fn save_basic_info(&mut self, basic_info: DeliberationBasicInfoCreateRequest) {
+        self.deliberation_requests.with_mut(|req| {
+            req.basic_infos = vec![basic_info];
+        });
+    }
+
+    pub fn save_sample_survey(&mut self, sample_surveys: DeliberationSampleSurveyCreateRequest) {
+        self.deliberation_requests.with_mut(|req| {
+            req.sample_surveys = vec![sample_surveys];
+        });
+    }
+
+    pub fn save_content(&mut self, content: DeliberationContentCreateRequest) {
+        self.deliberation_requests.with_mut(|req| {
+            req.contents = vec![content];
+        });
+    }
+
+    pub fn save_discussion(&mut self, discussion: DeliberationDiscussionCreateRequest) {
+        self.deliberation_requests.with_mut(|req| {
+            req.deliberation_discussions = vec![discussion];
+        });
+    }
+
+    pub fn save_final_survey(&mut self, final_survey: DeliberationFinalSurveyCreateRequest) {
+        self.deliberation_requests.with_mut(|req| {
+            req.final_surveys = vec![final_survey];
+        });
     }
 }

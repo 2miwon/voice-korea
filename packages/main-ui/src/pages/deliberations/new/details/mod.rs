@@ -3,6 +3,7 @@ mod i18n;
 mod layout;
 mod models;
 
+pub(self) use super::controller::Controller as DeliberationNewController;
 pub use layout::*;
 pub(self) use models::*;
 

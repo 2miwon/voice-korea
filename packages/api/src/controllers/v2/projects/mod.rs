@@ -8,15 +8,7 @@ use by_axum::{
     },
 };
 use by_types::QueryResponse;
-use deliberation_project::*;
-use models::{
-    deliberation_content::DeliberationContent,
-    deliberations::{
-        deliberation::Deliberation, deliberation_basic_info::DeliberationBasicInfo,
-        deliberation_draft::DeliberationDraft, deliberation_survey::DeliberationSurvey,
-    },
-    *,
-};
+use models::*;
 use sqlx::postgres::PgRow;
 
 #[derive(
