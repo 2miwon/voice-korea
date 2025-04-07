@@ -1,27 +1,25 @@
 #![allow(dead_code, unused)]
 use bdk::prelude::*;
 
-use crate::pages::deliberations::new::controller::CurrentStep;
+use crate::pages::deliberations::new::controller::DeliberationNewStep;
 
 // TODO: implement preview
 #[component]
-pub fn Preview(lang: Language, visibility: bool, onstep: EventHandler<CurrentStep>) -> Element {
+pub fn Preview(
+    lang: Language,
+    // visibility: bool,
+    // onstep: EventHandler<DeliberationNewStep>,
+) -> Element {
     let _ctrl = Controller::new(lang)?;
     let tr: PreviewTranslate = translate(&lang);
 
     rsx! {
-        div {
-            class: format!(
-                "flex flex-col w-full justify-start items-start {}",
-                if !visibility { "hidden" } else { "" },
-            ),
+        div { class: "flex flex-col w-full justify-start items-start",
             div { class: "font-medium text-base text-text-black mb-10", "{tr.final_review}" }
             div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
                 div {
                     class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
-                    onclick: move |_| {
-                        onstep.call(CurrentStep::DeliberationSchedule);
-                    },
+                    onclick: move |_| {},
                     "{tr.backward}"
                 }
                 div {
@@ -40,7 +38,7 @@ pub fn Preview(lang: Language, visibility: bool, onstep: EventHandler<CurrentSte
 }
 
 #[derive(Debug, Clone, Copy, DioxusController)]
-pub struct Controller {
+struct Controller {
     lang: Language,
 }
 

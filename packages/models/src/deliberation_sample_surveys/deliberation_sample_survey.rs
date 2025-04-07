@@ -2,11 +2,13 @@
 use bdk::prelude::*;
 use validator::Validate;
 
+use crate::deliberation_response::DeliberationResponse;
 use crate::deliberation_user::DeliberationUser;
+use crate::Question;
 use crate::SurveyV2;
 
 #[derive(Validate)]
-#[api_model(base = "/v2/deliberations/:deliberation-id/sample-surveys", table = deliberation_sample_surveys, action = [create(users = Vec<i64>, surveys = Vec<i64>)])]
+#[api_model(base = "/v2/deliberations/:deliberation-id/sample-surveys", table = deliberation_sample_surveys, action = [create(users = Vec<i64>, surveys = Vec<Question>)])]
 pub struct DeliberationSampleSurvey {
     #[api_model(summary, primary_key)]
     pub id: i64,
@@ -44,4 +46,8 @@ pub struct DeliberationSampleSurvey {
     #[api_model(summary, many_to_many = deliberation_sample_survey_surveys, foreign_table_name = surveys, foreign_primary_key = survey_id, foreign_reference_key = sample_survey_id)]
     #[serde(default)]
     pub surveys: Vec<SurveyV2>,
+
+    #[api_model(summary, one_to_many = deliberation_responses, foreign_key = deliberation_id)]
+    #[serde(default)]
+    pub responses: Vec<DeliberationResponse>,
 }

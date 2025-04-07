@@ -10,7 +10,6 @@ use by_axum::{
 use by_types::QueryResponse;
 use deliberation::Deliberation;
 use discussion_resources::DiscussionResource;
-use discussions::*;
 use models::*;
 use sqlx::{postgres::PgRow, Postgres, Transaction};
 
@@ -411,6 +410,7 @@ mod discussion_tests {
                 format!("test deliberation {now}"),
                 "test description".to_string(),
                 ProjectArea::City,
+                vec![],
                 vec![],
                 vec![],
                 vec![],

@@ -650,3 +650,89 @@ translate! {
         en: "Cancel"
     }
 }
+
+translate! {
+    SettingDeliberationTranslate;
+
+    overview: {
+        ko: "공론 개요 설정",
+        en: "Setting up a deliberation outline"
+    }
+
+    title: {
+        ko: "공론화 개요",
+        en: "Deliberation outline",
+    }
+
+    description: {
+        ko: "공론의 주제와 목적에 대해 설명해주세요. 참여자들이 더 쉽게 이해하고 적극적으로 참여할 수 있을 것입니다.",
+        en: "Please describe the topic and purpose of the deliberation. Participants will be able to understand and participate more actively."
+    }
+
+    proj_title: {
+        ko: "프로젝트 명칭",
+        en: "Project name",
+    }
+
+    proj_title_placeholder: {
+        ko: "제목을 입력해주세요.",
+        en: "Please enter the project name.",
+    }
+
+    proj_desc: {
+        ko: "간단 소개글",
+        en: "Brief introduction",
+    }
+
+    proj_desc_placeholder: {
+        ko: "내용을 입력해주세요.",
+        en: "Please enter a brief introduction.",
+    }
+
+    deliberation_field: {
+        ko: "공론 분야",
+        en: "Deliberation field",
+    }
+
+    deliberation_field_hint: {
+        ko: "1개 이상 선택 가능합니다.",
+        en: "You can select more than one.",
+    }
+
+    thumbnail: {
+        ko: "썸네일",
+        en: "Thumbnail",
+    }
+
+    upload_directly: {
+        ko: "직접 업로드하기",
+        en: "Upload directly",
+    }
+
+    no_file: {
+        ko: "파일 없음",
+        en: "No file",
+    }
+
+    upload_desc: {
+        ko: "썸네일은 공론 주제를 한눈에 보여주는 이미지입니다. 업로드한 파일은 썸네일에 자동 정렬됩니다. 지원 형식 : jpg, png, pdf 포맷 가능, 최대 용량 5MB",
+        en: "The thumbnail is an image that shows the topic of the deliberation at a glance. The uploaded file is automatically arranged in the thumbnail. Supported formats: jpg, png, pdf format available, maximum capacity 5MB",
+    }
+
+    go_to_deliberation_management_list: {
+        ko: "공론관리 목록으로",
+        en: "To deliberation management list"
+    }
+    backward: {
+        ko: "뒤로",
+        en: "Backward"
+    }
+    temporary_save: {
+        ko: "임시저장",
+        en: "Temporary Save"
+    }
+    next: {
+        ko: "다음으로",
+        en: "Next"
+    }
+}
