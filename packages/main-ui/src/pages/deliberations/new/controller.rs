@@ -45,6 +45,7 @@ pub struct Controller {
     user: LoginService,
 
     deliberation_requests: Signal<DeliberationCreateRequest>,
+    project_areas: Signal<Vec<ProjectArea>>,
 }
 
 impl Controller {
@@ -60,6 +61,7 @@ impl Controller {
             current_step,
             popup_service: use_signal(|| popup_service),
             deliberation_requests: use_signal(|| DeliberationCreateRequest::default()),
+            project_areas: use_signal(|| vec![]),
         };
         use_context_provider(|| ctrl);
         Ok(ctrl)
@@ -199,6 +201,27 @@ impl Controller {
         });
     }
 
+    pub fn update_overview_deliberation_requests(
+        &mut self,
+        title: String,
+        description: String,
+        thumbnail_image: String,
+        project_areas_string: Vec<String>,
+    ) {
+        self.deliberation_requests.with_mut(|req| {
+            req.thumbnail_image = thumbnail_image;
+            req.title = title;
+            req.description = description;
+        });
+
+        self.project_areas.set(
+            project_areas_string
+                .iter()
+                .map(|s| s.parse().unwrap_or_default())
+                .collect(),
+        );
+    }
+
     pub async fn temporary_save(&self) {
         let DeliberationCreateRequest {
             started_at,
@@ -259,5 +282,7 @@ impl Controller {
                 btracing::error!("failed to create deliberation: {}", e.translate(&self.lang));
             }
         }
+
+        // TODO: update project areas in DB
     }
 }
