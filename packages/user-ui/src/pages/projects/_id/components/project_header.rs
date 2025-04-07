@@ -32,8 +32,8 @@ pub fn ProjectHeader(
     let mut set_active_tab = move |value: Tab| active_tab.set(value);
     let active_tab_value = active_tab.read();
 
-    let started_at = formatted_timestamp(deliberation.started_at);
-    let ended_at = formatted_timestamp(deliberation.ended_at);
+    let started_at = formatted_timestamp(lang, deliberation.started_at);
+    let ended_at = formatted_timestamp(lang, deliberation.ended_at);
 
     rsx! {
         div { class: " max-w-1300 h-fit mb-40 flex max-[1000px]:flex-col-reverse flex-row w-full justify-center items-center gap-40 px-10",

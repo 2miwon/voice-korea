@@ -1,24 +1,19 @@
-#![allow(non_snake_case, dead_code, unused_variables)]
 use bdk::prelude::*;
+
 use indexmap::IndexMap;
 use models::{
     deliberation_response::{DeliberationResponse, DeliberationType},
-    deliberation_survey::DeliberationSurvey,
     response::Answer,
+    DeliberationFinalSurvey, DeliberationFinalSurveyQuery, DeliberationFinalSurveySummary,
     ParsedQuestion, Question, SurveyV2,
 };
 
 use crate::{
-    pages::projects::_id::components::{
-        final_statistics::FinalStatistics, final_survey_info::FinalSurveyInfo,
-        final_survey_question::FinalSurveyQuestion, final_vote_modal::FinalVoteModal,
-        my_final_survey::MyFinalSurvey,
-    },
+    pages::projects::_id::components::final_survey::final_vote_modal::FinalVoteModal,
     service::{popup_service::PopupService, user_service::UserService},
-    utils::time::current_timestamp,
 };
 
-use super::final_vote_modal::FinalVoteModalTranslate;
+use super::i18n::FinalVoteModalTranslate;
 
 #[derive(Translate, PartialEq, Default, Debug)]
 pub enum FinalSurveyStatus {
@@ -39,88 +34,13 @@ pub enum FinalSurveyStep {
     Statistics,
 }
 
-#[component]
-pub fn FinalSurvey(
-    lang: Language,
-    project_id: ReadOnlySignal<i64>,
-    #[props(extends = GlobalAttributes)] attributes: Vec<Attribute>,
-    children: Element,
-) -> Element {
-    let mut ctrl = Controller::new(lang, project_id)?;
-    let survey = ctrl.survey()?;
-
-    let steps = survey.clone().steps;
-
-    let mut start_date = 0;
-    let mut end_date = 0;
-
-    if steps.len() == 5 {
-        start_date = steps[4].started_at;
-        end_date = steps[4].ended_at;
-    }
-
-    let step = ctrl.get_step();
-
-    rsx! {
-        div { id: "final-survey", ..attributes,
-            if step == FinalSurveyStep::Display {
-                FinalSurveyInfo {
-                    lang,
-                    survey,
-                    start_date,
-                    end_date,
-                    survey_completed: ctrl.survey_completed(),
-                    onchange: move |step| {
-                        ctrl.set_step(step);
-                    },
-                }
-            } else if step == FinalSurveyStep::WriteSurvey {
-                FinalSurveyQuestion {
-                    lang,
-                    survey: if survey.surveys.len() != 0 { survey.surveys[0].clone() } else { SurveyV2::default() },
-                    answers: ctrl.answers(),
-                    onprev: move |_| {
-                        ctrl.set_step(FinalSurveyStep::Display);
-                    },
-                    onsend: move |_| async move {
-                        ctrl.open_send_survey_modal();
-                    },
-                    onchange: move |(index, answer)| {
-                        ctrl.change_answer(index, answer);
-                    },
-                }
-            } else if step == FinalSurveyStep::MySurvey {
-                MyFinalSurvey {
-                    lang,
-                    survey: if survey.surveys.len() != 0 { survey.surveys[0].clone() } else { SurveyV2::default() },
-                    answers: ctrl.answers(),
-                    onprev: move |_| {
-                        ctrl.set_step(FinalSurveyStep::Display);
-                    },
-                    onchange: move |(index, answer)| {
-                        ctrl.change_answer(index, answer);
-                    },
-                }
-            } else {
-                FinalStatistics {
-                    lang,
-                    responses: ctrl.survey_responses(),
-                    onprev: move |_| {
-                        ctrl.set_step(FinalSurveyStep::Display);
-                    },
-                }
-            }
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy, DioxusController)]
 pub struct Controller {
     #[allow(dead_code)]
     lang: Language,
     project_id: ReadOnlySignal<i64>,
 
-    survey: Resource<DeliberationSurvey>,
+    survey: Resource<DeliberationFinalSurveySummary>,
     answers: Signal<Vec<Answer>>,
 
     survey_completed: Signal<bool>,
@@ -145,10 +65,15 @@ impl Controller {
         let user: UserService = use_context();
 
         let survey = use_server_future(move || async move {
-            DeliberationSurvey::get_client(&crate::config::get().api_url)
-                .read(project_id())
+            let res = DeliberationFinalSurvey::get_client(&crate::config::get().api_url)
+                .query(project_id(), DeliberationFinalSurveyQuery::default())
                 .await
-                .unwrap_or_default()
+                .unwrap_or_default();
+            if res.items.is_empty() {
+                DeliberationFinalSurveySummary::default()
+            } else {
+                res.items[0].clone()
+            }
         })?;
 
         let mut ctrl = Self {
@@ -347,63 +272,5 @@ impl Controller {
                 btracing::error!("send response failed with error: {:?}", e);
             }
         };
-    }
-}
-
-translate! {
-    FinalSurveyTranslate;
-
-    title: {
-        ko: "최종 투표 주제",
-        en: "Final Vote Topic",
-    }
-    see_detail: {
-        ko: "자세히 보기",
-        en: "See Detail"
-    }
-    my_answer: {
-        ko: "내가 작성한 답변",
-        en: "My Answer"
-    }
-    response_per_question: {
-        ko: "질문별 응답",
-        en: "Responses to each question"
-    }
-    necessary: {
-        ko: "[필수]",
-        en: "[Necessary]"
-    }
-    plural: {
-        ko: "[복수]",
-        en: "[Plural]"
-    }
-    unit: {
-        ko: "명",
-        en: "Unit"
-    }
-    subjective_answer: {
-        ko: "주관식 답변",
-        en: "Subjective Answer"
-    }
-    submit: {
-        ko: "제출하기",
-        en: "Submit"
-    }
-}
-
-pub fn get_survey_status(started_at: i64, ended_at: i64) -> FinalSurveyStatus {
-    let current = current_timestamp();
-
-    if started_at > 10000000000 {
-        tracing::error!("time parsing failed");
-        return FinalSurveyStatus::default();
-    }
-
-    if started_at > current {
-        FinalSurveyStatus::Ready
-    } else if ended_at < current {
-        FinalSurveyStatus::Finish
-    } else {
-        FinalSurveyStatus::InProgress
     }
 }

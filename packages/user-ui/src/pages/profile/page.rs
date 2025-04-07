@@ -95,7 +95,7 @@ pub fn ClickableType(
 pub fn ProfileBanner(lang: Language, profile: User) -> Element {
     let tr: ProfileBannerTranslate = translate(&lang);
     let banner_url = asset!("/public/images/profile-banner.png").to_string();
-    let date = formatted_timestamp(profile.created_at);
+    let date = formatted_timestamp(lang, profile.created_at);
 
     let nickname = match profile.nickname {
         Some(v) => v,

@@ -1,27 +1,19 @@
-#![allow(non_snake_case, dead_code, unused)]
 use bdk::prelude::*;
 use by_components::charts::{
     horizontal_bar::HorizontalBar,
     pie_chart::{PieChart, PieChartData},
 };
-use indexmap::IndexMap;
-use models::{
-    deliberation_draft::DeliberationDraft,
-    deliberation_report::{DeliberationReport, DeliberationReportStatus},
-    deliberation_response::{DeliberationResponse, DeliberationType},
-    response::Answer,
-    ParsedQuestion, Question, Tab,
-};
+use models::{ParsedQuestion, Tab};
 
 use crate::by_components::rich_texts::RichText;
 
-use crate::{
-    components::{
-        icons::triangle::{TriangleDown, TriangleUp},
-        input::InputBox,
-    },
-    service::user_service::UserService,
+use crate::components::{
+    icons::triangle::{TriangleDown, TriangleUp},
+    input::InputBox,
 };
+
+use super::controllers::Controller;
+use super::i18n::FinalDraftTranslate;
 
 #[component]
 pub fn FinalDraft(
@@ -33,7 +25,7 @@ pub fn FinalDraft(
     let mut title = use_signal(|| "".to_string());
     let mut content = use_signal(|| "".to_string());
 
-    let mut ctrl = Controller::new(lang, project_id)?;
+    let ctrl = Controller::new(lang, project_id)?;
     let draft = ctrl.draft()?;
     let members = draft.members.clone();
     let user_id = ctrl.user_id();
@@ -370,202 +362,5 @@ pub fn SubjectiveBox(lang: Language, title: String, answers: Vec<String>) -> Ele
                 }
             }
         }
-    }
-}
-
-#[derive(Debug, Clone, Copy, DioxusController)]
-pub struct Controller {
-    #[allow(dead_code)]
-    lang: Language,
-    project_id: ReadOnlySignal<i64>,
-    user_id: Signal<i64>,
-
-    draft: Resource<DeliberationDraft>,
-    pub survey_responses: Signal<FinalSurveyResponses>,
-}
-
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct FinalSurveyResponses {
-    pub answers: IndexMap<i64, (String, ParsedQuestion)>, // question_id, (title, response_count, <panel_id, answer>)
-}
-
-impl Controller {
-    pub fn new(
-        lang: Language,
-        project_id: ReadOnlySignal<i64>,
-    ) -> std::result::Result<Self, RenderError> {
-        let user: UserService = use_context();
-
-        let draft = use_server_future(move || async move {
-            DeliberationDraft::get_client(&crate::config::get().api_url)
-                .read(project_id())
-                .await
-                .unwrap_or_default()
-        })?;
-
-        let mut ctrl = Self {
-            lang,
-            project_id,
-            user_id: use_signal(|| (user.user_id)()),
-            draft,
-            survey_responses: use_signal(|| FinalSurveyResponses::default()),
-        };
-
-        use_effect(move || {
-            let questions = if (ctrl.draft)().unwrap_or_default().surveys.is_empty() {
-                vec![]
-            } else {
-                (ctrl.draft)().unwrap_or_default().surveys[0]
-                    .clone()
-                    .questions
-            };
-            let responses = (ctrl.draft)().unwrap_or_default().responses;
-
-            let survey_responses = FinalSurveyResponses {
-                answers: ctrl
-                    .clone()
-                    .parsing_final_answers(questions.clone(), responses.clone()),
-            };
-
-            ctrl.survey_responses.set(survey_responses);
-        });
-
-        Ok(ctrl)
-    }
-
-    pub async fn update_draft(&mut self, title: String, description: String) {
-        tracing::debug!("title: {:?} description: {:?}", title, description);
-        let draft = self.draft().unwrap_or_default();
-        let deliberation_id = self.project_id();
-
-        let reports = draft.reports;
-
-        if reports.is_empty() {
-            match DeliberationReport::get_client(&crate::config::get().api_url)
-                .create(
-                    draft.org_id,
-                    deliberation_id,
-                    title,
-                    description,
-                    DeliberationReportStatus::Draft,
-                )
-                .await
-            {
-                Ok(_) => {
-                    self.draft.restart();
-                }
-                Err(e) => {
-                    btracing::error!("change report failed with error: {:?}", e);
-                }
-            };
-        } else {
-            let id = reports[0].id;
-
-            match DeliberationReport::get_client(&crate::config::get().api_url)
-                .update(draft.org_id, id, title, description)
-                .await
-            {
-                Ok(_) => {
-                    self.draft.restart();
-                }
-                Err(e) => {
-                    btracing::error!("change report failed with error: {:?}", e);
-                }
-            };
-        }
-    }
-
-    pub fn parsing_final_answers(
-        &self,
-        questions: Vec<Question>,
-        responses: Vec<DeliberationResponse>,
-    ) -> IndexMap<i64, (String, ParsedQuestion)> {
-        let mut survey_maps: IndexMap<i64, (String, ParsedQuestion)> = IndexMap::new();
-
-        for response in responses {
-            if response.deliberation_type == DeliberationType::Sample {
-                continue;
-            }
-
-            for (i, answer) in response.answers.iter().enumerate() {
-                let questions = questions.clone();
-                let question = &questions[i];
-                let title = question.title();
-
-                let parsed_question: ParsedQuestion = (question, answer).into();
-
-                survey_maps
-                    .entry(i as i64)
-                    .and_modify(|survey_data| match &mut survey_data.1 {
-                        ParsedQuestion::SingleChoice { response_count, .. } => {
-                            if let Answer::SingleChoice { answer } = answer {
-                                response_count[(answer - 1) as usize] += 1;
-                            }
-                        }
-                        ParsedQuestion::MultipleChoice { response_count, .. } => {
-                            if let Answer::MultipleChoice { answer } = answer {
-                                for ans in answer {
-                                    response_count[(ans - 1) as usize] += 1;
-                                }
-                            }
-                        }
-                        ParsedQuestion::ShortAnswer { answers } => {
-                            if let Answer::ShortAnswer { answer } = answer {
-                                answers.push(answer.clone());
-                            }
-                        }
-                        ParsedQuestion::Subjective { answers } => {
-                            if let Answer::Subjective { answer } = answer {
-                                answers.push(answer.clone());
-                            }
-                        }
-                    })
-                    .or_insert_with(|| (title, parsed_question.clone()));
-            }
-        }
-
-        survey_maps
-    }
-}
-
-translate! {
-    FinalDraftTranslate;
-
-    title: {
-        ko: "최종 권고안",
-        en: "Final Recommendation",
-    },
-    necessary: {
-        ko: "[필수]",
-        en: "[Necessary]"
-    }
-    plural: {
-        ko: "[복수]",
-        en: "[Plural]"
-    }
-    unit: {
-        ko: "명",
-        en: "Unit"
-    }
-    subjective_answer: {
-        ko: "주관식 답변",
-        en: "Subjective Answer"
-    }
-    update: {
-        ko: "수정하기",
-        en: "Update"
-    }
-
-    name: {
-        ko: "제목",
-        en: "Title"
-    }
-    description: {
-        ko: "내용",
-        en: "Description"
-    }
-    name_hint: {
-        ko: "제목 입력",
-        en: "Input Title"
     }
 }

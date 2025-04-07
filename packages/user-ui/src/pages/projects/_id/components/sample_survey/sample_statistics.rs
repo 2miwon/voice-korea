@@ -6,12 +6,11 @@ use dioxus::prelude::*;
 use dioxus_translate::{translate, Language};
 use models::ParsedQuestion;
 
-use crate::{
-    components::icons::left_arrow::LeftArrow,
-    pages::projects::_id::components::sample_survey::SampleSurveyTranslate,
-};
+use crate::components::icons::left_arrow::LeftArrow;
 
-use super::sample_survey::SampleSurveyResponses;
+use super::i18n::SampleSurveyTranslate;
+
+use super::controllers::SampleSurveyResponses;
 
 #[component]
 pub fn SampleStatistics(

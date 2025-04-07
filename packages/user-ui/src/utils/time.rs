@@ -1,4 +1,5 @@
 use chrono::{TimeZone, Utc};
+use dioxus_translate::Language;
 
 pub fn format_prev_time(timestamp: i64) -> String {
     let now = Utc::now();
@@ -27,16 +28,27 @@ pub fn format_prev_time(timestamp: i64) -> String {
     }
 }
 
-pub fn formatted_timestamp(timestamp: i64) -> String {
-    if timestamp > 10000000000 {
-        return "".to_string();
+pub fn formatted_timestamp(lang: Language, timestamp: i64) -> String {
+    let datetime: chrono::DateTime<Utc> = if timestamp > 1_000_000_000_000_000_000 {
+        Utc.timestamp_nanos(timestamp)
+    } else if timestamp > 1_000_000_000_000_000 {
+        Utc.timestamp_micros(timestamp)
+            .single()
+            .expect("Invalid timestamp")
+    } else if timestamp > 1_000_000_000_000 {
+        Utc.timestamp_millis_opt(timestamp)
+            .single()
+            .expect("Invalid timestamp")
+    } else {
+        Utc.timestamp_opt(timestamp, 0)
+            .single()
+            .expect("Invalid timestamp")
+    };
+    match lang {
+        // Language::Ko => datetime.format("%-m월 %-d일 %Y년").to_string(),
+        Language::Ko => datetime.format(" %Y년 %-m월 %-d일").to_string(),
+        Language::En => datetime.format("%-m. %-d. %Y").to_string(),
     }
-    let datetime = Utc
-        .timestamp_opt(timestamp, 0)
-        .single()
-        .expect("Invalid timestamp");
-
-    datetime.format("%-m월 %-d일 %Y년").to_string()
 }
 
 pub fn formatted_timestamp_to_sec(timestamp: i64) -> String {

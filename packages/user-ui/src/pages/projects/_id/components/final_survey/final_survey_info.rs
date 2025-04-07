@@ -1,33 +1,31 @@
-#![allow(non_snake_case, dead_code, unused_variables)]
-use dioxus::prelude::*;
-use dioxus_logger::tracing;
-use dioxus_translate::{translate, Language};
-use models::{deliberation_survey::DeliberationSurvey, Tab};
+use bdk::prelude::*;
+
+use models::{DeliberationFinalSurveySummary, Tab};
 
 use crate::{
     components::icons::{
         right_arrow::RightArrow,
         triangle::{TriangleDown, TriangleUp},
     },
-    pages::projects::_id::components::sample_survey::{SampleSurveyTranslate, SurveyStatus},
     utils::time::{current_timestamp, formatted_timestamp},
 };
 
-use super::sample_survey::SurveyStep;
+use super::controllers::{FinalSurveyStatus, FinalSurveyStep};
+use super::i18n::FinalSurveyTranslate;
 
 #[component]
-pub fn SampleSurveyInfo(
+pub fn FinalSurveyInfo(
     lang: Language,
-    survey: DeliberationSurvey,
-    survey_completed: bool,
+    survey: DeliberationFinalSurveySummary,
     start_date: i64,
     end_date: i64,
-    onchange: EventHandler<SurveyStep>,
+    survey_completed: bool,
+    onchange: EventHandler<FinalSurveyStep>,
 ) -> Element {
-    let tab_title: &str = Tab::SampleSurvey.translate(&lang);
+    let tab_title: &str = Tab::FinalSurvey.translate(&lang);
     let mut clicked1 = use_signal(|| true);
-    let status = get_survey_status(start_date, end_date);
-    let tr: SampleSurveyTranslate = translate(&lang);
+    let status = get_survey_status(survey.started_at, survey.ended_at);
+    let tr: FinalSurveyTranslate = translate(&lang);
 
     let title = if survey.surveys.is_empty() {
         "".to_string()
@@ -42,18 +40,18 @@ pub fn SampleSurveyInfo(
     };
 
     rsx! {
-        div { class: "flex flex-col w-full justify-start items-start gap-10",
+        div { class: "max-[1000px]:px-30 flex flex-col w-full justify-start items-start gap-10",
             div { class: "flex flex-col w-full h-fit bg-box-gray gap-20",
 
                 // header
-                div { class: "w-full flex max-[500px]:flex-col max-[500px]:items-start max-[500px]:justify-start max-[500px]:gap-5 flex-row justify-between items-center mt-28",
-                    div { class: " font-semibold text-[20px]", "{tab_title}" }
-                    div { class: "font-medium text-[15px] text-black",
+                div { class: "w-full flex flex-row max-[500px]:flex-col max-[500px]:items-start max-[500px]:justify-start max-[500px]:gap-5 justify-between items-center mt-28",
+                    div { class: " font-semibold text-20", "{tab_title}" }
+                    div { class: "font-medium text-15 text-black",
                         {
                             format!(
                                 "{} ~ {}",
-                                formatted_timestamp(start_date),
-                                formatted_timestamp(end_date),
+                                formatted_timestamp(lang, start_date),
+                                formatted_timestamp(lang, end_date),
                             )
                         }
                     }
@@ -107,18 +105,18 @@ pub fn SampleSurveyInfo(
                 div {
                     class: "flex flex-col w-full gap-10",
                     style: if survey_completed { "" } else { "display: none;" },
-                    SampleLinkComponent {
+                    FinalSurveyLinkComponent {
                         lang,
                         title: tr.my_answer,
                         onclick: move |_| {
-                            onchange.call(SurveyStep::MySurvey);
+                            onchange.call(FinalSurveyStep::MySurvey);
                         },
                     }
-                    SampleLinkComponent {
+                    FinalSurveyLinkComponent {
                         lang,
                         title: tr.response_per_question,
                         onclick: move |_| {
-                            onchange.call(SurveyStep::Statistics);
+                            onchange.call(FinalSurveyStep::Statistics);
                         },
                     }
                 }
@@ -128,16 +126,16 @@ pub fn SampleSurveyInfo(
                 div {
                     style: if survey.surveys.is_empty() || survey_completed { "display: none;" } else { "" },
                     class: format!(
-                        "flex flex-row px-15 py-13 {} rounded-lg font-bold text-white text-base",
-                        if status == SurveyStatus::InProgress {
+                        "flex flex-row px-15 py-13 {} rounded-lg font-bold text-white text-[16px]",
+                        if status == FinalSurveyStatus::InProgress {
                             "bg-button-primary cursor-pointer"
                         } else {
                             "bg-hint-gray cursor-not-allowed"
                         },
                     ),
                     onclick: move |_| {
-                        if status == SurveyStatus::InProgress {
-                            onchange.call(SurveyStep::WriteSurvey);
+                        if status == FinalSurveyStatus::InProgress {
+                            onchange.call(FinalSurveyStep::WriteSurvey);
                         }
                     },
                     {status.translate(&lang)}
@@ -148,12 +146,12 @@ pub fn SampleSurveyInfo(
 }
 
 #[component]
-pub fn SampleLinkComponent(
+pub fn FinalSurveyLinkComponent(
     lang: Language,
     title: String,
     onclick: EventHandler<MouseEvent>,
 ) -> Element {
-    let tr: SampleSurveyTranslate = translate(&lang);
+    let tr: FinalSurveyTranslate = translate(&lang);
     rsx! {
         div { class: "flex flex-row w-full justify-between items-center px-20 py-9 bg-white rounded-lg",
             div { class: "font-bold text-base text-text-black", "{title}" }
@@ -171,19 +169,19 @@ pub fn SampleLinkComponent(
     }
 }
 
-pub fn get_survey_status(started_at: i64, ended_at: i64) -> SurveyStatus {
+pub fn get_survey_status(started_at: i64, ended_at: i64) -> FinalSurveyStatus {
     let current = current_timestamp();
 
     if started_at > 10000000000 {
         tracing::error!("time parsing failed");
-        return SurveyStatus::default();
+        return FinalSurveyStatus::default();
     }
 
     if started_at > current {
-        SurveyStatus::Ready
+        FinalSurveyStatus::Ready
     } else if ended_at < current {
-        SurveyStatus::Finish
+        FinalSurveyStatus::Finish
     } else {
-        SurveyStatus::InProgress
+        FinalSurveyStatus::InProgress
     }
 }
