@@ -1,4 +1,5 @@
-use bdk::prelude::{dioxus_popup::PopupService, *};
+use bdk::prelude::*;
+use dioxus_popup::PopupService;
 use indexmap::IndexMap;
 use models::{
     deliberation_response::{DeliberationResponse, DeliberationType},
