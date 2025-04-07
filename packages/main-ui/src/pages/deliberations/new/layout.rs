@@ -62,9 +62,7 @@ pub fn DeliberationNewLayout(lang: Language) -> Element {
                         CubeLoader {}
                     }
                 },
-                div { class: "flex flex-col grow w-full bg-[#f0f2fc] px-[60px] pt-[25px]",
-                    Outlet::<Route> {}
-                }
+                div { class: "flex flex-col grow w-full bg-[#f0f2fc] pt-[25px]", Outlet::<Route> {} }
             }
 
         // SettingDeliberation {
