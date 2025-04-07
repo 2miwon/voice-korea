@@ -1,7 +1,10 @@
 use bdk::prelude::*;
-use models::DeliberationFinalSurveyCreateRequest;
+use models::{
+    deliberation_user::DeliberationUserCreateRequest, DeliberationFinalSurveyCreateRequest,
+    OrganizationMember, OrganizationMemberQuery, OrganizationMemberSummary,
+};
 
-use crate::{routes::Route, utils::time::current_timestamp};
+use crate::{routes::Route, service::login_service::LoginService, utils::time::current_timestamp};
 
 use super::DeliberationNewController;
 
@@ -12,16 +15,45 @@ pub struct Controller {
     final_survey: Signal<DeliberationFinalSurveyCreateRequest>,
     pub parent: DeliberationNewController,
     pub nav: Navigator,
+
+    pub members: Resource<Vec<OrganizationMemberSummary>>,
+    pub committee_members: Signal<Vec<DeliberationUserCreateRequest>>,
 }
 
 impl Controller {
     pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
+        let user: LoginService = use_context();
         let final_survey = use_signal(|| DeliberationFinalSurveyCreateRequest::default());
+
+        let members = use_server_future(move || {
+            let page = 1;
+            let size = 100;
+            async move {
+                let org_id = user.get_selected_org();
+                if org_id.is_none() {
+                    tracing::error!("Organization ID is missing");
+                    return vec![];
+                }
+                let endpoint = crate::config::get().api_url;
+                let res = OrganizationMember::get_client(endpoint)
+                    .query(
+                        org_id.unwrap().id,
+                        OrganizationMemberQuery::new(size).with_page(page),
+                    )
+                    .await;
+
+                res.unwrap_or_default().items
+            }
+        })?;
+
         let mut ctrl = Self {
             lang,
             final_survey,
             parent: use_context(),
             nav: use_navigator(),
+
+            members,
+            committee_members: use_signal(|| vec![]),
         };
 
         use_effect({
@@ -32,6 +64,8 @@ impl Controller {
                 .unwrap_or(&DeliberationFinalSurveyCreateRequest::default())
                 .clone();
             let current_timestamp = current_timestamp();
+            let committees = req.roles.clone();
+
             move || {
                 let started_at = final_survey.clone().started_at;
                 let ended_at = final_survey.clone().ended_at;
@@ -45,6 +79,7 @@ impl Controller {
                 }
 
                 ctrl.final_survey.set(final_survey.clone());
+                ctrl.committee_members.set(committees.clone());
             }
         });
         Ok(ctrl)
@@ -56,6 +91,34 @@ impl Controller {
 
     pub fn get_final_survey(&self) -> DeliberationFinalSurveyCreateRequest {
         (self.final_survey)()
+    }
+
+    pub fn get_committees(&self) -> Vec<OrganizationMemberSummary> {
+        let committees = self.committee_members();
+        let members = self.members().unwrap_or_default();
+
+        let d = members
+            .clone()
+            .into_iter()
+            .filter(|member| {
+                committees
+                    .iter()
+                    .any(|committee| committee.user_id == member.user_id)
+            })
+            .collect();
+
+        d
+    }
+
+    pub fn get_selected_committee(&self) -> Vec<OrganizationMemberSummary> {
+        let total_committees = self.members().unwrap_or_default();
+        let final_survey = self.get_final_survey();
+        let roles = final_survey.clone().users;
+        total_committees
+            .clone()
+            .into_iter()
+            .filter(|member| roles.iter().any(|id| id.clone() == member.id))
+            .collect()
     }
 
     pub fn back(&mut self) {

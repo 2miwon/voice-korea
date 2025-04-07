@@ -3,7 +3,7 @@ use bdk::prelude::*;
 use crate::{
     components::icons::ArrowLeft,
     pages::deliberations::new::details::votes::components::{
-        introduction::Introduction, reward::FinalSurveyReward,
+        introduction::Introduction, member::FinalSurveyMember, reward::FinalSurveyReward,
     },
 };
 
@@ -49,6 +49,18 @@ pub fn DeliberationVoteSettingPage(lang: Language) -> Element {
                         set_final_survey: move |survey| {
                             ctrl.set_final_survey(survey);
                         },
+                    }
+
+                    FinalSurveyMember {
+                        lang,
+
+                        final_survey: ctrl.get_final_survey(),
+                        set_final_survey: move |survey| {
+                            ctrl.set_final_survey(survey);
+                        },
+
+                        total_committees: ctrl.get_committees(),
+                        selected_committees: ctrl.get_selected_committee(),
                     }
                 }
                 div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
