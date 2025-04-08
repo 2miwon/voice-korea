@@ -34,7 +34,7 @@ pub fn DeliberationBasicInfoSettingPage(lang: Language) -> Element {
         div { class: "flex flex-col w-full justify-start items-start",
 
             div { class: "flex flex-col w-full justify-start items-start",
-                div { class: "font-medium text-base text-text-black mb-10", "{tr.post_setting}" }
+                div { class: "font-medium text-base text-text-black mb-10", {tr.post_setting} }
                 div { class: "flex flex-col w-full justify-start items-start gap-20",
                     BasicInfoIntroduction {
                         lang,
@@ -84,21 +84,21 @@ pub fn DeliberationBasicInfoSettingPage(lang: Language) -> Element {
                         onclick: move |_| {
                             ctrl.back();
                         },
-                        "{tr.backward}"
+                        {tr.backward}
                     }
                     div {
                         class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                         onclick: move |_| async move {
                             ctrl.temp_save().await;
                         },
-                        "{tr.temporary_save}"
+                        {tr.temporary_save}
                     }
                     div {
                         class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
                         onclick: move |_| {
                             ctrl.next();
                         },
-                        "{tr.next}"
+                        {tr.next}
                     }
                 }
             }
@@ -171,8 +171,8 @@ pub fn ConnectProject(
         div { class: "flex flex-col w-full justify-start items-start gap-10",
             //TODO: implement preview
             div { class: "flex flex-col w-full justify-start items-start",
-                div { class: "text-lg font-bold text-text-black", "{tr.title}" }
-                div { class: "text-sm font-normal text-text-gray", "{tr.description}" }
+                div { class: "text-lg font-bold text-text-black", {tr.title} }
+                div { class: "text-sm font-normal text-text-gray", {tr.description} }
             }
 
             SurveyDropdown {

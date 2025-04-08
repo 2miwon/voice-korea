@@ -14,7 +14,7 @@ pub struct Area {
     #[api_model(summary, auto = [insert, update])]
     pub updated_at: i64,
 
-    #[api_model(summary, type = INTEGER, action = create)]
+    #[api_model(summary, type = INTEGER, action = create, unique, version = v0.1)]
     #[serde(default)]
     pub project_area: ProjectArea,
 }

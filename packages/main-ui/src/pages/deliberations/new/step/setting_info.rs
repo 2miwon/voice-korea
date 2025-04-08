@@ -1,6 +1,6 @@
 #[allow(non_snake_case)]
 use crate::{
-    components::{block_header::BlockHeader, dropdown::Dropdown, section::Section},
+    components::{block_header::BlockHeader, dropdown::Dropdown, section::SubSection},
     routes::Route,
 };
 use bdk::prelude::*;
@@ -21,7 +21,7 @@ pub fn SettingDeliberation(lang: Language) -> Element {
                     header: tr.title.to_string(),
                     description: tr.description.to_string(),
                 }
-                Section { required: true, title: tr.proj_title.to_string(),
+                SubSection { required: true, title: tr.proj_title.to_string(),
                     div { class: "flex flex-row w-full focus:outline-none justify-start items-center bg-background-gray rounded-[4px] h-54",
                         div { class: "flex px-15 w-full",
                             input {
@@ -33,7 +33,7 @@ pub fn SettingDeliberation(lang: Language) -> Element {
                         }
                     }
                 }
-                Section { required: true, title: tr.proj_desc.to_string(),
+                SubSection { required: true, title: tr.proj_desc.to_string(),
                     div { class: "flex flex-row w-full focus:outline-none justify-start items-start bg-background-gray rounded-[4px] h-248",
                         div { class: "flex px-15 py-10 w-full h-full justify-start items-start",
                             textarea {
@@ -44,7 +44,7 @@ pub fn SettingDeliberation(lang: Language) -> Element {
                         }
                     }
                 }
-                Section { required: true, title: tr.deliberation_field.to_string(),
+                SubSection { required: true, title: tr.deliberation_field.to_string(),
                     div { class: "flex w-full",
                         Dropdown {
                             id: "deliberation fields",
@@ -54,7 +54,7 @@ pub fn SettingDeliberation(lang: Language) -> Element {
                         }
                     }
                 }
-                Section { required: true, title: tr.thumbnail.to_string(),
+                SubSection { required: true, title: tr.thumbnail.to_string(),
                     div { class: "flex flex-col w-full focus:outline-none justify-center items-center",
                         div { class: "flex flex-row gap-20 px-15 w-full h-54 bg-background-gray rounded-sm justify-center items-center",
                             div {
