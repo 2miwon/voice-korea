@@ -1,4 +1,4 @@
-pub mod preview;
+// pub mod preview;
 pub mod setting_info;
 
 // pub mod basic_info;
@@ -21,7 +21,7 @@ pub mod material_upload;
 // pub use deliberation::*;
 // pub use discussion::*;
 pub use material_upload::*;
-pub use preview::*;
+// pub use preview::*;
 // pub use recommendation::*;
 // pub use sample_survey::*;
 pub use setting_info::*;

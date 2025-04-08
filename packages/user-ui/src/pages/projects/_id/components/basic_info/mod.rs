@@ -1,9 +1,11 @@
-#![allow(non_snake_case, dead_code, unused_variables)]
 use by_components::icons::upload_download::Download2;
 use by_macros::*;
 use dioxus::prelude::*;
 use dioxus_translate::*;
-use models::{deliberation_basic_info::DeliberationBasicInfo, Tab};
+use models::{
+    deliberation_basic_info::DeliberationBasicInfo, DeliberationBasicInfoQuery,
+    DeliberationBasicInfoSummary, Tab,
+};
 
 use crate::{
     components::icons::triangle::{TriangleDown, TriangleUp},
@@ -17,17 +19,7 @@ pub fn BasicInfo(
     children: Element,
 ) -> Element {
     let ctrl = Controller::new(lang, project_id)?;
-    let info = ctrl.infos()?;
-
-    let steps = info.clone().steps;
-
-    let mut start_date = 0;
-    let mut end_date = 0;
-
-    if steps.len() == 5 {
-        start_date = steps[0].started_at;
-        end_date = steps[0].ended_at;
-    }
+    let basic_info = ctrl.basic_info()?;
 
     let tr: BasicInfoTranslate = translate(&lang);
     let mut clicked1 = use_signal(|| true);
@@ -45,8 +37,8 @@ pub fn BasicInfo(
                     {
                         format!(
                             "{} ~ {}",
-                            formatted_timestamp(start_date),
-                            formatted_timestamp(end_date),
+                            formatted_timestamp(lang, basic_info.started_at),
+                            formatted_timestamp(lang, basic_info.ended_at),
                         )
                     }
                 }
@@ -74,11 +66,13 @@ pub fn BasicInfo(
                         //line
                         hr { class: "w-full h-1 mt-12 mb-12 border-line-gray" }
                         div { class: "w-full justify-start mt-15 mb-20 font-bold text-lg",
-                            "{info.title}"
+                            "{basic_info.title}"
                         }
-                        div { class: "w-full flex justify-start text-[15px]", "{info.description}" }
+                        div { class: "w-full flex justify-start text-[15px]",
+                            "{basic_info.description}"
+                        }
                         div { class: "w-full mt-20 flex flex-row justify-start gap-40",
-                            for member in info.members {
+                            for member in basic_info.members {
                                 div { class: "flex flex-row justify-start gap-8",
                                     img { class: "w-40 h-40 bg-profile-gray rounded-full" }
                                     div { class: "flex flex-col justify-center",
@@ -100,7 +94,7 @@ pub fn BasicInfo(
                         }
                         //file
                         div { class: "flex flex-wrap flex-1 justify-start items-center gap-8",
-                            for resource in info.resources {
+                            for resource in basic_info.resources {
                                 div {
                                     class: "cursor-pointer flex flex-row justify-start items-center rounded-[100px] bg-light-gray gap-4 px-12 py-4",
                                     onclick: {
@@ -136,32 +130,45 @@ pub fn BasicInfo(
 pub struct Controller {
     #[allow(dead_code)]
     lang: Language,
-    project_id: ReadOnlySignal<i64>,
+    #[allow(dead_code)]
+    deliberation_id: ReadOnlySignal<i64>,
 
-    infos: Resource<DeliberationBasicInfo>,
+    basic_info: Resource<DeliberationBasicInfoSummary>,
 }
 
 impl Controller {
     pub fn new(
         lang: Language,
-        project_id: ReadOnlySignal<i64>,
+        deliberation_id: ReadOnlySignal<i64>,
     ) -> std::result::Result<Self, RenderError> {
-        let infos = use_server_future(move || async move {
-            DeliberationBasicInfo::get_client(&crate::config::get().api_url)
-                .read(project_id())
-                .await
-                .unwrap_or_default()
+        let basic_info = use_server_future(move || {
+            let deliberation_id = deliberation_id();
+            async move {
+                let res = DeliberationBasicInfo::get_client(&crate::config::get().api_url)
+                    .query(deliberation_id, DeliberationBasicInfoQuery::default())
+                    .await;
+                match res {
+                    Ok(v) => {
+                        if v.total_count == 1 {
+                            v.items[0].clone()
+                        } else {
+                            DeliberationBasicInfoSummary::default()
+                        }
+                    }
+                    _ => DeliberationBasicInfoSummary::default(),
+                }
+            }
         })?;
 
         let ctrl = Self {
             lang,
-            project_id,
-            infos,
+            deliberation_id,
+            basic_info,
         };
 
         Ok(ctrl)
     }
-
+    #[allow(unused)]
     pub async fn download_file(&self, name: String, url: Option<String>) {
         if url.is_none() {
             return;

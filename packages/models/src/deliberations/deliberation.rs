@@ -86,6 +86,7 @@ pub struct Deliberation {
 
     #[api_model(one_to_many = deliberation_basic_infos, foreign_key = deliberation_id)]
     #[serde(default)]
+    //Note: expected to contain only one field.
     pub basic_infos: Vec<DeliberationBasicInfo>,
     #[api_model(one_to_many = deliberation_sample_surveys, foreign_key = deliberation_id)]
     #[serde(default)]

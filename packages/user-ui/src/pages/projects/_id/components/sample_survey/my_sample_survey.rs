@@ -1,39 +1,72 @@
-#![allow(non_snake_case, dead_code, unused_variables)]
-use dioxus::prelude::*;
-use dioxus_translate::{translate, Language};
+use bdk::prelude::*;
+use by_components::icons::validations::Extra;
 use models::{response::Answer, Question, SurveyV2};
+
+use super::sample_survey::{get_survey_status, SurveyStatus};
 
 use crate::{
     components::icons::left_arrow::LeftArrow,
     pages::projects::_id::components::{
-        final_survey::FinalSurveyTranslate, multiple_objective::MultipleObjective,
-        single_objective::SingleObjective, subjective::Subjective,
+        multiple_objective::MultipleObjective, single_objective::SingleObjective,
+        subjective::Subjective,
     },
 };
 
+use super::i18n::SampleSurveyTranslate;
+
 #[component]
-pub fn FinalSurveyQuestion(
+pub fn MySampleSurvey(
     lang: Language,
+    start_date: i64,
+    end_date: i64,
     survey: SurveyV2,
     answers: Vec<Answer>,
     onprev: EventHandler<MouseEvent>,
-    onsend: EventHandler<MouseEvent>,
     onchange: EventHandler<(usize, Answer)>,
+    onupdate: EventHandler<MouseEvent>,
+    onremove: EventHandler<MouseEvent>,
 ) -> Element {
-    let tr: FinalSurveyTranslate = translate(&lang);
-    let survey_title = survey.name;
-
+    let status = get_survey_status(start_date, end_date);
+    let tr: SampleSurveyTranslate = translate(&lang);
     rsx! {
-        div { class: "max-[1000px]:px-30 flex flex-col w-full justify-start items-start gap-10 mt-28",
-            div { class: "flex flex-row w-full justify-start items-center gap-8 mb-10",
-                div {
-                    class: "cursor-pointer w-24 h-24",
-                    onclick: move |e: Event<MouseData>| {
-                        onprev.call(e);
-                    },
-                    LeftArrow { stroke: "black" }
+        div { class: "flex flex-col w-full gap-10 mb-40 mt-28",
+            div { class: "flex flex-row w-full justify-between items-center mb-10",
+                div { class: "flex flex-row justify-start items-center gap-8",
+                    div {
+                        class: "cursor-pointer w-24 h-24",
+                        onclick: move |e: Event<MouseData>| {
+                            onprev.call(e);
+                        },
+                        LeftArrow { stroke: "black" }
+                    }
+                    div { class: "font-semibold text-text-black text-20", "{tr.title}" }
                 }
-                div { class: "font-semibold text-text-black text-20", "{survey_title}" }
+
+                if status == SurveyStatus::InProgress {
+                    div { class: "group relative",
+                        div { class: "flex flex-row w-[90px] min-w-[90px] h-full justify-center items-center",
+                            button { class: "cursor-pointer", Extra {} }
+                            nav { class: "border-2 bg-white invisible border-none shadow-lg rounded w-180 absolute right-0 top-full transition-all opacity-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-1 group-focus-within:z-20",
+                                ul { class: "py-1",
+                                    li {
+                                        class: "px-20 py-15 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
+                                        onclick: move |e: Event<MouseData>| {
+                                            onupdate.call(e);
+                                        },
+                                        "{tr.update}"
+                                    }
+                                    li {
+                                        class: "px-20 py-15 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
+                                        onclick: move |e: Event<MouseData>| {
+                                            onremove.call(e);
+                                        },
+                                        "{tr.remove}"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             for (i , question) in survey.questions.iter().enumerate() {
@@ -112,16 +145,6 @@ pub fn FinalSurveyQuestion(
                             }
                         }
                     }
-                }
-            }
-
-            div { class: "flex flex-row w-full justify-center items-center mb-40",
-                div {
-                    class: "cursor-pointer flex flex-row justify-center items-center w-200 py-13 font-bold text-white text-base bg-button-primary rounded-lg",
-                    onclick: move |e: Event<MouseData>| {
-                        onsend.call(e);
-                    },
-                    "{tr.submit}"
                 }
             }
         }

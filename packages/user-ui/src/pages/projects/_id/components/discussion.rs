@@ -63,8 +63,8 @@ pub fn DiscussionPage(
                     {
                         format!(
                             "{} ~ {}",
-                            formatted_timestamp(start_date),
-                            formatted_timestamp(end_date),
+                            formatted_timestamp(lang, start_date),
+                            formatted_timestamp(lang, end_date),
                         )
                     }
                 }
@@ -206,7 +206,7 @@ pub fn Video(
                         {
                             format!(
                                 "{} · {} {}",
-                                formatted_timestamp(discussion.started_at),
+                                formatted_timestamp(lang, discussion.started_at),
                                 tr.participant,
                                 discussion.user_id.len(),
                             )
@@ -288,7 +288,7 @@ pub fn DiscussionTable(lang: Language, discussion: DiscussionSummary) -> Element
     rsx! {
         div { class: "flex flex-col w-3/5 justify-start items-start border rounded-lg border-discussion-border-gray",
             div { class: "flex flex-row min-h-55 w-full justify-center items-center border-b border-b-discussion-border-gray font-semibold text-sm text-light-gray",
-                {formatted_timestamp(discussion.started_at)}
+                {formatted_timestamp(lang, discussion.started_at)}
             }
             div { class: "flex flex-row min-h-55 w-full justify-center items-center border-b border-b-discussion-border-gray font-semibold text-sm text-light-gray",
                 div { class: "flex flex-row min-w-200 justify-center items-center",

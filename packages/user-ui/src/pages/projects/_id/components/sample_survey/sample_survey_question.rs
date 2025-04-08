@@ -1,70 +1,40 @@
-use bdk::prelude::*;
-use by_components::icons::validations::Extra;
+#![allow(non_snake_case, dead_code, unused_variables)]
+use dioxus::prelude::*;
+use dioxus_translate::{translate, Language};
 use models::{response::Answer, Question, SurveyV2};
-
-use crate::pages::projects::_id::components::sample_survey::{get_survey_status, SurveyStatus};
 
 use crate::{
     components::icons::left_arrow::LeftArrow,
     pages::projects::_id::components::{
-        multiple_objective::MultipleObjective, sample_survey::SampleSurveyTranslate,
-        single_objective::SingleObjective, subjective::Subjective,
+        multiple_objective::MultipleObjective, single_objective::SingleObjective,
+        subjective::Subjective,
     },
 };
 
+use super::i18n::SampleSurveyTranslate;
 #[component]
-pub fn MySampleSurvey(
+pub fn SampleSurveyQuestion(
     lang: Language,
-    start_date: i64,
-    end_date: i64,
     survey: SurveyV2,
     answers: Vec<Answer>,
     onprev: EventHandler<MouseEvent>,
+    onsend: EventHandler<MouseEvent>,
     onchange: EventHandler<(usize, Answer)>,
-    onupdate: EventHandler<MouseEvent>,
-    onremove: EventHandler<MouseEvent>,
 ) -> Element {
-    let status = get_survey_status(start_date, end_date);
     let tr: SampleSurveyTranslate = translate(&lang);
-    rsx! {
-        div { class: "flex flex-col w-full gap-10 mb-40 mt-28",
-            div { class: "flex flex-row w-full justify-between items-center mb-10",
-                div { class: "flex flex-row justify-start items-center gap-8",
-                    div {
-                        class: "cursor-pointer w-24 h-24",
-                        onclick: move |e: Event<MouseData>| {
-                            onprev.call(e);
-                        },
-                        LeftArrow { stroke: "black" }
-                    }
-                    div { class: "font-semibold text-text-black text-20", "{tr.title}" }
-                }
+    let survey_title = survey.name;
 
-                if status == SurveyStatus::InProgress {
-                    div { class: "group relative",
-                        div { class: "flex flex-row w-[90px] min-w-[90px] h-full justify-center items-center",
-                            button { class: "cursor-pointer", Extra {} }
-                            nav { class: "border-2 bg-white invisible border-none shadow-lg rounded w-180 absolute right-0 top-full transition-all opacity-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-1 group-focus-within:z-20",
-                                ul { class: "py-1",
-                                    li {
-                                        class: "px-20 py-15 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
-                                        onclick: move |e: Event<MouseData>| {
-                                            onupdate.call(e);
-                                        },
-                                        "{tr.update}"
-                                    }
-                                    li {
-                                        class: "px-20 py-15 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
-                                        onclick: move |e: Event<MouseData>| {
-                                            onremove.call(e);
-                                        },
-                                        "{tr.remove}"
-                                    }
-                                }
-                            }
-                        }
-                    }
+    rsx! {
+        div { class: "flex flex-col w-full justify-start items-start gap-[10px] mt-[28px]",
+            div { class: "flex flex-row w-full justify-start items-center gap-[8px] mb-[10px]",
+                div {
+                    class: "cursor-pointer w-[24px] h-[24px]",
+                    onclick: move |e: Event<MouseData>| {
+                        onprev.call(e);
+                    },
+                    LeftArrow { stroke: "black" }
                 }
+                div { class: "font-semibold text-[#222222] text-[20px]", "{survey_title}" }
             }
 
             for (i , question) in survey.questions.iter().enumerate() {
@@ -143,6 +113,16 @@ pub fn MySampleSurvey(
                             }
                         }
                     }
+                }
+            }
+
+            div { class: "flex flex-row w-full justify-center items-center mb-[40px]",
+                div {
+                    class: "cursor-pointer flex flex-row justify-center items-center w-[200px] py-[13px] font-bold text-white text-[16px] bg-[#8095EA] rounded-[8px]",
+                    onclick: move |e: Event<MouseData>| {
+                        onsend.call(e);
+                    },
+                    "{tr.submit}"
                 }
             }
         }
