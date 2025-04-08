@@ -1,7 +1,7 @@
-use crate::{
-    components::updatable_card::UpdatableCard,
-    pages::deliberations::new::preview::{controller::Controller, i18n::PreviewTranslate},
-    routes::Route,
+use crate::pages::deliberations::new::preview::{
+    components::{committee::Committee, panel::Panel, procedure::Procedure},
+    controller::Controller,
+    i18n::PreviewTranslate,
 };
 
 use bdk::prelude::*;
@@ -10,31 +10,42 @@ use bdk::prelude::*;
 pub fn Preview(lang: Language) -> Element {
     let tr: PreviewTranslate = translate(&lang);
     let mut ctrl = Controller::new(lang)?;
+
+    let roles = ctrl.roles();
+    let committees = ctrl.committee_roles();
+
+    let selected_panels = ctrl.selected_panels();
+
+    let basic_info = ctrl.basic_info();
+    let sample_survey = ctrl.sample_survey();
+    let deliberation = ctrl.deliberation();
+    let discussion = ctrl.discussion();
+    let final_survey = ctrl.final_survey();
+
+    let basic_info_members = basic_info.clone().users;
+    let sample_survey_members = sample_survey.clone().users;
+    let deliberation_members = deliberation.clone().users;
+    let discussion_members = discussion.clone().users;
+    let final_survey_members = final_survey.clone().users;
+
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start gap-20",
-            div { class: "font-medium text-base text-text-black mb-10", "최종 검토" }
-            UpdatableCard {
+            div { class: "font-medium text-base text-text-black mb-10", {tr.final_review} }
+            Committee { lang, roles, committees }
+            Panel { lang, selected_panels }
+            Procedure {
                 lang,
-                enable_line: true,
-                title: tr.composition_committee,
-                route: Route::CompositionCommitee { lang },
-                div { {tr.composition_committee} }
-            }
-            UpdatableCard {
-                lang,
-                enable_line: true,
-                title: tr.composition_panel,
-                route: Route::CompositionPanel { lang },
-                div { {tr.composition_panel} }
-            }
-            UpdatableCard {
-                lang,
-                enable_line: false,
-                title: tr.setting_deliberation_procedure,
-                route: Route::DeliberationBasicInfoSettingPage {
-                    lang,
-                },
-                div { {tr.setting_deliberation_procedure} }
+                basic_info,
+                sample_survey,
+                deliberation,
+                discussion,
+                final_survey,
+
+                basic_info_members: ctrl.convert_user_ids_to_members(basic_info_members),
+                sample_survey_members: ctrl.convert_user_ids_to_members(sample_survey_members),
+                deliberation_members: ctrl.convert_user_ids_to_members(deliberation_members),
+                discussion_members: ctrl.convert_user_ids_to_members(discussion_members),
+                final_survey_members: ctrl.convert_user_ids_to_members(final_survey_members),
             }
             div { class: "flex flex-row w-full justify-end items-end mt-20 mb-50",
                 div {
