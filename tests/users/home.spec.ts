@@ -91,46 +91,141 @@ test.describe("Home Page Tests", () => {
     });
 
 
-    // test("[Home-ID-002] Validate Inquiry Form", async ({
-    //     page,
-    // }, testInfo) => {
-    //     const projectName = testInfo.project.name;
-    //     const screenshotBase = path.join(
-    //         "screenshots",
-    //         "users",
-    //         projectName,
-    //         "home",
-    //     );
+    test("[Home-ID-002] Validate Inquiry Form", async ({
+        page,
+    }, testInfo) => {
+        const projectName = testInfo.project.name;
+        const screenshotBase = path.join(
+            "screenshots",
+            "users",
+            projectName,
+            "home",
+        );
 
-    //     await page.goto(`http://dev.voice-korea.com/en/`);
+        await page.goto(`http://dev.voice-korea.com/en/`);
 
-    //     await page.screenshot({
-    //         path: `${screenshotBase}/01-page-entered.png`,
-    //         fullPage: true,
-    //     });
+        await page.screenshot({
+            path: `${screenshotBase}/01-page-entered.png`,
+            fullPage: true,
+        });
 
-    //     const nameInInquiryInput = page.getByRole('textbox', { name: 'Please Enter Your Name' })
-    //     await expect(nameInInquiryInput).toBeVisible();
-    //     await nameInInquiryInput.fill('test name')
-    //     await page.screenshot({
-    //         path: `${screenshotBase}/02-inquiry-name.png`,
-    //         fullPage: true,
-    //     });
+        const nameInInquiryInput = page.getByRole('textbox', { name: 'Please Enter Your Name' })
+        await expect(nameInInquiryInput).toBeVisible();
+        await nameInInquiryInput.fill('test name')
+        await page.screenshot({
+            path: `${screenshotBase}/02-inquiry-name.png`,
+            fullPage: true,
+        });
 
 
-    //     const inquiryButton = page.getByRole('button', { name: 'Inquiry' })
-    //     await expect(inquiryButton).toBeVisible();
-    //     await inquiryButton.click();
+        const inquiryButton = page.getByRole('button', { name: 'Inquiry' })
+        await expect(inquiryButton).toBeVisible();
+        await inquiryButton.click();
 
-    //     const emailError = page.getByText('Please enter your email address in the correct format.')
-    //     await expect(emailError).toBeVisible();
+        const emailError = page.getByText('Please enter your email address in the correct format.')
+        await expect(emailError).toBeVisible();
 
-    //     const messageError = page.getByText('Please enter your inquiry details.')
-    //     await expect(messageError).toBeVisible();
+        const messageError = page.getByText('Please enter your inquiry details.')
+        await expect(messageError).toBeVisible();
 
-    //     await page.screenshot({
-    //         path: `${screenshotBase}/03-inquiry-error.png`,
-    //         fullPage: true,
-    //     });
-    // })
+        await page.screenshot({
+            path: `${screenshotBase}/03-inquiry-error.png`,
+            fullPage: true,
+        });
+    })
+
+    test("[Home-ID-003] Navigate To Governance.", async ({
+        page,
+    }, testInfo) => {
+        const projectName = testInfo.project.name;
+        const screenshotBase = path.join(
+            "screenshots",
+            "users",
+            projectName,
+            "home",
+        );
+
+        await page.goto(`http://dev.voice-korea.com/en/`);
+
+        await page.screenshot({
+            path: `${screenshotBase}/01-page-entered.png`,
+            fullPage: true,
+        });
+
+        const goToGovernance = page.getByRole('link', { name: 'user-86569e21-e852-48e7-92b9-' });
+        await expect(goToGovernance).toBeVisible()
+        await goToGovernance.click()
+        await expect(page).toHaveURL("http://dev.voice-korea.com/en/governance/181");
+
+        await page.screenshot({
+            path: `${screenshotBase}/02-governance-page.png`,
+            fullPage: true,
+        });
+    })
+
+
+    test("[Home-ID-004] Test Pricing.", async ({
+        page,
+    }, testInfo) => {
+        const projectName = testInfo.project.name;
+        const screenshotBase = path.join(
+            "screenshots",
+            "users",
+            projectName,
+            "home",
+        );
+
+        await page.goto(`http://dev.voice-korea.com/en/`);
+
+        await page.screenshot({
+            path: `${screenshotBase}/01-page-entered.png`,
+            fullPage: true,
+        });
+
+        const free = page.locator('#price div').filter({ hasText: 'FreeParticipate in public' }).nth(1)
+        await expect(free).toBeVisible()
+        await page.screenshot({
+            path: `${screenshotBase}/02-free-page.png`,
+            fullPage: true,
+        });
+
+        const freeHeader = page.getByText('Free', { exact: true })
+        await expect(freeHeader).toBeVisible()
+
+        const freeButton = page.getByRole('button', { name: 'Start' }).first()
+        await expect(freeButton).toBeVisible();
+        await freeButton.click()
+
+
+        const premium = page.locator('#price div').filter({ hasText: 'FreeParticipate in public' }).nth(1)
+        await expect(premium).toBeVisible()
+        await page.screenshot({
+            path: `${screenshotBase}/03-premium-page.png`,
+            fullPage: true,
+        });
+
+        const premiumHeader = page.getByText('Premium', { exact: true })
+        await expect(premiumHeader).toBeVisible()
+
+        const premiumButton = page.getByRole('button', { name: 'Start' }).nth(1)
+        await expect(premiumButton).toBeVisible();
+        await premiumButton.click()
+
+
+        const guide = page.locator('div').filter({ hasText: /^Public Opinion Participation Guide$/ }).nth(1)
+        await expect(guide).toBeVisible()
+        await guide.click()
+
+        const consoleGuide = page.locator('div').filter({ hasText: /^Public Opinion Survey Design Console Guide$/ }).nth(1)
+        await expect(guide).toBeVisible()
+        await consoleGuide.click()
+
+        await page.screenshot({
+            path: `${screenshotBase}/04-guides-page.png`,
+            fullPage: true,
+        });
+
+    })
+
+
 });
