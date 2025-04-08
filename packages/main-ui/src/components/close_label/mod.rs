@@ -7,6 +7,7 @@ pub fn CloseLabel(label: String, onremove: EventHandler<MouseEvent>) -> Element 
         div { class: "flex flex-row justify-between items-center px-[8px] py-[5px] bg-[#35343f] rounded-[8px]",
             div { class: "font-semibold text-[14px] text-white", {label} }
             button {
+                class: "cursor-pointer",
                 onclick: move |e: MouseEvent| {
                     onremove.call(e);
                 },

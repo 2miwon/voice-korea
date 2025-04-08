@@ -56,6 +56,11 @@ translate! {
         ko: "표본 조사",
         en: "Sample Survey"
     }
+
+    voting_items: {
+        ko: "투표 항목",
+        en: "Voting Items"
+    }
 }
 
 translate! {
