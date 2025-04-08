@@ -41,14 +41,12 @@ pub fn Document(
                         class: "cursor-pointer flex min-w-130 h-40 border bg-white border-active rounded-sm text-active text-center font-semibold text-sm justify-center items-center",
                         text: tr.direct_upload,
                         accept: ".pdf,.xls,.xlsx,.csv".to_string(),
-                        onuploaded: move |event: FormEvent| {
-                            spawn(async move {
-                                #[cfg(feature = "web")]
-                                if let Some(file_engine) = event.files() {
-                                    let result = handle_file_upload(file_engine, api).await;
-                                    create_metadata.call(result[0].clone());
-                                }
-                            });
+                        onuploaded: move |event: FormEvent| async move {
+                            #[cfg(feature = "web")]
+                            if let Some(file_engine) = event.files() {
+                                let result = handle_file_upload(file_engine, api).await;
+                                create_metadata.call(result[0].clone());
+                            }
                         },
                     }
 
