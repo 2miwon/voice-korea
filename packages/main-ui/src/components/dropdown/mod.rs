@@ -11,9 +11,10 @@ pub fn Dropdown(
     items: Vec<String>,
     #[props(default = 0)] selected: usize,
     onselect: EventHandler<Vec<String>>,
+    value: Option<Vec<String>>,
 ) -> Element {
     let mut is_focused = use_signal(|| false);
-    let mut selected_options: Signal<Vec<String>> = use_signal(|| vec![]);
+    let mut selected_options: Signal<Vec<String>> = use_signal(|| value.unwrap_or_default());
 
     #[cfg(feature = "web")]
     use_outside_click(&id, move |_| is_focused.set(false));

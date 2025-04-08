@@ -1,13 +1,14 @@
 #![allow(dead_code, unused)]
 
+#[cfg(feature = "web")]
+use crate::components::drop_zone::handle_file_upload;
+use crate::{
+    components::{close_label::CloseLabel, icons::Remove, upload_button::UploadButton},
+    service::metadata_api::MetadataApi,
+};
 use dioxus::prelude::*;
 use models::File;
 use models::ResourceFileSummary;
-
-use crate::components::close_label::CloseLabel;
-use crate::components::icons::Remove;
-use crate::components::upload_button::UploadButton;
-use crate::service::metadata_api::MetadataApi;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[cfg(feature = "web")]
@@ -36,54 +37,6 @@ fn human_readable_size(bytes: usize) -> String {
     }
 
     format!("{:.2} {}", size, sizes[index])
-}
-
-#[cfg(feature = "web")]
-pub async fn handle_file_upload(file_engine: Arc<dyn FileEngine>, api: MetadataApi) -> Vec<File> {
-    use models::MetadataRequest;
-
-    let mut result: Vec<File> = vec![];
-    let files = file_engine.files();
-
-    for f in files {
-        match file_engine.read_file(f.as_str()).await {
-            Some(bytes) => {
-                let file_name: String = f.into();
-                let ext = file_name.rsplitn(2, '.').next().unwrap_or("");
-                let extension = models::FileExtension::from_str(ext);
-                match extension {
-                    Ok(ext) => {
-                        let url = match api
-                            .upload_metadata(MetadataRequest {
-                                file_name: file_name.clone(),
-                                bytes: bytes.clone(),
-                            })
-                            .await
-                        {
-                            Ok(v) => Some(v),
-                            Err(_) => None,
-                        };
-
-                        result.push(File {
-                            name: file_name,
-                            size: human_readable_size(bytes.len()),
-                            ext,
-                            url,
-                        });
-                    }
-                    Err(_) => {
-                        tracing::error!("Not Allowed file extension {}", ext);
-                        continue;
-                    }
-                }
-            }
-            None => {
-                tracing::error!("Error reading file");
-                continue;
-            }
-        };
-    }
-    result
 }
 
 #[component]
@@ -150,8 +103,8 @@ pub fn UploadMaterial(
                     },
                 }
             }
-            //FIXME: fix to dropzone not working bug
-                // DropZone {
+                //FIXME: fix to dropzone not working bug
+        // DropZone {
         //     class: "cursor-pointer flex flex-row justify-center items-center bg-white border border-[#bfc8d9] rounded-[4px]",
         //     accept: ".jpg, .png, .pdf, .zip, .word, .excel, .pptx",
         //     onupload: move |(file_bytes, ext): (Vec<u8>, String)| async move {
