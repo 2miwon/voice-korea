@@ -60,6 +60,7 @@ pub mod components {
     pub mod stepper;
     pub mod table_row;
     pub mod textarea;
+    pub mod updatable_card;
     pub mod upload_button;
 }
 

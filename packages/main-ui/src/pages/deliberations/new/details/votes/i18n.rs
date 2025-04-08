@@ -37,6 +37,11 @@ translate! {
         ko: "투표",
         en: "Vote"
     }
+
+    voting_items: {
+        ko: "투표 항목",
+        en: "Voting Item"
+    }
 }
 
 translate! {

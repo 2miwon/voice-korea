@@ -1,10 +1,8 @@
 use bdk::prelude::*;
 
-use crate::{
-    components::icons::ArrowLeft,
-    pages::deliberations::new::details::sample_survey::components::{
-        introduction::Introduction, member::SampleSurveyMember, reward::SampleSurveyReward,
-    },
+use crate::pages::deliberations::new::details::sample_survey::components::{
+    introduction::Introduction, member::SampleSurveyMember, question::QuestionList,
+    reward::SampleSurveyReward,
 };
 
 use super::*;
@@ -19,44 +17,47 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
-
-            div { class: "text-header-gray font-medium text-sm mb-10",
-                "{tr.organization_management} / {tr.deliberation_management} / {tr.start_deliberation}"
-            }
-            div { class: "flex flex-row w-full justify-start items-center mb-25 gap-10",
-                div { onclick: move |_| {},
-                    ArrowLeft { width: "24", height: "24", color: "#3a3a3a" }
-                }
-                div { class: "text-header-black font-semibold text-[28px] mr-20", "{tr.sample_survey}" }
-            }
-
             div { class: "flex flex-col w-full justify-start items-start",
-                div { class: "font-medium text-base text-text-black mb-10", "{tr.input_introduction}" }
-                div { class: "flex flex-col w-full justify-start items-start gap-20",
-                    Introduction {
-                        lang,
-                        sample_survey: sample_survey.clone(),
-                        set_sample_survey: move |survey| {
-                            ctrl.set_sample_survey(survey);
-                        },
+                div { class: "flex flex-col w-full justify-start items-start gap-10",
+                    div { class: "font-medium text-base text-text-black", {tr.input_introduction} }
+                    div { class: "flex flex-col w-full justify-start items-start gap-20",
+                        Introduction {
+                            lang,
+                            sample_survey: sample_survey.clone(),
+                            set_sample_survey: move |survey| {
+                                ctrl.set_sample_survey(survey);
+                            },
+                        }
+
+                        SampleSurveyReward {
+                            lang,
+                            sample_survey: sample_survey.clone(),
+                            set_sample_survey: move |survey| {
+                                ctrl.set_sample_survey(survey);
+                            },
+                        }
+
+                        SampleSurveyMember {
+                            lang,
+                            total_committees: ctrl.get_committees(),
+                            selected_committees: ctrl.get_selected_committee(),
+                            sample_survey: sample_survey.clone(),
+                            set_sample_survey: move |survey| {
+                                ctrl.set_sample_survey(survey);
+                            },
+                        }
                     }
 
-                    SampleSurveyReward {
-                        lang,
-                        sample_survey: sample_survey.clone(),
-                        set_sample_survey: move |survey| {
-                            ctrl.set_sample_survey(survey);
-                        },
-                    }
+                    div { class: "flex flex-col w-full justify-start items-start gap-10",
+                        div { class: "font-medium text-base text-text-black", {tr.voting_items} }
+                        QuestionList {
+                            lang,
 
-                    SampleSurveyMember {
-                        lang,
-                        total_committees: ctrl.get_committees(),
-                        selected_committees: ctrl.get_selected_committee(),
-                        sample_survey: sample_survey.clone(),
-                        set_sample_survey: move |survey| {
-                            ctrl.set_sample_survey(survey);
-                        },
+                            sample_survey: ctrl.get_sample_survey(),
+                            set_sample_survey: move |survey| {
+                                ctrl.set_sample_survey(survey);
+                            },
+                        }
                     }
                 }
                 div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
@@ -65,21 +66,21 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
                         onclick: move |_| {
                             ctrl.back();
                         },
-                        "{tr.backward}"
+                        {tr.backward}
                     }
                     div {
                         class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                         onclick: move |_| async move {
                             ctrl.temp_save().await;
                         },
-                        "{tr.temporary_save}"
+                        {tr.temporary_save}
                     }
                     div {
                         class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
                         onclick: move |_| {
                             ctrl.next();
                         },
-                        "{tr.next}"
+                        {tr.next}
                     }
                 }
             }
