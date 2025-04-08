@@ -317,16 +317,12 @@ impl OverviewController {
 
         use_effect({
             let req = ctrl.parent.deliberation_requests();
+            let areas = ctrl.parent.project_areas();
             move || {
                 ctrl.title.set(req.title.clone());
                 ctrl.description.set(req.description.clone());
                 ctrl.thumbnail_image.set(req.thumbnail_image.clone());
-                let project_areas = req
-                    .project_areas
-                    .iter()
-                    .map(|s| s.to_string())
-                    .collect::<Vec<String>>();
-                tracing::debug!("project_areas: {:?}", project_areas);
+                let project_areas = areas.iter().map(|s| s.to_string()).collect::<Vec<String>>();
                 ctrl.fields.set(project_areas.clone());
             }
         });

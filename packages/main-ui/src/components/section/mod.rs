@@ -22,12 +22,25 @@ pub fn MainSection(
     header: String,
     description: String,
     children: Element,
+    open: Option<bool>,
 ) -> Element {
+    let mut opened = use_signal(|| open.unwrap_or(true));
     rsx! {
-        div { class: format!("flex flex-col w-full justify-start items-start"),
+        div { class: "flex flex-col w-full justify-start items-start",
             div { class: "flex flex-col w-full justify-start items-start rounded-lg bg-white px-40 py-20 mb-20 gap-10",
-                BlockHeader { required, header, description }
-                {children}
+                BlockHeader {
+                    required,
+                    header,
+                    description,
+                    onopen: Some(
+                        EventHandler::new(move |is_open| {
+                            opened.set(is_open);
+                        }),
+                    ),
+                }
+                if opened() {
+                    {children}
+                }
             }
         }
     }
