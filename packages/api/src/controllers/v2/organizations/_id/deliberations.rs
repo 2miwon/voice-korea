@@ -109,7 +109,7 @@ impl DeliberationController {
             drafts,
         }: DeliberationCreateRequest,
     ) -> Result<Deliberation> {
-        if started_at >= ended_at {
+        if started_at > ended_at {
             return Err(ApiError::ValidationError(
                 "started_at should be less than ended_at".to_string(),
             )
@@ -235,7 +235,7 @@ impl DeliberationController {
             surveys,
         } in basic_infos
         {
-            if started_at >= ended_at {
+            if started_at > ended_at {
                 return Err(ApiError::ValidationError(
                     "started_at should be less than ended_at".to_string(),
                 )
@@ -287,7 +287,7 @@ impl DeliberationController {
             surveys,
         } in sample_surveys
         {
-            if started_at >= ended_at {
+            if started_at > ended_at {
                 return Err(ApiError::ValidationError(
                     "started_at should be less than ended_at".to_string(),
                 )
@@ -356,7 +356,7 @@ impl DeliberationController {
             elearnings,
         } in contents
         {
-            if started_at >= ended_at {
+            if started_at > ended_at {
                 return Err(ApiError::ValidationError(
                     "started_at should be less than ended_at".to_string(),
                 )
@@ -407,7 +407,7 @@ impl DeliberationController {
             discussions,
         } in deliberation_discussions
         {
-            if started_at >= ended_at {
+            if started_at > ended_at {
                 return Err(ApiError::ValidationError(
                     "started_at should be less than ended_at".to_string(),
                 )

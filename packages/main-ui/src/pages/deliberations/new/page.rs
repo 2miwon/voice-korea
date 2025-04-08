@@ -27,8 +27,8 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
     let mut ctrl = OverviewController::new(lang)?;
 
     rsx! {
-        div { class: format!("flex flex-col w-full justify-start items-start"),
-            div { class: "font-medium text-base text-text-black mb-10", {tr.overview} }
+        div { class: format!("flex flex-col w-full justify-start items-start gap-10"),
+            div { class: "font-medium text-base text-text-black", {tr.overview} }
             MainSection {
                 required: true,
                 header: tr.title.to_string(),
@@ -42,9 +42,7 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
                                 placeholder: tr.proj_title_placeholder,
                                 value: ctrl.title(),
                                 oninput: move |event| {
-                                    tracing::debug!("Title: {}", event.value());
                                     ctrl.title.set(event.value());
-                                    tracing::debug!("Title:1 {}", ctrl.title());
                                 },
                             }
                         }
@@ -69,7 +67,7 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
                             items: ProjectArea::variants(&lang),
                             hint: tr.deliberation_field_hint,
                             onselect: move |selected_items: Vec<String>| ctrl.fields.set(selected_items.clone()),
-                            value: ctrl.fields(),
+                            value: Some(ctrl.fields()),
                         }
                     }
                 }
@@ -121,7 +119,7 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
                     }
                 }
             }
-            div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
+            div { class: "flex flex-row w-full justify-end items-end mt-30 mb-50",
                 Link {
                     class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                     to: Route::DeliberationPage { lang },
