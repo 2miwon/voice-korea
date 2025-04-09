@@ -45,7 +45,6 @@ pub struct Controller {
     user: LoginService,
 
     deliberation_requests: Signal<DeliberationCreateRequest>,
-    project_areas: Signal<Vec<ProjectArea>>,
 }
 
 impl Controller {
@@ -61,7 +60,6 @@ impl Controller {
             current_step,
             popup_service: use_signal(|| popup_service),
             deliberation_requests: use_signal(|| DeliberationCreateRequest::default()),
-            project_areas: use_signal(|| vec![]),
         };
         use_context_provider(|| ctrl);
         Ok(ctrl)
@@ -153,6 +151,11 @@ impl Controller {
         }
     }
 
+    pub fn project_areas(&self) -> Vec<ProjectArea> {
+        self.deliberation_requests
+            .with(|req| req.project_areas.clone())
+    }
+
     pub fn get_deliberation_time(&self, steps: Vec<StepCreateRequest>) -> (i64, i64) {
         let started_at = steps.iter().map(|s| s.started_at).min().unwrap_or(0);
         let ended_at = steps.iter().map(|s| s.ended_at).max().unwrap_or(0);
@@ -213,8 +216,8 @@ impl Controller {
             req.title = title;
             req.description = description;
             req.thumbnail_image = thumbnail_image;
+            req.project_areas = project_areas;
         });
-        self.project_areas.set(project_areas);
     }
 
     pub async fn temporary_save(&self) {
@@ -290,37 +293,33 @@ pub struct OverviewController {
     pub title: Signal<String>,
     pub description: Signal<String>,
     pub thumbnail_image: Signal<String>,
-    pub fields: Signal<Vec<String>>,
+    pub project_areas: Signal<Vec<ProjectArea>>,
 }
 
 impl OverviewController {
     pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
-        let title = use_signal(|| String::new());
-        let description = use_signal(|| String::new());
-        let thumbnail_image = use_signal(|| String::new());
-        let fields = use_signal(|| vec![]);
+        let parent: Controller = use_context();
+        let DeliberationCreateRequest {
+            thumbnail_image,
+            title,
+            description,
+            project_areas,
+            ..
+        } = parent.deliberation_requests();
 
-        let mut ctrl = Self {
+        let title = use_signal(move || title);
+        let description = use_signal(move || description);
+        let thumbnail_image = use_signal(move || thumbnail_image);
+
+        let ctrl = Self {
             lang,
             parent: use_context(),
             nav: use_navigator(),
             title,
             description,
             thumbnail_image,
-            fields,
+            project_areas: use_signal(move || project_areas),
         };
-
-        use_effect({
-            let req = ctrl.parent.deliberation_requests();
-            let areas = ctrl.parent.project_areas();
-            move || {
-                ctrl.title.set(req.title.clone());
-                ctrl.description.set(req.description.clone());
-                ctrl.thumbnail_image.set(req.thumbnail_image.clone());
-                let project_areas = areas.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-                ctrl.fields.set(project_areas.clone());
-            }
-        });
 
         Ok(ctrl)
     }
@@ -330,13 +329,7 @@ impl OverviewController {
             .iter()
             .map(|s| s.parse().unwrap_or_default())
             .collect();
-
-        self.parent.save_overview(
-            self.title(),
-            self.description(),
-            self.thumbnail_image(),
-            project_areas,
-        );
+        self.project_areas.set(project_areas);
     }
 
     pub fn back(&mut self) {
@@ -345,12 +338,27 @@ impl OverviewController {
     }
 
     pub async fn temp_save(&mut self) {
+        self.parent.save_overview(
+            self.title(),
+            self.description(),
+            self.thumbnail_image(),
+            self.project_areas(),
+        );
+
         self.parent.temporary_save().await;
+        tracing::debug!("{:?}", self.parent.deliberation_requests());
     }
 
-    pub fn next(&self) {
+    pub fn next(&mut self) {
         if self.validation_check() {
             tracing::debug!("Submit");
+            self.parent.save_overview(
+                self.title(),
+                self.description(),
+                self.thumbnail_image(),
+                self.project_areas(),
+            );
+
             self.nav
                 .push(Route::CompositionCommitee { lang: self.lang });
         }
@@ -365,41 +373,53 @@ impl OverviewController {
     }
 
     pub fn is_valid(&self) -> bool {
-        self.title().is_empty()
+        !(self.title().is_empty()
             || self.description().is_empty()
             || self.thumbnail_image().is_empty()
-            || self.fields().is_empty()
+            || self.parent.project_areas().is_empty())
     }
 
     pub fn validation_check(&self) -> bool {
         if self.title().is_empty() {
-            btracing::e!(
-                self.lang,
-                ApiError::ValidationError("Project title is required.".to_string())
-            );
+            btracing::e!(self.lang, ValidationError::TitleRequired);
             return false;
         }
         if self.description().is_empty() {
-            btracing::e!(
-                self.lang,
-                ApiError::ValidationError("Project description is required.".to_string())
-            );
+            btracing::e!(self.lang, ValidationError::DescriptionRequired);
             return false;
         }
         if self.thumbnail_image().is_empty() {
-            btracing::e!(
-                self.lang,
-                ApiError::ValidationError("Project thumbnail image is required.".to_string())
-            );
+            btracing::e!(self.lang, ValidationError::ThumbnailImageRequired);
             return false;
         }
-        if self.fields().is_empty() {
-            btracing::e!(
-                self.lang,
-                ApiError::ValidationError("Project area is required.".to_string())
-            );
+        if self.parent.project_areas().is_empty() {
+            btracing::e!(self.lang, ValidationError::ProjectAreaRequired);
             return false;
         }
         true
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Translate)]
+pub enum ValidationError {
+    #[translate(
+        ko = "프로젝트 제목을 입력해주세요.",
+        en = "Please enter the project title."
+    )]
+    TitleRequired,
+    #[translate(
+        ko = "프로젝트 설명을 입력해주세요.",
+        en = "Please enter the project description."
+    )]
+    DescriptionRequired,
+    #[translate(
+        ko = "프로젝트 썸네일 이미지를 선택해주세요.",
+        en = "Please select a project thumbnail image."
+    )]
+    ThumbnailImageRequired,
+    #[translate(
+        ko = "프로젝트 분야를 선택해주세요.",
+        en = "Please select a project area."
+    )]
+    ProjectAreaRequired,
 }

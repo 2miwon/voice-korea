@@ -69,7 +69,10 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
                             items: ProjectArea::variants(&lang),
                             hint: tr.deliberation_field_hint,
                             onselect: move |selected_items| ctrl.save_project_area(selected_items),
-                            value: Some(ctrl.fields()),
+                            value: ctrl.project_areas()
+                                .iter()
+                                .map(|area| area.translate(&lang).to_string())
+                                .collect::<Vec<String>>(),
                         }
                     }
                 }
