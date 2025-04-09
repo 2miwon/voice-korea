@@ -15,7 +15,7 @@ use models::DeliberationStatus;
 
 #[component]
 pub fn DeliberationPage(lang: Language) -> Element {
-    let ctrl = Controller::new(lang)?;
+    let mut ctrl = Controller::new(lang)?;
     let translates: OpinionTranslate = translate(&lang);
     let deliberations = ctrl.get_deliberations();
     let mut is_focused = use_signal(|| false);
@@ -83,7 +83,7 @@ pub fn DeliberationPage(lang: Language) -> Element {
                                 div {
                                     class: "text-white font-semibold text-[16px]",
                                     onclick: move |_| {},
-                                    "{translates.start_public_opinion}"
+                                    {translates.start_public_opinion}
                                 }
                             }
                         }
@@ -95,43 +95,43 @@ pub fn DeliberationPage(lang: Language) -> Element {
                     div { class: "flex flex-row w-full h-[55px] justify-start items-center",
                         div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
                             div { class: "!text-davy-gray font-semibold text-[14px]",
-                                "{translates.field}"
+                                {translates.field}
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
                             div { class: "!text-davy-gray font-semibold text-[14px]",
-                                "{translates.project}"
+                                {translates.project}
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
                             div { class: "!text-davy-gray font-semibold text-[14px]",
-                                "{translates.response_rate}"
+                                {translates.response_rate}
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
                             div { class: "!text-davy-gray font-semibold text-[14px]",
-                                "{translates.panel}"
+                                {translates.panel}
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
                             div { class: "!text-davy-gray font-semibold text-[14px]",
-                                "{translates.period}"
+                                {translates.period}
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
                             div { class: "!text-davy-gray font-semibold text-[14px]",
-                                "{translates.status}"
+                                {translates.status}
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
                             div { class: "!text-davy-gray font-semibold text-[14px]",
-                                "{translates.view}"
+                                {translates.view}
                             }
                         }
                         div { class: "w-[90px] h-full justify-center items-center gap-[10px]" }
@@ -147,7 +147,7 @@ pub fn DeliberationPage(lang: Language) -> Element {
                             }
                             div { class: "flex flex-row flex-1 h-full justify-center items-center",
                                 div { class: "!text-davy-gray font-semibold text-[14px]",
-                                    "{deliberation.title}"
+                                    {deliberation.title}
                                 }
                             }
                             //FIXME: fix to real response data
@@ -184,19 +184,28 @@ pub fn DeliberationPage(lang: Language) -> Element {
                             div { class: "cursor-pointer flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center",
                                 if deliberation.status == DeliberationStatus::Finish {
                                     div { class: "font-semibold text-[14px] text-[#2A60D3] text-center",
-                                        "{translates.view_result}"
+                                        {translates.view_result}
                                     }
                                 } else {
                                     div { class: "font-semibold text-[14px] text-[#2A60D3] text-center",
-                                        "{translates.view_more}"
+                                        {translates.view_more}
                                     }
                                 }
                             }
-                            div { class: "cursor-pointer flex flex-row w-[90px] h-full justify-center items-center",
+                            div {
+                                class: "cursor-pointer flex flex-row w-[90px] h-full justify-center items-center",
+                                onclick: move |evt| ctrl.handle_click_menu(deliberation.id, evt),
                                 RowOption { width: "24", height: "24" }
                             }
                         }
                     }
+                }
+
+                div {
+                    class: "hidden aria-opened:flex flex",
+                    "aria-opened": ctrl.context_menu(),
+                    style: "left: {ctrl.mouse_pos().0}px; top: {ctrl.mouse_pos().1}px;",
+
                 }
 
                 Pagination {

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use super::controller::{Controller, ProjectHistory, ProjectStatus, ProjectType};
 use super::i18n::MemberDetailTranslate;
 use dioxus::prelude::*;

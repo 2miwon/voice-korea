@@ -23,12 +23,15 @@ pub struct Opinion {
     pub status: String,
 }
 
-#[derive(Debug, Clone, PartialEq, DioxusController)]
+#[derive(Debug, Clone, Copy, PartialEq, DioxusController)]
 pub struct Controller {
     pub deliberations: Resource<QueryResponse<DeliberationSummary>>,
     page: Signal<usize>,
     pub size: usize,
     pub search_keyword: Signal<String>,
+    pub selected_id: Signal<i64>,
+    pub context_menu: Signal<bool>,
+    pub mouse_pos: Signal<(f64, f64)>,
 }
 
 impl Controller {
@@ -89,6 +92,9 @@ impl Controller {
             page,
             size,
             search_keyword,
+            selected_id: use_signal(|| 0),
+            context_menu: use_signal(|| false),
+            mouse_pos: use_signal(|| (0.0, 0.0)),
         };
 
         Ok(ctrl)
@@ -118,5 +124,12 @@ impl Controller {
             Some(v) => v.clone().items,
             None => vec![],
         })
+    }
+
+    pub fn handle_click_menu(&mut self, id: i64, e: MouseEvent) {
+        self.context_menu.set(true);
+        self.selected_id.set(id);
+        let rect = e.client_coordinates();
+        self.mouse_pos.set((rect.x, rect.y));
     }
 }
