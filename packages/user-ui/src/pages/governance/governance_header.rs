@@ -6,9 +6,9 @@ use dioxus_translate::{translate, Language};
 use crate::{
     components::{header::GoogleLoginPopup, icons},
     routes::Route,
-    service::{popup_service::PopupService, user_service::UserService},
+    service::user_service::UserService,
 };
-
+use dioxus_popup::PopupService;
 #[component]
 pub fn GovernanceHeader(lang: Language) -> Element {
     let tr: GovernanceHeaderTranslate = translate(&lang);

@@ -10,8 +10,10 @@ use models::{
 
 use crate::{
     pages::projects::_id::components::final_survey::final_vote_modal::FinalVoteModal,
-    service::{popup_service::PopupService, user_service::UserService},
+    service::user_service::UserService,
 };
+
+use dioxus_popup::PopupService;
 
 use super::i18n::FinalVoteModalTranslate;
 

@@ -1,6 +1,5 @@
+use bdk::prelude::*;
 use by_components::icons as by_components_icon;
-use dioxus::prelude::*;
-use dioxus_logger::tracing;
 use dioxus_translate::{translate, Language};
 
 mod i18n;
@@ -10,11 +9,9 @@ use crate::{
         input::InputBox,
     },
     routes::Route,
-    service::{
-        popup_service::PopupService,
-        user_service::{UserEvent, UserService},
-    },
+    service::user_service::{UserEvent, UserService},
 };
+use dioxus_popup::PopupService;
 use i18n::{
     CompletePopupTranslate, GoogleLoginPopupTranslate, SeeDetailButtonTranslate,
     SignupPopupTranslate, Translate,

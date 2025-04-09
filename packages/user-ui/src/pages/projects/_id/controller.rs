@@ -1,5 +1,7 @@
 #![allow(unused)]
+use crate::{service::user_service::UserService, utils::time::formatted_timestamp_to_sec};
 use bdk::prelude::*;
+use dioxus_popup::PopupService;
 use indexmap::IndexMap;
 use models::{
     deliberation::Deliberation,
@@ -17,14 +19,6 @@ use models::{
     SubjectiveQuestion, SurveyV2,
 };
 use std::collections::HashMap;
-
-use crate::{
-    service::{
-        popup_service::{self, PopupService},
-        user_service::UserService,
-    },
-    utils::time::formatted_timestamp_to_sec,
-};
 
 use super::i18n::ProjectTranslate;
 

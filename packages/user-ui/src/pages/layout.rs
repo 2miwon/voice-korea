@@ -5,10 +5,10 @@ use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_translate::Language;
 
+use crate::components::PopupZone;
 use crate::pages::main_footer::MainFooter;
 use crate::pages::main_header::MainHeader;
 use crate::routes::Route;
-use crate::service::popup_service::PopupZone;
 
 #[component]
 pub fn MainRootLayout(lang: Language) -> Element {
@@ -29,7 +29,9 @@ pub fn MainRootLayout(lang: Language) -> Element {
                                 CubeLoader {}
                             }
                         },
-                        div { class: "flex flex-col w-full min-h-lvh pt-(--header-height)", Outlet::<Route> {} }
+                        div { class: "flex flex-col w-full min-h-lvh pt-(--header-height)",
+                            Outlet::<Route> {}
+                        }
                         div { class: "flex flex-row w-full ",
                             MainFooter { lang: lang.clone() }
                         }
