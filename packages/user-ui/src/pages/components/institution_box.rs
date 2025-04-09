@@ -32,11 +32,11 @@ pub fn InstitutionBox(lang: Language, institution: OrganizationSummary) -> Eleme
                         }
                     }
                     if institution.description.is_some() {
-                        div { class: "font-normal text-[14px] text-[#555462] leading-[22.4px] line-clamp-4",
+                        div { class: "font-normal text-[14px] text-davy-gray leading-[22.4px] line-clamp-4",
                             "{institution.description.clone().unwrap_or_default()}"
                         }
                     }
-
+                
                 }
 
                 div { class: "flex flex-row w-full justify-between items-center",
