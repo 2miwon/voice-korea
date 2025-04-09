@@ -94,43 +94,43 @@ pub fn DeliberationPage(lang: Language) -> Element {
                     //header
                     div { class: "flex flex-row w-full h-[55px] justify-start items-center",
                         div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-davy-gray font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translates.field}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "text-davy-gray font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translates.project}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "text-davy-gray font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translates.response_rate}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "text-davy-gray font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translates.panel}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "text-davy-gray font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translates.period}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-davy-gray font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translates.status}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-davy-gray font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translates.view}"
                             }
                         }
@@ -141,18 +141,18 @@ pub fn DeliberationPage(lang: Language) -> Element {
                     for deliberation in deliberations {
                         div { class: "flex flex-row w-full min-h-[55px] justify-start items-center",
                             div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center",
-                                div { class: "text-davy-gray font-semibold text-[14px]",
+                                div { class: "!text-davy-gray font-semibold text-[14px]",
                                     {deliberation.project_area.translate(&lang)}
                                 }
                             }
                             div { class: "flex flex-row flex-1 h-full justify-center items-center",
-                                div { class: "text-davy-gray font-semibold text-[14px]",
+                                div { class: "!text-davy-gray font-semibold text-[14px]",
                                     "{deliberation.title}"
                                 }
                             }
                             //FIXME: fix to real response data
                             div { class: "flex flex-row flex-1 h-full justify-center items-center",
-                                div { class: "text-davy-gray font-semibold text-[14px]",
+                                div { class: "!text-davy-gray font-semibold text-[14px]",
                                     "0% (0/0)"
                                 }
                             }
