@@ -64,6 +64,7 @@ use crate::controllers::v2::organizations::OrganizationPath;
 #[derive(
     Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema, aide::OperationIo,
 )]
+#[serde(rename_all = "kebab-case")]
 pub struct DeliberationPath {
     pub org_id: i64,
     pub id: i64,

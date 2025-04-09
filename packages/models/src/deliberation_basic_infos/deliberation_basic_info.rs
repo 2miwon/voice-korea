@@ -42,3 +42,17 @@ pub struct DeliberationBasicInfo {
     #[serde(default)]
     pub surveys: Vec<SurveyV2>,
 }
+
+impl Into<DeliberationBasicInfoCreateRequest> for DeliberationBasicInfo {
+    fn into(self) -> DeliberationBasicInfoCreateRequest {
+        DeliberationBasicInfoCreateRequest {
+            users: self.members.into_iter().map(|u| u.user_id).collect(),
+            resources: self.resources.into_iter().map(|r| r.id).collect(),
+            surveys: self.surveys.into_iter().map(|s| s.id).collect(),
+            started_at: self.started_at,
+            ended_at: self.ended_at,
+            title: self.title,
+            description: self.description,
+        }
+    }
+}

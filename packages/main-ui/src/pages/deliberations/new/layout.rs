@@ -12,9 +12,9 @@ use dioxus::prelude::*;
 use dioxus_translate::{translate, Language};
 
 #[component]
-pub fn DeliberationNewLayout(lang: Language, deliberation_id: Option<i64>) -> Element {
+pub fn DeliberationNewLayout(lang: Language) -> Element {
     let tr: DeliberationNewTranslate = translate(&lang.clone());
-    let ctrl = Controller::new(lang, deliberation_id)?;
+    let ctrl = Controller::new(lang)?;
 
     let step = ctrl.get_current_step();
 

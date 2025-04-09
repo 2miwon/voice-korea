@@ -25,7 +25,7 @@ use crate::step::*;
 use crate::{PanelV2, ProjectArea, ResourceFile, SurveyV2};
 
 #[derive(Validate)]
-#[api_model(base = "/v2/organizations/:org-id/deliberations", action = [create(project_areas = Vec<ProjectArea>, resource_ids = Vec<i64>, survey_ids = Vec<i64>, roles = Vec<DeliberationUserCreateRequest>, panel_ids = Vec<i64>, steps = Vec<StepCreateRequest>, elearning = Vec<i64>, basic_infos = Vec<DeliberationBasicInfoCreateRequest>, sample_surveys = Vec<DeliberationSampleSurveyCreateRequest>, contents = Vec<DeliberationContentCreateRequest>, deliberation_discussions = Vec<DeliberationDiscussionCreateRequest>, final_surveys = Vec<DeliberationFinalSurveyCreateRequest>, drafts = Vec<DeliberationDraftCreateRequest>)], table = deliberations)]
+#[api_model(base = "/v2/organizations/:org-id/deliberations", action = [create(project_areas = Vec<ProjectArea>, resource_ids = Vec<i64>, survey_ids = Vec<i64>, roles = Vec<DeliberationUserCreateRequest>, panel_ids = Vec<i64>, steps = Vec<StepCreateRequest>, elearning = Vec<i64>, basic_infos = Vec<DeliberationBasicInfoCreateRequest>, sample_surveys = Vec<DeliberationSampleSurveyCreateRequest>, contents = Vec<DeliberationContentCreateRequest>, deliberation_discussions = Vec<DeliberationDiscussionCreateRequest>, final_surveys = Vec<DeliberationFinalSurveyCreateRequest>, drafts = Vec<DeliberationDraftCreateRequest>)], act_by_id = [update(req = DeliberationCreateRequest)] table = deliberations)]
 pub struct Deliberation {
     #[api_model(summary, primary_key)]
     pub id: i64,
@@ -139,59 +139,67 @@ pub enum DeliberationStatus {
     Finish = 3,
 }
 
-// impl Into<DeliberationCreateRequest> for Deliberation {
-//     fn into(self) -> DeliberationCreateRequest {
-//         DeliberationCreateRequest {
-//             title: self.title,
-//             description: self.description,
-//             project_area: self.project_area,
-//             project_areas: self.project_areas,
-//             started_at: self.started_at,
-//             ended_at: self.ended_at,
-//             thumbnail_image: self.thumbnail_image,
-//             steps: self.steps.into_iter().map(|step| step.into()).collect(),
-//             members: self
-//                 .members
-//                 .into_iter()
-//                 .map(|member| member.into())
-//                 .collect(),
-//             resources: self
-//                 .resources
-//                 .into_iter()
-//                 .map(|resource| resource.into())
-//                 .collect(),
-//             surveys: self
-//                 .surveys
-//                 .into_iter()
-//                 .map(|survey| survey.into())
-//                 .collect(),
-//             resource_ids: self
-//                 .resources
-//                 .into_iter()
-//                 .map(|resource| resource.id)
-//                 .collect(),
-//             survey_ids: self.surveys.into_iter().map(|survey| survey.id).collect(),
-//             roles: self
-//                 .members
-//                 .into_iter()
-//                 .map(|member| member.into())
-//                 .collect(),
-//             panel_ids: self.panels.into_iter().map(|panel| panel.id).collect(),
-//             basic_infos: self
-//                 .basic_infos
-//                 .into_iter()
-//                 .map(|basic_info| basic_info.into())
-//                 .collect(),
-//             sample_surveys: self
-//                 .sample_surveys
-//                 .into_iter()
-//                 .map(|sample_survey| sample_survey.into())
-//                 .collect(),
-//             contents: self
-//                 .contents
-//                 .into_iter()
-//                 .map(|content| content.into())
-//                 .collect(),
-//         }
-//     }
-// }
+impl Into<DeliberationCreateRequest> for Deliberation {
+    fn into(self) -> DeliberationCreateRequest {
+        DeliberationCreateRequest {
+            title: self.title,
+            description: self.description,
+            project_area: self.project_area,
+            project_areas: self
+                .project_areas
+                .into_iter()
+                .map(|area| area.project_area)
+                .collect(),
+            started_at: self.started_at,
+            ended_at: self.ended_at,
+            thumbnail_image: self.thumbnail_image,
+            steps: self.steps.into_iter().map(|step| step.into()).collect(),
+            resource_ids: self
+                .resources
+                .clone()
+                .into_iter()
+                .map(|resource| resource.id)
+                .collect(),
+            survey_ids: self.surveys.into_iter().map(|survey| survey.id).collect(),
+            roles: self
+                .members
+                .into_iter()
+                .map(|member| member.into())
+                .collect(),
+            panel_ids: self.panels.into_iter().map(|panel| panel.id).collect(),
+            basic_infos: self
+                .basic_infos
+                .into_iter()
+                .map(|basic_info| basic_info.into())
+                .collect(),
+            sample_surveys: self
+                .sample_surveys
+                .into_iter()
+                .map(|sample_survey| sample_survey.into())
+                .collect(),
+            contents: self
+                .contents
+                .into_iter()
+                .map(|content| content.into())
+                .collect(),
+            deliberation_discussions: self
+                .deliberation_discussions
+                .into_iter()
+                .map(|discussion| discussion.into())
+                .collect(),
+            final_surveys: self
+                .final_surveys
+                .into_iter()
+                .map(|final_survey| final_survey.into())
+                .collect(),
+            drafts: self.drafts.into_iter().map(|draft| draft.into()).collect(),
+            // FIXME: it may be deprecated.
+            //        elearning is included in content.
+            elearning: self
+                .resources
+                .into_iter()
+                .map(|resource| resource.id)
+                .collect(),
+        }
+    }
+}

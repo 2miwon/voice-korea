@@ -46,35 +46,16 @@ pub struct Controller {
     user: LoginService,
 
     deliberation_requests: Signal<DeliberationCreateRequest>,
+    deliberation_id: Signal<Option<i64>>,
 }
 
 impl Controller {
-    pub fn new(
-        lang: Language,
-        deliberation_id: Option<i64>,
-    ) -> std::result::Result<Self, RenderError> {
+    pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
         let user: LoginService = use_context();
         let popup_service: PopupService = use_context();
         let route = use_route::<Route>();
         let current_step = route.clone().into();
-        // FIXME: setting with id
         let deliberation_requests = use_signal(|| DeliberationCreateRequest::default());
-        use_future(move || async move {
-            if let Some(deliberation_id) = deliberation_id {
-                let client = Deliberation::get_client(config::get().api_url);
-                let org_id = user.get_selected_org();
-                if org_id.is_none() {
-                    tracing::error!("Organization ID is missing");
-                    return;
-                }
-                let org_id = org_id.unwrap().id;
-                let _deliberation = client
-                    .get(org_id, deliberation_id)
-                    .await
-                    .unwrap_or_default();
-                // deliberation_requests.set(deliberation);
-            }
-        });
 
         let ctrl = Self {
             lang,
@@ -82,6 +63,7 @@ impl Controller {
             current_step,
             popup_service: use_signal(|| popup_service),
             deliberation_requests,
+            deliberation_id: use_signal(|| None),
         };
         use_context_provider(|| ctrl);
         Ok(ctrl)
@@ -237,7 +219,32 @@ impl Controller {
         });
     }
 
-    pub async fn temporary_save(&self) {
+    pub fn save_title(&mut self, title: String) {
+        self.deliberation_requests.with_mut(|req| {
+            req.title = title;
+        });
+    }
+
+    pub fn save_description(&mut self, description: String) {
+        self.deliberation_requests.with_mut(|req| {
+            req.description = description;
+        });
+    }
+
+    #[cfg(feature = "web")]
+    pub fn save_thumbnail_image(&mut self, thumbnail_image: String) {
+        self.deliberation_requests.with_mut(|req| {
+            req.thumbnail_image = thumbnail_image;
+        });
+    }
+
+    pub fn save_project_areas(&mut self, project_areas: Vec<ProjectArea>) {
+        self.deliberation_requests.with_mut(|req| {
+            req.project_areas = project_areas;
+        });
+    }
+
+    pub async fn temporary_save(&mut self) {
         let DeliberationCreateRequest {
             started_at,
             ended_at,
@@ -267,6 +274,8 @@ impl Controller {
 
         let org_id = org.unwrap().id;
 
+        // FIXME: update if deliberation_id is not None
+        //        And also set deliberation_id after temporary save.
         match Deliberation::get_client(config::get().api_url)
             .create(
                 org_id,
@@ -292,7 +301,10 @@ impl Controller {
             )
             .await
         {
-            Ok(_) => btracing::i!(self.lang, Info::TempSave),
+            Ok(d) => {
+                btracing::i!(self.lang, Info::TempSave);
+                self.deliberation_id.set(Some(d.id));
+            }
             Err(e) => btracing::e!(self.lang, e),
         }
 
@@ -307,26 +319,40 @@ pub struct OverviewController {
     pub parent: Controller,
     pub nav: Navigator,
 
-    pub title: Signal<String>,
-    pub description: Signal<String>,
-    pub thumbnail_image: Signal<String>,
-    pub project_areas: Signal<Vec<ProjectArea>>,
+    pub title: Memo<String>,
+    pub description: Memo<String>,
+    pub thumbnail_image: Memo<String>,
+    pub project_areas: Memo<Vec<ProjectArea>>,
 }
 
 impl OverviewController {
-    pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
-        let parent: Controller = use_context();
-        let DeliberationCreateRequest {
-            thumbnail_image,
-            title,
-            description,
-            project_areas,
-            ..
-        } = parent.deliberation_requests();
+    pub fn new(
+        lang: Language,
+        deliberation_id: Option<i64>,
+    ) -> std::result::Result<Self, RenderError> {
+        let mut parent: Controller = use_context();
+        use_future(move || async move {
+            tracing::debug!("Deliberation ID: {:?}", deliberation_id);
+            if let Some(deliberation_id) = deliberation_id {
+                let client = Deliberation::get_client(config::get().api_url);
+                let org_id = parent.user.get_selected_org();
+                if org_id.is_none() {
+                    tracing::error!("Organization ID is missing");
+                    return;
+                }
+                let org_id = org_id.unwrap().id;
+                let deliberation = client
+                    .get(org_id, deliberation_id)
+                    .await
+                    .unwrap_or_default();
+                parent.deliberation_requests.set(deliberation.into());
+                parent.deliberation_id.set(Some(deliberation_id));
+            }
+        });
 
-        let title = use_signal(move || title);
-        let description = use_signal(move || description);
-        let thumbnail_image = use_signal(move || thumbnail_image);
+        let title = use_memo(move || parent.deliberation_requests().title);
+        let description = use_memo(move || parent.deliberation_requests().description);
+        let thumbnail_image = use_memo(move || parent.deliberation_requests().thumbnail_image);
 
         let ctrl = Self {
             lang,
@@ -335,7 +361,7 @@ impl OverviewController {
             title,
             description,
             thumbnail_image,
-            project_areas: use_signal(move || project_areas),
+            project_areas: use_memo(move || parent.deliberation_requests().project_areas),
         };
 
         Ok(ctrl)
@@ -346,7 +372,7 @@ impl OverviewController {
             .iter()
             .map(|s| s.parse().unwrap_or_default())
             .collect();
-        self.project_areas.set(project_areas);
+        self.parent.save_project_areas(project_areas);
     }
 
     // pub fn back(&mut self) {

@@ -24,7 +24,7 @@ pub fn DeliberationNewPage(lang: Language, deliberation_id: Option<i64>) -> Elem
     let api: MetadataApi = use_context();
     let tr: SettingDeliberationTranslate = translate(&lang);
     let nav = use_navigator();
-    let mut ctrl = OverviewController::new(lang)?;
+    let mut ctrl = OverviewController::new(lang, deliberation_id)?;
 
     rsx! {
         div { class: format!("flex flex-col w-full justify-start items-start gap-10"),
@@ -42,9 +42,7 @@ pub fn DeliberationNewPage(lang: Language, deliberation_id: Option<i64>) -> Elem
                                 name: "deliberation-name",
                                 placeholder: tr.proj_title_placeholder,
                                 value: ctrl.title(),
-                                oninput: move |event| {
-                                    ctrl.title.set(event.value());
-                                },
+                                oninput: move |event| ctrl.parent.save_title(event.value()),
                             }
                         }
                     }
@@ -57,7 +55,7 @@ pub fn DeliberationNewPage(lang: Language, deliberation_id: Option<i64>) -> Elem
                                 placeholder: tr.proj_desc_placeholder,
                                 name: "deliberation-description",
                                 value: ctrl.description(),
-                                oninput: move |event| ctrl.description.set(event.value()),
+                                oninput: move |event| ctrl.parent.save_description(event.value()),
                             }
                         }
                     }
@@ -83,20 +81,18 @@ pub fn DeliberationNewPage(lang: Language, deliberation_id: Option<i64>) -> Elem
                                 UploadButton {
                                     class: "flex min-w-[130px] h-[40px] border bg-white border-[#2a60d3] rounded-sm text-[#2a60d3] text-center font-semibold text-sm justify-center items-center",
                                     text: tr.upload_directly,
-                                    onuploaded: move |event: FormEvent| {
-                                        spawn(async move {
-                                            #[cfg(feature = "web")]
-                                            if let Some(file_engine) = event.files() {
-                                                let result = handle_file_upload(file_engine, api).await;
-                                                if !result.is_empty() {
-                                                    if let Some(url) = result[0].url.as_ref() {
-                                                        ctrl.thumbnail_image.set(url.clone());
-                                                    }
-                                                } else {
-                                                    btracing::e!(lang, ApiError::DeliberationResourceException);
+                                    onuploaded: move |event: FormEvent| async move {
+                                        #[cfg(feature = "web")]
+                                        if let Some(file_engine) = event.files() {
+                                            let result = handle_file_upload(file_engine, api).await;
+                                            if !result.is_empty() {
+                                                if let Some(url) = result[0].url.as_ref() {
+                                                    ctrl.parent.save_thumbnail_image(url.clone());
                                                 }
+                                            } else {
+                                                btracing::e!(lang, ApiError::DeliberationResourceException);
                                             }
-                                        });
+                                        }
                                     },
                                 }
                                 input {

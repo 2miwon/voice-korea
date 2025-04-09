@@ -25,3 +25,13 @@ pub struct Elearning {
     #[api_model(summary, action = create, action_by_id = update)]
     pub necessary: bool,
 }
+
+impl Into<ElearningCreateRequest> for Elearning {
+    fn into(self) -> ElearningCreateRequest {
+        ElearningCreateRequest {
+            title: self.title,
+            resources: self.resources,
+            necessary: self.necessary,
+        }
+    }
+}
