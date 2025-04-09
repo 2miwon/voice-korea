@@ -16,7 +16,6 @@ use crate::deliberation_sample_surveys::deliberation_sample_survey::Deliberation
 use crate::deliberation_user::{DeliberationUser, DeliberationUserCreateRequest};
 
 use bdk::prelude::*;
-use chrono::Utc;
 use validator::Validate;
 
 use crate::deliberation_report::DeliberationReport;
@@ -122,37 +121,20 @@ pub struct Deliberation {
     #[api_model(summary, type = INTEGER, action = create)]
     #[serde(default)]
     pub project_area: ProjectArea,
+
+    #[api_model(summary, type = INTEGER, version = v0.1)]
+    #[serde(default)]
+    pub status: DeliberationStatus,
 }
 
-#[derive(Translate, PartialEq, Default, Debug)]
+#[derive(Clone, Copy, Translate, PartialEq, Default, Debug, ApiModel)]
+#[cfg_attr(feature = "server", derive(JsonSchema, aide::OperationIo))]
 pub enum DeliberationStatus {
     #[default]
     #[translate(ko = "준비", en = "Ready")]
-    Ready,
+    Ready = 1,
     #[translate(ko = "진행", en = "InProgress")]
-    InProgress,
+    InProgress = 2,
     #[translate(ko = "마감", en = "Finish")]
-    Finish,
-}
-
-impl Deliberation {
-    pub fn status(&self) -> DeliberationStatus {
-        let started_at = self.started_at;
-        let ended_at = self.ended_at;
-
-        let now = Utc::now();
-        let current = now.timestamp();
-
-        if started_at > 10000000000 {
-            return DeliberationStatus::default();
-        }
-
-        if started_at > current {
-            DeliberationStatus::Ready
-        } else if ended_at < current {
-            DeliberationStatus::Finish
-        } else {
-            DeliberationStatus::InProgress
-        }
-    }
+    Finish = 3,
 }

@@ -39,6 +39,7 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
                             input {
                                 class: "flex flex-row w-full justify-start items-center bg-transparent focus:outline-none",
                                 r#type: "text",
+                                name: "deliberation-name",
                                 placeholder: tr.proj_title_placeholder,
                                 value: ctrl.title(),
                                 oninput: move |event| {
@@ -54,6 +55,7 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
                             textarea {
                                 class: "flex w-full h-full justify-start items-start bg-transparent focus:outline-none my-10 break-words whitespace-normal",
                                 placeholder: tr.proj_desc_placeholder,
+                                name: "deliberation-description",
                                 value: ctrl.description(),
                                 oninput: move |event| ctrl.description.set(event.value()),
                             }
@@ -66,7 +68,7 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
                             id: "deliberation fields",
                             items: ProjectArea::variants(&lang),
                             hint: tr.deliberation_field_hint,
-                            onselect: move |selected_items: Vec<String>| ctrl.fields.set(selected_items.clone()),
+                            onselect: move |selected_items| ctrl.save_project_area(selected_items),
                             value: Some(ctrl.fields()),
                         }
                     }
@@ -126,26 +128,16 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
                     {tr.go_to_deliberation_management_list}
                 }
                 div {
-                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
-                    onclick: move |_| {
-                        tracing::debug!("Temporary save");
-                        ctrl.update_deliberation_requests();
-                        spawn(async move {
-                            ctrl.temp_save().await;
-                        });
+                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20 cursor-pointer hover:!bg-primary hover:!text-white",
+                    onclick: move |_| async move {
+                        ctrl.temp_save().await;
                     },
                     {tr.temporary_save}
                 }
                 div {
                     class: "aria-active:cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-disabled aria-active:!bg-hover font-semibold text-base text-white",
-                    "aria-active": ctrl.validation_check(),
-                    onclick: move |_| {
-                        if ctrl.validation_check() {
-                            tracing::debug!("Submit");
-                            ctrl.update_deliberation_requests();
-                            nav.push(Route::CompositionCommitee { lang });
-                        }
-                    },
+                    "aria-active": ctrl.is_valid(),
+                    onclick: move |_| ctrl.next(),
                     {tr.next}
                 }
             }

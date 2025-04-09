@@ -167,6 +167,7 @@ impl DeliberationController {
                 title,
                 description,
                 project_area,
+                DeliberationStatus::Ready,
             )
             .await?
             .ok_or(ApiError::DeliberationException)?;

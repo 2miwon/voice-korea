@@ -214,7 +214,7 @@ impl Controller {
             req.description = description;
             req.thumbnail_image = thumbnail_image;
         });
-        self.project_areas.set(project_areas.clone());
+        self.project_areas.set(project_areas);
     }
 
     pub async fn temporary_save(&self) {
@@ -272,12 +272,8 @@ impl Controller {
             )
             .await
         {
-            Ok(_) => {
-                tracing::debug!("success to create deliberation");
-            }
-            Err(e) => {
-                btracing::error!("failed to create deliberation: {}", e.translate(&self.lang));
-            }
+            Ok(_) => btracing::i!(self.lang, Info::TempSave),
+            Err(e) => btracing::e!(self.lang, e),
         }
 
         // TODO: update deliberation_areas in DB
@@ -286,7 +282,6 @@ impl Controller {
 
 #[derive(Clone, Copy, DioxusController)]
 pub struct OverviewController {
-    #[allow(dead_code)]
     lang: Language,
 
     pub parent: Controller,
@@ -330,9 +325,8 @@ impl OverviewController {
         Ok(ctrl)
     }
 
-    pub fn update_deliberation_requests(&mut self) {
-        let project_areas: Vec<ProjectArea> = self
-            .fields
+    pub fn save_project_area(&mut self, selected_items: Vec<String>) {
+        let project_areas: Vec<ProjectArea> = selected_items
             .iter()
             .map(|s| s.parse().unwrap_or_default())
             .collect();
@@ -346,20 +340,20 @@ impl OverviewController {
     }
 
     pub fn back(&mut self) {
-        self.update_deliberation_requests();
         self.nav
             .replace(Route::DeliberationPage { lang: self.lang });
     }
 
     pub async fn temp_save(&mut self) {
-        self.update_deliberation_requests();
         self.parent.temporary_save().await;
     }
 
-    pub fn next(&mut self) {
-        self.update_deliberation_requests();
-        self.nav
-            .push(Route::DeliberationSettingPage { lang: self.lang });
+    pub fn next(&self) {
+        if self.validation_check() {
+            tracing::debug!("Submit");
+            self.nav
+                .push(Route::CompositionCommitee { lang: self.lang });
+        }
     }
 
     pub fn get_file_name(&self) -> String {
@@ -368,6 +362,13 @@ impl OverviewController {
             return String::new();
         }
         url.split('/').last().unwrap_or_default().to_string()
+    }
+
+    pub fn is_valid(&self) -> bool {
+        self.title().is_empty()
+            || self.description().is_empty()
+            || self.thumbnail_image().is_empty()
+            || self.fields().is_empty()
     }
 
     pub fn validation_check(&self) -> bool {

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use crate::{
     components::{
         icons::{RowOption, Search, Switch},
@@ -10,10 +9,9 @@ use crate::{
 
 use super::controller::Controller;
 use super::i18n::OpinionTranslate;
-use chrono::{NaiveDateTime, NaiveTime, Utc};
 use dioxus::prelude::*;
 use dioxus_translate::{translate, Language};
-use models::dto::deliberation_status::DeliberationStatus;
+use models::DeliberationStatus;
 
 #[component]
 pub fn DeliberationPage(lang: Language) -> Element {
@@ -166,26 +164,25 @@ pub fn DeliberationPage(lang: Language) -> Element {
                             div { class: "flex flex-row flex-1 h-full justify-center items-center",
                                 div { class: "font-semibold text-[14px] text-[#222222] text-center",
                                     {
-                                        format!(
-                                            "{} ~ {}",
-                                            convert_timestamp_to_date(deliberation.started_at),
-                                            convert_timestamp_to_date(deliberation.ended_at),
-                                        )
+                                        if deliberation.started_at > 0 && deliberation.ended_at > 0 {
+                                            format!(
+                                                "{} ~ {}",
+                                                convert_timestamp_to_date(deliberation.started_at),
+                                                convert_timestamp_to_date(deliberation.ended_at),
+                                            )
+                                        } else {
+                                            "".to_string()
+                                        }
                                     }
                                 }
                             }
                             div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center",
                                 div { class: "font-semibold text-[14px] text-[#222222] text-center",
-                                    {
-                                        deliberation_status(deliberation.started_at, deliberation.ended_at)
-                                            .translate(&lang)
-                                    }
+                                    {deliberation.status.translate(&lang)}
                                 }
                             }
                             div { class: "cursor-pointer flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center",
-                                if deliberation_status(deliberation.started_at, deliberation.ended_at)
-                                    == DeliberationStatus::Finish
-                                {
+                                if deliberation.status == DeliberationStatus::Finish {
                                     div { class: "font-semibold text-[14px] text-[#2A60D3] text-center",
                                         "{translates.view_result}"
                                     }
@@ -224,20 +221,5 @@ pub fn PanelLabel(label: String) -> Element {
         div { class: "flex flex-row h-[25px] justify-center items-center px-[8px] py-[3px] bg-[#35343f] rounded-[40px] font-semibold text-[14px] text-white",
             {label}
         }
-    }
-}
-
-pub fn deliberation_status(started_at: i64, ended_at: i64) -> DeliberationStatus {
-    let today = Utc::now().date_naive();
-    let naive_time = NaiveTime::from_hms_opt(0, 0, 0).expect("Invalid time");
-    let timestamp = NaiveDateTime::new(today, naive_time).and_utc().timestamp();
-
-    tracing::debug!("timestamp: {} {} {}", timestamp, started_at, ended_at);
-    if timestamp < started_at {
-        DeliberationStatus::Ready
-    } else if timestamp > ended_at {
-        DeliberationStatus::Finish
-    } else {
-        DeliberationStatus::InProgress
     }
 }
