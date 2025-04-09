@@ -24,7 +24,7 @@ pub fn DeliberationPage(lang: Language) -> Element {
 
     rsx! {
         div {
-            class: "hidden aria-opened:flex flex-col absolute fixed items-center justify-center bg-white w-239",
+            class: "hidden aria-opened:!flex flex-col absolute fixed items-center justify-center bg-white w-239 z-50",
             style: "box-shadow: 0px 8px 20px 0px rgba(20, 26, 62, 0.25); left: {ctrl.get_x()}px; top: {ctrl.get_y()}px;",
             "aria-opened": ctrl.context_menu(),
 
