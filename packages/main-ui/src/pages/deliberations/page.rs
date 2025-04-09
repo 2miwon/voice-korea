@@ -17,13 +17,29 @@ use models::DeliberationStatus;
 pub fn DeliberationPage(lang: Language) -> Element {
     let mut ctrl = Controller::new(lang)?;
     let translates: OpinionTranslate = translate(&lang);
-    let deliberations = ctrl.get_deliberations();
+    let deliberations = ctrl.deliberations()?.items;
     let mut is_focused = use_signal(|| false);
 
     let mut search_keyword = use_signal(|| "".to_string());
 
     rsx! {
-        div { class: "flex flex-col w-full justify-start items-start",
+        div {
+            class: "hidden aria-opened:flex flex-col absolute fixed items-center justify-center bg-white w-239",
+            style: "box-shadow: 0px 8px 20px 0px rgba(20, 26, 62, 0.25); left: {ctrl.get_x()}px; top: {ctrl.get_y()}px;",
+            "aria-opened": ctrl.context_menu(),
+
+            button {
+                class: "w-full px-20 py-15 text-black cursor-pointer hover:!bg-neutral1",
+                onclick: move |_| ctrl.handle_edit(),
+                {translates.edit}
+            }
+        }
+
+        div {
+            class: "flex flex-col w-full justify-start items-start",
+            onclick: move |_| {
+                ctrl.context_menu.set(false);
+            },
             div { class: "text-[#9b9b9b] font-medium text-[14px] mb-[10px]",
                 "{translates.organization_management} / {translates.public_opinion_management}"
             }
@@ -140,7 +156,7 @@ pub fn DeliberationPage(lang: Language) -> Element {
                     //data
                     for deliberation in deliberations {
                         div { class: "flex flex-row w-full min-h-[55px] justify-start items-center",
-                            div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center",
+                            div { class: "flex flex-row w-120 min-w-120 h-full justify-center items-center",
                                 div { class: "!text-davy-gray font-semibold text-[14px]",
                                     {deliberation.project_area.translate(&lang)}
                                 }
@@ -201,12 +217,6 @@ pub fn DeliberationPage(lang: Language) -> Element {
                     }
                 }
 
-                div {
-                    class: "hidden aria-opened:flex flex",
-                    "aria-opened": ctrl.context_menu(),
-                    style: "left: {ctrl.mouse_pos().0}px; top: {ctrl.mouse_pos().1}px;",
-
-                }
 
                 Pagination {
                     total_page: if ctrl.size != 0 { ctrl.total_pages() } else { 0 },

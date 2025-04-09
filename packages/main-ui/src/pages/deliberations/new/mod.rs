@@ -1,11 +1,11 @@
-pub mod components;
+mod components;
 
-pub mod controller;
+mod controller;
 mod i18n;
 mod layout;
-pub mod models;
-pub mod page;
-pub mod step;
+mod models;
+mod page;
+mod step;
 
 pub use controller::DeliberationNewStep;
 pub use layout::*;

@@ -104,6 +104,14 @@ impl Controller {
         self.page.set(page);
     }
 
+    pub fn get_x(&self) -> f64 {
+        self.mouse_pos.with(|v| v.0 - 239.0)
+    }
+
+    pub fn get_y(&self) -> f64 {
+        self.mouse_pos.with(|v| v.1 + 20.0)
+    }
+
     pub fn total_pages(&self) -> usize {
         let size = self.size;
         self.deliberations.with(|v| {
@@ -119,17 +127,14 @@ impl Controller {
         }) as usize
     }
 
-    pub fn get_deliberations(&self) -> Vec<DeliberationSummary> {
-        self.deliberations.with(|v| match v {
-            Some(v) => v.clone().items,
-            None => vec![],
-        })
-    }
-
     pub fn handle_click_menu(&mut self, id: i64, e: MouseEvent) {
         self.context_menu.set(true);
         self.selected_id.set(id);
-        let rect = e.client_coordinates();
+        let rect = e.page_coordinates();
         self.mouse_pos.set((rect.x, rect.y));
+    }
+
+    pub fn handle_edit(&mut self) {
+        self.context_menu.set(false);
     }
 }

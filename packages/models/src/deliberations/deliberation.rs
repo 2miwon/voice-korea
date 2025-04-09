@@ -138,3 +138,60 @@ pub enum DeliberationStatus {
     #[translate(ko = "마감", en = "Finish")]
     Finish = 3,
 }
+
+// impl Into<DeliberationCreateRequest> for Deliberation {
+//     fn into(self) -> DeliberationCreateRequest {
+//         DeliberationCreateRequest {
+//             title: self.title,
+//             description: self.description,
+//             project_area: self.project_area,
+//             project_areas: self.project_areas,
+//             started_at: self.started_at,
+//             ended_at: self.ended_at,
+//             thumbnail_image: self.thumbnail_image,
+//             steps: self.steps.into_iter().map(|step| step.into()).collect(),
+//             members: self
+//                 .members
+//                 .into_iter()
+//                 .map(|member| member.into())
+//                 .collect(),
+//             resources: self
+//                 .resources
+//                 .into_iter()
+//                 .map(|resource| resource.into())
+//                 .collect(),
+//             surveys: self
+//                 .surveys
+//                 .into_iter()
+//                 .map(|survey| survey.into())
+//                 .collect(),
+//             resource_ids: self
+//                 .resources
+//                 .into_iter()
+//                 .map(|resource| resource.id)
+//                 .collect(),
+//             survey_ids: self.surveys.into_iter().map(|survey| survey.id).collect(),
+//             roles: self
+//                 .members
+//                 .into_iter()
+//                 .map(|member| member.into())
+//                 .collect(),
+//             panel_ids: self.panels.into_iter().map(|panel| panel.id).collect(),
+//             basic_infos: self
+//                 .basic_infos
+//                 .into_iter()
+//                 .map(|basic_info| basic_info.into())
+//                 .collect(),
+//             sample_surveys: self
+//                 .sample_surveys
+//                 .into_iter()
+//                 .map(|sample_survey| sample_survey.into())
+//                 .collect(),
+//             contents: self
+//                 .contents
+//                 .into_iter()
+//                 .map(|content| content.into())
+//                 .collect(),
+//         }
+//     }
+// }

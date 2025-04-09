@@ -20,7 +20,7 @@ use models::ProjectArea;
 
 // TODO: implement setting deliberation
 #[component]
-pub fn DeliberationNewPage(lang: Language) -> Element {
+pub fn DeliberationNewPage(lang: Language, deliberation_id: Option<i64>) -> Element {
     let api: MetadataApi = use_context();
     let tr: SettingDeliberationTranslate = translate(&lang);
     let nav = use_navigator();
