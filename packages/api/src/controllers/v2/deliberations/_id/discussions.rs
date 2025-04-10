@@ -410,6 +410,7 @@ mod discussion_tests {
                 format!("test deliberation {now}"),
                 "test description".to_string(),
                 ProjectArea::City,
+                DeliberationStatus::Ready,
                 vec![],
                 vec![],
                 vec![],

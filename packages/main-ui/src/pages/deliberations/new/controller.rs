@@ -1,6 +1,6 @@
 use bdk::prelude::*;
 use by_macros::DioxusController;
-use models::{deliberation_user::DeliberationUserCreateRequest, *};
+use models::{deliberation_user::DeliberationUserCreateRequest, DeliberationStatus, *};
 
 use crate::{
     config,
@@ -245,6 +245,22 @@ impl Controller {
     }
 
     pub async fn temporary_save(&mut self) {
+        let cli = Deliberation::get_client(config::get().api_url);
+
+        let org = self.user.get_selected_org();
+        if org.is_none() {
+            btracing::e!(self.lang, ApiError::OrganizationNotFound);
+            return;
+        }
+
+        let org_id = org.unwrap().id;
+        let creator_id = if let Some(user_id) = self.user.get_user_id() {
+            user_id
+        } else {
+            btracing::e!(self.lang, ApiError::Unauthorized);
+            return;
+        };
+
         let DeliberationCreateRequest {
             started_at,
             ended_at,
@@ -265,50 +281,74 @@ impl Controller {
             deliberation_discussions,
             final_surveys,
             drafts,
+            ..
         } = self.deliberation_requests();
-        let org = self.user.get_selected_org();
-        if org.is_none() {
-            btracing::e!(self.lang, ApiError::OrganizationNotFound);
-            return;
-        }
 
-        let org_id = org.unwrap().id;
-
-        // FIXME: update if deliberation_id is not None
-        //        And also set deliberation_id after temporary save.
-        match Deliberation::get_client(config::get().api_url)
-            .create(
-                org_id,
-                started_at,
-                ended_at,
-                thumbnail_image,
-                title,
-                description,
-                project_area,
-                project_areas,
-                resource_ids,
-                survey_ids,
-                roles,
-                panel_ids,
-                steps,
-                elearning,
-                basic_infos,
-                sample_surveys,
-                contents,
-                deliberation_discussions,
-                final_surveys,
-                drafts,
-            )
-            .await
-        {
+        match cli.get_draft(org_id, creator_id).await {
             Ok(d) => {
-                btracing::i!(self.lang, Info::TempSave);
-                self.deliberation_id.set(Some(d.id));
-            }
-            Err(e) => btracing::e!(self.lang, e),
-        }
+                let update_request = DeliberationRepositoryUpdateRequest {
+                    org_id: Some(org_id),
+                    started_at: Some(started_at),
+                    ended_at: Some(ended_at),
+                    thumbnail_image: Some(thumbnail_image),
+                    title: Some(title),
+                    description: Some(description),
+                    project_area: Some(project_area),
+                    status: Some(DeliberationStatus::Draft),
+                    creator_id: Some(creator_id),
+                };
 
-        // TODO: update deliberation_areas in DB
+                // TODO: update the following fields
+                // match cli.update(d.id, update_request).await {
+                //     Ok(_) => {
+                //         btracing::i!(self.lang, Info::TempSave);
+                //         self.deliberation_id.set(Some(d.id));
+                //     }
+                //     Err(e) => {
+                //         btracing::e!(self.lang, e);
+                //     }
+                // }
+
+                // TODO: update sub structures
+            }
+            Err(e) => {
+                match cli
+                    .create(
+                        org_id,
+                        started_at,
+                        ended_at,
+                        thumbnail_image,
+                        title,
+                        description,
+                        project_area,
+                        DeliberationStatus::Draft,
+                        creator_id,
+                        project_areas,
+                        resource_ids,
+                        survey_ids,
+                        roles,
+                        panel_ids,
+                        steps,
+                        elearning,
+                        basic_infos,
+                        sample_surveys,
+                        contents,
+                        deliberation_discussions,
+                        final_surveys,
+                        drafts,
+                    )
+                    .await
+                {
+                    Ok(d) => {
+                        btracing::i!(self.lang, Info::TempSave);
+                        self.deliberation_id.set(Some(d.id));
+                    }
+                    Err(e) => btracing::e!(self.lang, e),
+                }
+
+                // TODO: update deliberation_areas in DB
+            }
+        }
     }
 }
 

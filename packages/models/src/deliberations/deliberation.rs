@@ -122,15 +122,20 @@ pub struct Deliberation {
     #[serde(default)]
     pub project_area: ProjectArea,
 
-    #[api_model(summary, type = INTEGER, version = v0.1)]
+    #[api_model(summary, type = INTEGER, action = create, version = v0.2)]
     #[serde(default)]
     pub status: DeliberationStatus,
+
+    #[api_model(summary, many_to_one = users, action = create, read_action = get_draft)]
+    pub creator_id: i64,
 }
 
 #[derive(Clone, Copy, Translate, PartialEq, Default, Debug, ApiModel)]
 #[cfg_attr(feature = "server", derive(JsonSchema, aide::OperationIo))]
 pub enum DeliberationStatus {
     #[default]
+    #[translate(ko = "초안", en = "Draft")]
+    Draft = 0,
     #[translate(ko = "준비", en = "Ready")]
     Ready = 1,
     #[translate(ko = "진행", en = "InProgress")]
@@ -200,6 +205,8 @@ impl Into<DeliberationCreateRequest> for Deliberation {
                 .into_iter()
                 .map(|resource| resource.id)
                 .collect(),
+            status: self.status,
+            creator_id: self.creator_id,
         }
     }
 }
