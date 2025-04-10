@@ -57,6 +57,8 @@ impl Controller {
         let current_step = route.clone().into();
         let deliberation_requests = use_signal(|| DeliberationCreateRequest::default());
 
+        // TODO: read draft from DB
+
         let ctrl = Self {
             lang,
             user,

@@ -692,17 +692,23 @@ impl DeliberationController {
         Ok(())
     }
 
-    pub async fn get_draft(org_id: i64, user_id: i64) -> Result<Json<Deliberation>> {
+    pub async fn get_draft(&self, org_id: i64, user_id: Option<i64>) -> Result<Deliberation> {
+        if user_id.is_none() {
+            return Err(ApiError::ValidationError("user_id is required".to_string()).into());
+        }
+
+        let user_id = user_id.unwrap();
+
         let deliberation = Deliberation::query_builder()
             .org_id_equals(org_id)
             .status_equals(DeliberationStatus::Draft)
             .creator_id_equals(user_id)
             .query()
             .map(Deliberation::from)
-            .fetch_one(&ctrl.pool)
+            .fetch_one(&self.pool)
             .await?;
 
-        Ok(Json(deliberation))
+        Ok(deliberation)
     }
 }
 
