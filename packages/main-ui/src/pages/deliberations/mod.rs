@@ -1,4 +1,10 @@
-pub mod controller;
-pub mod i18n;
-pub mod new;
-pub mod page;
+mod controller;
+mod i18n;
+mod new;
+mod page;
+
+mod _id;
+
+pub use _id::*;
+pub use new::*;
+pub use page::*;

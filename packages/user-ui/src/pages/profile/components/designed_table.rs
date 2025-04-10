@@ -30,7 +30,7 @@ pub fn TableRow(lang: Language, project: Deliberation, user_id: i64) -> Element 
 
     let number_of_participation = project.response_count.to_formatted_string(&Locale::ko);
     let prev_time = format_prev_time(project.updated_at);
-    let status = project.status();
+    let status = project.status;
 
     let icon = match status {
         DeliberationStatus::Ready => rsx! {
