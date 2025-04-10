@@ -32,9 +32,11 @@ pub struct DeliberationProject {
     pub votes: i64,
 
     #[api_model(summary, type = INTEGER)]
+    #[serde(default)]
     pub status: DeliberationStatus,
 
     #[api_model(summary)]
+    #[serde(default)]
     pub thumbnail_image: String,
 }
 

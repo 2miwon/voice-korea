@@ -5,10 +5,8 @@ use dioxus_translate::{translate, Language};
 use models::{DeliberationSampleSurveySummary, Tab};
 
 use crate::{
-    components::icons::{
-        right_arrow::RightArrow,
-        triangle::{TriangleDown, TriangleUp},
-    },
+    components::icons::right_arrow::RightArrow,
+    pages::projects::_id::components::{accordion::Accordion, rich_text_viewer::RichTextViewer},
     utils::time::{current_timestamp, formatted_timestamp},
 };
 
@@ -27,7 +25,6 @@ pub fn SampleSurveyInfo(
     onchange: EventHandler<SurveyStep>,
 ) -> Element {
     let tab_title: &str = Tab::SampleSurvey.translate(&lang);
-    let mut clicked1 = use_signal(|| true);
     let status = get_survey_status(start_date, end_date);
     let tr: SampleSurveyTranslate = translate(&lang);
 
@@ -65,44 +62,31 @@ pub fn SampleSurveyInfo(
                 div {
                     style: if survey_completed { "display: none;" } else { "" },
                     class: "flex flex-col gap-10",
-
                     // introduction section
-                    div { class: "w-full flex flex-col rounded-lg bg-white justify-start items-center py-14 px-20",
-                        div {
-                            class: "w-full flex justify-start items-center text-base font-bold cursor-pointer",
-                            onclick: move |_| {
-                                clicked1.set(!clicked1());
-                            },
-                            div { class: "w-full flex flex-row justify-between items-center",
-                                span { "{tr.title}" }
-                                if clicked1() {
-                                    TriangleUp {}
-                                } else {
-                                    TriangleDown {}
-                                }
-                            }
+
+                    Accordion { title: tr.title, default_open: true,
+                        div { class: "w-full justify-start mt-15 mb-20 font-bold text-lg",
+                            "{title}"
                         }
-                        if clicked1() {
-                            //line
-                            hr { class: "w-full h-1 mt-12 mb-12 border-line-gray" }
-                            div { class: "w-full justify-start mt-15 mb-20 font-bold text-lg",
-                                "{title}"
-                            }
-                            div { class: "w-full flex justify-start text-[15px]", "{description}" }
-                            div { class: "w-full mt-20 flex flex-row justify-start gap-40",
-                                for member in sample_survey.members {
-                                    div { class: "flex flex-row justify-start gap-8",
-                                        img { class: "w-40 h-40 bg-profile-gray rounded-full" }
-                                        div { class: "flex flex-col justify-start",
-                                            p { class: "font-semibold text-[15px] justify-start",
-                                                {member.role.translate(&lang)}
-                                            }
+                        RichTextViewer {
+                            class: "w-full flex justify-start text-[15px]",
+                            contenteditable: false,
+                            html: description,
+                        }
+                        div { class: "w-full mt-20 flex flex-row justify-start gap-40",
+                            for member in sample_survey.members {
+                                div { class: "flex flex-row justify-start gap-8",
+                                    img { class: "w-40 h-40 bg-profile-gray rounded-full" }
+                                    div { class: "flex flex-col justify-start",
+                                        p { class: "font-semibold text-[15px] justify-start",
+                                            {member.role.translate(&lang)}
                                         }
                                     }
                                 }
                             }
                         }
                     }
+                
                 }
 
                 // information section when survey completed

@@ -1,8 +1,9 @@
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_translate::{translate, Language};
-use models::{deliberation_project::DeliberationProject, DeliberationStatus, Tab};
+use models::{deliberation_project::DeliberationProject, DeliberationStatus};
 
+use super::i18n::HeaderTranslate;
 use crate::{
     components::{
         icons::{
@@ -10,9 +11,10 @@ use crate::{
         },
         label::Label,
     },
-    pages::projects::_id::components::i18n::HeaderTranslate,
     utils::time::formatted_timestamp,
 };
+
+use super::super::super::page::Tab;
 
 #[component]
 pub fn ProjectHeader(
@@ -21,8 +23,7 @@ pub fn ProjectHeader(
     active_tab: Signal<Tab>,
 ) -> Element {
     let tr: HeaderTranslate = translate(&lang);
-    let mut set_active_tab = move |value: Tab| active_tab.set(value);
-    let active_tab_value = active_tab.read();
+
     tracing::debug!("active_tab_value: {:?}", deliberation);
     let started_at = formatted_timestamp(lang, deliberation.started_at);
     let ended_at = formatted_timestamp(lang, deliberation.ended_at);
@@ -103,23 +104,21 @@ pub fn ProjectHeader(
         }
         //menu
         div { class: "flex flex-col w-full justify-center items-center bg-box-gray whitespace-nowrap",
-            div { class: "flex flex-col max-w-1300 w-full",
-
+            div { class: "flex flex-col w-full",
                 // Tab menu
-                div { class: "w-full h-42 flex flex-row justify-between items-center overflow-x-auto max-[1300px]:no-scrollbar",
-                    for tab in Tab::all() {
-                        div { class: "flex flex-col items-center min-w-160",
-                            div {
-                                class: "w-160 h-40 flex justify-center items-center font-md text-[15px] cursor-pointer",
-                                class: if *active_tab_value == tab { " font-semibold" } else { "text-text-black" },
-                                onclick: move |_| set_active_tab(tab),
-                                p { {tab.translate(&lang)} }
-                            }
-                            div { class: if *active_tab_value == tab { "w-full h-2 bg-button-primary" } else { "w-full h-2 bg-transparent" } }
+                div { class: "group w-full flex flex-row justify-between gap-10 items-center overflow-x-auto max-[1300px]:no-scrollbar [&>:last-child]:hidden",
+                    for tab in Tab::VARIANTS.iter() {
+                        div {
+                            class: format!(
+                                "flex flex-col items-center flex-1 border-b-2 cursor-pointer {}",
+                                if active_tab() == *tab { "border-button-primary" } else { "border-transparent" },
+                            ),
+                            onclick: move |_| {
+                                active_tab.set(*tab);
+                            },
+                            p { class: "font-md text-[15px]/22 py-10", {tab.translate(&lang)} }
                         }
-                        if tab != Tab::FinalDraft {
-                            RightArrow { color: "#B4B4B4" }
-                        }
+                        RightArrow { color: "#B4B4B4" }
                     }
                 }
 

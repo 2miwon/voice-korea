@@ -35,7 +35,6 @@ pub fn SampleSurvey(
     lang: Language,
     project_id: ReadOnlySignal<i64>,
     #[props(extends = GlobalAttributes)] attributes: Vec<Attribute>,
-    children: Element,
 ) -> Element {
     let mut ctrl = Controller::new(lang, project_id)?;
     let survey = ctrl.sample_survey()?;

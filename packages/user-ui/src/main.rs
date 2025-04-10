@@ -9,6 +9,7 @@ pub mod service {
 }
 
 pub mod utils {
+    pub mod download;
     pub mod time;
 }
 

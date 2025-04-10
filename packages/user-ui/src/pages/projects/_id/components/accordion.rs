@@ -16,6 +16,8 @@ pub fn Accordion(
         div {
             class: "w-full flex flex-col rounded-lg bg-white justify-start items-center py-14 px-20 {class}",
             ..attributes,
+
+
             div {
                 class: "w-full flex justify-between items-center text-base font-bold cursor-pointer",
                 onclick: move |_| {
@@ -24,13 +26,14 @@ pub fn Accordion(
                 },
                 span { {title} }
                 if expand() {
-                    TriangleDown {}
-                } else {
                     TriangleUp {}
+                } else {
+                    TriangleDown {}
                 }
             }
 
             if expand() {
+                hr { class: "w-full h-1 mt-12 mb-12 border-line-gray" }
                 {children}
             }
         

@@ -3,10 +3,10 @@ mod i18n;
 
 use bdk::prelude::*;
 use by_components::icons::upload_download::Download2;
-use dioxus::document::Style;
 
 use crate::{
-    pages::projects::_id::components::accordion::Accordion, utils::time::formatted_timestamp,
+    pages::projects::_id::components::{accordion::Accordion, rich_text_viewer::RichTextViewer},
+    utils::time::formatted_timestamp,
 };
 use models::tab::Tab;
 
@@ -47,18 +47,15 @@ pub fn BasicInfo(
             // information section
             div { class: "flex flex-col gap-10",
                 Accordion { title: tr.main_title, default_open: true,
-                    hr { class: "w-full h-1 mt-12 mb-12 border-line-gray" }
                     div { class: "w-full justify-start mt-15 mb-20 font-bold text-lg",
                         "{basic_info.title}"
                     }
-                    Style { href: "https://cdn.jsdelivr.net/npm/quill@2.0.0-dev.4/dist/quill.snow.css" }
-                    div {
-                        class: "w-full flex justify-start text-[15px] ql-editor",
+                    RichTextViewer {
+                        class: "w-full flex justify-start text-[15px]",
                         contenteditable: false,
-                        dangerous_inner_html: format!("{}", basic_info.description.replace("\n", "<br>")),
-                    
-                    // "{basic_info.description}"
+                        html: basic_info.description,
                     }
+
                     div { class: "w-full mt-20 flex flex-row justify-start gap-40",
                         for member in basic_info.members {
                             div { class: "flex flex-row justify-start gap-8",
