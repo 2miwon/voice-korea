@@ -23,9 +23,12 @@ pub fn ParticipantDistributeTable(
 ) -> Element {
     let tr: ParticipantDistributeTableTranslate = translate(&lang);
     let mut attribute_groups = use_signal(|| vec![]);
-
-    let mut total_page = use_signal(|| 1);
     let mut current_page = use_signal(|| 1);
+
+    let total_page = use_memo(move || {
+        let total = attribute_groups().len().max(1);
+        (total - 1) / 7 + 1
+    });
 
     use_effect(use_reactive(&(attribute_options, selected_attributes), {
         move |(attribute_options, selected_attributes)| {
@@ -35,24 +38,27 @@ pub fn ParticipantDistributeTable(
                 .flat_map(|(_, groups)| groups.clone())
                 .collect::<Vec<AttributeGroupInfo>>();
 
-            attribute_groups.set(new_groups.clone());
-
-            let totals = new_groups.len().max(1);
-            total_page.set((totals - 1) / 7 + 1);
+            attribute_groups.set(new_groups);
+            current_page.set(1);
         }
     }));
 
     let groups = attribute_groups();
+    let total_len = groups.len();
     let page = current_page();
     let start_index = (page - 1) * 7;
-    let end_index = (start_index + 7).min(groups.len());
 
-    let paginated_groups: Vec<(usize, AttributeGroupInfo)> = groups[start_index..end_index]
-        .iter()
-        .cloned()
-        .enumerate()
-        .map(|(i, group)| (start_index + i, group))
-        .collect();
+    let paginated_groups: Vec<(usize, AttributeGroupInfo)> = if start_index >= total_len {
+        vec![]
+    } else {
+        let end_index = (start_index + 7).min(total_len);
+        groups[start_index..end_index]
+            .iter()
+            .cloned()
+            .enumerate()
+            .map(|(i, group)| (start_index + i, group))
+            .collect()
+    };
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start gap-20",
@@ -124,6 +130,8 @@ pub fn ParticipantDistributeTable(
                                         move |e: Event<FormData>| {
                                             if let Ok(v) = e.value().parse::<i64>() {
                                                 update_attribute_rate.call((name.clone(), attribute.clone(), v));
+                                            } else {
+                                                btracing::error!("{}", tr.number_format_error);
                                             }
                                         }
                                     },
@@ -174,6 +182,11 @@ pub fn AttributeLabel(label: String) -> Element {
 
 translate! {
     ParticipantDistributeTableTranslate;
+
+    number_format_error: {
+        ko: "오직 숫자만 입력 가능합니다.",
+        en: "Only numbers can be entered."
+    }
 
     personnel_distribution: {
         ko: "인원 분배",

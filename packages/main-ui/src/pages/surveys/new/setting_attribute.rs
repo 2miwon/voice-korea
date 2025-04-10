@@ -6,7 +6,10 @@ use dioxus_translate::{translate, Language};
 use crate::{
     components::{close_label::CloseLabel, icons::Remove},
     pages::surveys::{
-        components::participant_distribute_table::ParticipantDistributeTable,
+        components::{
+            combination_table::CombinationTable,
+            participant_distribute_table::ParticipantDistributeTable,
+        },
         new::i18n::SettingAttributeTranslate,
     },
 };
@@ -14,7 +17,7 @@ use crate::{
 #[cfg(feature = "web")]
 use crate::components::outside_hook::eventhook::use_outside_click;
 
-use super::controller::AttributeGroupInfo;
+use super::controller::{AttributeCombination, AttributeGroupInfo};
 
 #[component]
 pub fn SettingAttribute(
@@ -27,16 +30,23 @@ pub fn SettingAttribute(
     selected_attributes: Vec<String>,
     selected_tab: bool,
 
+    total_counts: i64,
+    attribute_combinations: Vec<AttributeCombination>,
+    combination_error: bool,
+
+    clicked_complete_button: EventHandler<MouseEvent>,
+    set_total_counts: EventHandler<i64>,
     change_selected_tab: EventHandler<bool>,
     add_selected_attribute: EventHandler<String>,
     remove_selected_attribute: EventHandler<usize>,
     clear_selected_attributes: EventHandler<MouseEvent>,
     remove_attribute_option: EventHandler<(String, String)>,
     update_attribute_rate: EventHandler<(String, String, i64)>,
+    change_attribute_combination_value: EventHandler<(usize, usize)>,
+
+    onback: EventHandler<MouseEvent>,
 ) -> Element {
     let tr: SettingAttributeTranslate = translate(&lang);
-
-    let mut max_value = use_signal(|| 0);
 
     rsx! {
         div {
@@ -74,10 +84,10 @@ pub fn SettingAttribute(
                                     r#type: "number",
                                     class: "text-right flex flex-row w-215 rounded-10 p-15 placeholder-hint-gray bg-background-gray text-text-black focus:outline-none focus:border focus:border-focus",
                                     placeholder: tr.total_people_hint,
-                                    value: max_value(),
+                                    value: total_counts,
                                     oninput: move |e| {
                                         if let Ok(v) = e.value().parse::<i64>() {
-                                            max_value.set(v);
+                                            set_total_counts.call(v);
                                         }
                                     },
                                 }
@@ -118,6 +128,31 @@ pub fn SettingAttribute(
                             remove_attribute_option,
                             update_attribute_rate,
                         }
+                    }
+                }
+
+                CombinationTable {
+                    lang,
+                    combination_error,
+                    attribute_combinations,
+                    change_attribute_combination_value,
+                }
+
+                div { class: "flex flex-row w-full justify-end items-center gap-20 text-white mt-30",
+                    button {
+                        class: "cursor-pointer px-20 py-10 border-label-border-gray bg-white border-1 !text-davy-gray font-semibold text-sm rounded-sm",
+                        onclick: move |e| {
+                            onback.call(e);
+                        },
+                        {tr.back}
+                    }
+
+                    button {
+                        class: "cursor-pointer px-20 py-10 bg-hover font-semibold text-sm rounded-sm",
+                        onclick: move |e: Event<MouseData>| {
+                            clicked_complete_button.call(e);
+                        },
+                        {tr.complete}
                     }
                 }
             }
@@ -213,48 +248,4 @@ pub fn Dropdown(
             }
         }
     }
-}
-
-pub fn generate_combinations(
-    selected: Vec<String>,
-    options: &HashMap<String, Vec<AttributeGroupInfo>>,
-) -> Vec<Vec<AttributeGroupInfo>> {
-    let selected_values: Vec<Vec<AttributeGroupInfo>> = selected
-        .iter()
-        .filter_map(|key| options.get(key))
-        .cloned()
-        .collect();
-
-    if selected_values.is_empty() {
-        return vec![];
-    }
-
-    let initial: Vec<Vec<AttributeGroupInfo>> =
-        selected_values[0].iter().map(|x| vec![x.clone()]).collect();
-
-    let combinations = helper(initial, &selected_values[1..]);
-
-    tracing::debug!("combinations: {:?}", combinations);
-
-    combinations
-}
-
-pub fn helper(
-    acc: Vec<Vec<AttributeGroupInfo>>,
-    rest: &[Vec<AttributeGroupInfo>],
-) -> Vec<Vec<AttributeGroupInfo>> {
-    if rest.is_empty() {
-        return acc;
-    }
-
-    let mut result = vec![];
-    for a in &acc {
-        for r in &rest[0] {
-            let mut new_comb = a.clone();
-            new_comb.push(r.clone());
-            result.push(new_comb);
-        }
-    }
-
-    helper(result, &rest[1..])
 }

@@ -1,4 +1,6 @@
+pub mod combination_table;
 pub mod create_panel_modal;
+pub mod error_box;
 pub mod introduction;
 pub mod participant_distribute_table;
 pub mod setting;

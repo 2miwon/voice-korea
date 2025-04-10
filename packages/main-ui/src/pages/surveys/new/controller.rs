@@ -36,6 +36,14 @@ pub struct AttributeGroupInfo {
     pub rate: i64,
 }
 
+//FIXME: fix location to model directory
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Default)]
+pub struct AttributeCombination {
+    pub group: Vec<AttributeGroupInfo>,
+    pub total_rate: i64,
+    pub total_count: usize,
+}
+
 #[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     nav: Navigator,
@@ -60,6 +68,11 @@ pub struct Controller {
     attribute_options: Signal<HashMap<String, Vec<AttributeGroupInfo>>>,
     selected_attributes: Signal<Vec<String>>,
     selected_tab: Signal<bool>,
+    total_counts: Signal<i64>,
+
+    combination_error: Signal<bool>,
+
+    attribute_combinations: Signal<Vec<AttributeCombination>>,
 }
 
 impl Controller {
@@ -155,7 +168,12 @@ impl Controller {
 
             attribute_options: use_signal(|| attribute_options),
             selected_attributes: use_signal(|| vec![]),
-            selected_tab: use_signal(|| false),
+            selected_tab: use_signal(|| true),
+
+            attribute_combinations: use_signal(|| vec![]),
+            total_counts: use_signal(|| 0),
+
+            combination_error: use_signal(|| false),
         };
 
         let survey_resource: Resource<Option<SurveyV2>> = use_resource({
@@ -200,9 +218,88 @@ impl Controller {
         ctrl
     }
 
+    pub fn set_total_counts(&mut self, total_counts: i64) {
+        self.total_counts.set(total_counts);
+        self.generate_combinations_with_meta();
+    }
+
+    pub fn helper(
+        &self,
+        acc: Vec<Vec<AttributeGroupInfo>>,
+        rest: &[Vec<AttributeGroupInfo>],
+    ) -> Vec<Vec<AttributeGroupInfo>> {
+        if rest.is_empty() {
+            return acc;
+        }
+
+        let mut result = vec![];
+        for a in &acc {
+            for r in &rest[0] {
+                let mut new_comb = a.clone();
+                new_comb.push(r.clone());
+                result.push(new_comb);
+            }
+        }
+
+        self.helper(result, &rest[1..])
+    }
+
+    pub fn generate_combinations_with_meta(&mut self) {
+        let selected_attributes = self.selected_attributes();
+        let options = self.attribute_options();
+
+        let selected_values: Vec<Vec<AttributeGroupInfo>> = selected_attributes
+            .iter()
+            .filter_map(|key| options.get(key))
+            .cloned()
+            .collect();
+
+        if selected_values.is_empty() {
+            return;
+        }
+
+        let initial: Vec<Vec<AttributeGroupInfo>> =
+            selected_values[0].iter().map(|x| vec![x.clone()]).collect();
+
+        let raw_combinations = self.helper(initial, &selected_values[1..]);
+        let total_counts = self.total_counts();
+
+        let mut sum_counts: i64 = 0;
+
+        let mut v: Vec<AttributeCombination> = raw_combinations
+            .into_iter()
+            .map(|group| {
+                let total_rate = (group.iter().map(|v| v.rate as f64 / 100.0).product::<f64>()
+                    * 100.0)
+                    .floor() as i64;
+
+                let total_count: usize =
+                    ((total_counts as f64) * (total_rate as f64 / 100.0)).floor() as usize;
+
+                sum_counts += total_count as i64;
+
+                AttributeCombination {
+                    group,
+                    total_rate,
+                    total_count,
+                }
+            })
+            .collect();
+
+        if (total_counts > sum_counts) && !v.is_empty() {
+            let last_index = v.len() - 1;
+            let last = &mut v[last_index];
+            last.total_count =
+                (last.total_count as usize + (total_counts - sum_counts) as usize) as usize;
+        }
+
+        self.attribute_combinations.set(v);
+    }
+
     pub fn change_selected_tab(&mut self, selected: bool) {
         self.selected_tab.set(selected);
         self.change_rate();
+        self.generate_combinations_with_meta();
     }
 
     pub fn add_selected_attribute(&mut self, attribute: String) {
@@ -211,6 +308,7 @@ impl Controller {
         });
 
         self.change_rate();
+        self.generate_combinations_with_meta();
     }
 
     pub fn remove_selected_attribute(&mut self, index: usize) {
@@ -219,6 +317,7 @@ impl Controller {
         });
 
         self.change_rate();
+        self.generate_combinations_with_meta();
     }
 
     pub fn clear_selected_attributes(&mut self) {
@@ -227,6 +326,7 @@ impl Controller {
         });
 
         self.change_rate();
+        self.generate_combinations_with_meta();
     }
 
     pub fn update_attribute_manual_rate(&mut self) {
@@ -300,6 +400,7 @@ impl Controller {
         }
 
         self.change_rate();
+        self.generate_combinations_with_meta();
     }
 
     pub fn change_rate(&mut self) {
@@ -310,6 +411,12 @@ impl Controller {
         } else {
             self.update_attribute_manual_rate();
         }
+    }
+
+    pub fn change_attribute_combination_value(&mut self, index: usize, total_count: usize) {
+        self.attribute_combinations.with_mut(|combi| {
+            combi[index].total_count = total_count;
+        });
     }
 
     pub fn update_attribute_rate(&mut self, key: String, attribute_name: String, rate: i64) {
@@ -323,6 +430,8 @@ impl Controller {
                 }
             }
         });
+
+        self.generate_combinations_with_meta();
     }
 
     pub fn get_survey_id(&self) -> Option<i64> {
@@ -381,6 +490,24 @@ impl Controller {
         self.selected_panels.set(vec![]);
         self.maximum_panel_count.set(vec![]);
         self.total_panel_members.set(0);
+    }
+
+    pub fn clicked_complete_button(&mut self) {
+        let combi = self.attribute_combinations();
+        let totals = self.total_counts();
+
+        let mut sum = 0;
+        for c in combi {
+            sum += c.total_count as i64;
+        }
+
+        if totals != sum {
+            self.combination_error.set(true);
+            return;
+        }
+
+        self.combination_error.set(false);
+        tracing::debug!("complete button clicked");
     }
 
     pub async fn open_setting_reward_modal(&self, lang: Language, req: PanelRequest) {

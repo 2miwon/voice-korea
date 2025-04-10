@@ -23,6 +23,9 @@ pub fn SurveyCreatePage(lang: Language, survey_id: Option<i64>) -> Element {
     let selected_attributes = ctrl.selected_attributes();
     let selected_tab = ctrl.selected_tab();
 
+    let total_counts = ctrl.total_counts();
+    let attribute_combinations = ctrl.attribute_combinations();
+
     rsx! {
         div { class: "flex flex-col gap-[40px] items-end justify-start mb-[40px]",
             div { class: "flex flex-col w-full h-full justify-start items-start",
@@ -49,9 +52,18 @@ pub fn SurveyCreatePage(lang: Language, survey_id: Option<i64>) -> Element {
                 SettingAttribute {
                     lang,
                     survey_id,
+
+                    attribute_combinations,
+
                     attribute_options,
                     selected_attributes,
                     selected_tab,
+
+                    combination_error: ctrl.combination_error(),
+
+                    clicked_complete_button: move |_| {
+                        ctrl.clicked_complete_button();
+                    },
 
                     change_selected_tab: move |selected: bool| {
                         ctrl.change_selected_tab(selected);
@@ -73,7 +85,17 @@ pub fn SurveyCreatePage(lang: Language, survey_id: Option<i64>) -> Element {
                     update_attribute_rate: move |(key, name, rate): (String, String, i64)| {
                         ctrl.update_attribute_rate(key, name, rate);
                     },
+                    change_attribute_combination_value: move |(index, total_count): (usize, usize)| {
+                        ctrl.change_attribute_combination_value(index, total_count);
+                    },
+
+                    total_counts,
+                    set_total_counts: move |total_counts: i64| {
+                        ctrl.set_total_counts(total_counts);
+                    },
+
                     visibility: ctrl.get_current_step() == CurrentStep::SettingPanel,
+                    onback: move |_| ctrl.change_step(CurrentStep::CreateSurvey),
                 }
                         // SettingPanel {
             //     lang,

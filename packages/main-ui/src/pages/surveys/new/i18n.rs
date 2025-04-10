@@ -188,6 +188,15 @@ translate! {
         ko: "나이",
         en: "Age"
     }
+
+    back: {
+        ko: "뒤로",
+        en: "Bacl"
+    }
+    complete: {
+        ko: "완료",
+        en: "Complete"
+    }
 }
 
 translate! {
