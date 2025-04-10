@@ -2,7 +2,9 @@ use bdk::prelude::*;
 
 use crate::{
     components::{icons::Switch, pagination::Pagination},
-    pages::surveys::{components::error_box::ErrorBox, new::controller::AttributeCombination},
+    pages::surveys::{
+        components::error_box::ErrorBox, models::attribute_combination::AttributeCombination,
+    },
 };
 
 #[component]

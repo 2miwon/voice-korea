@@ -7,7 +7,7 @@ use crate::{
         pagination::Pagination,
         radio::RadioButton,
     },
-    pages::surveys::new::controller::AttributeGroupInfo,
+    pages::surveys::models::attribute_group_info::AttributeGroupInfo,
 };
 
 #[component]

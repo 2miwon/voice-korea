@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
 use crate::pages::surveys::components::setting_reward_modal::SettingRewardModal;
+use crate::pages::surveys::models::attribute_combination::AttributeCombination;
+use crate::pages::surveys::models::attribute_group_info::AttributeGroupInfo;
 use bdk::prelude::btracing;
 use by_macros::DioxusController;
 use dioxus::prelude::*;
@@ -12,7 +14,6 @@ use models::{
     PanelCountsV2, PanelV2, PanelV2Action, PanelV2CreateRequest, PanelV2Query, PanelV2Summary,
     QueryResponse, SurveyV2,
 };
-use serde::{Deserialize, Serialize};
 
 use crate::{
     pages::surveys::{
@@ -27,22 +28,6 @@ use super::{
     setting_panel::PanelRequest,
 };
 use crate::pages::surveys::components::setting_reward_modal::SettingRewardModalTranslate;
-
-//FIXME: fix location to model directory
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Default)]
-pub struct AttributeGroupInfo {
-    pub name: String,
-    pub attribute: String,
-    pub rate: i64,
-}
-
-//FIXME: fix location to model directory
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Default)]
-pub struct AttributeCombination {
-    pub group: Vec<AttributeGroupInfo>,
-    pub total_rate: i64,
-    pub total_count: usize,
-}
 
 #[derive(Clone, Copy, DioxusController)]
 pub struct Controller {

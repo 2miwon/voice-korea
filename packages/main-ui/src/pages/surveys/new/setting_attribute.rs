@@ -10,14 +10,15 @@ use crate::{
             combination_table::CombinationTable,
             participant_distribute_table::ParticipantDistributeTable,
         },
+        models::{
+            attribute_combination::AttributeCombination, attribute_group_info::AttributeGroupInfo,
+        },
         new::i18n::SettingAttributeTranslate,
     },
 };
 
 #[cfg(feature = "web")]
 use crate::components::outside_hook::eventhook::use_outside_click;
-
-use super::controller::{AttributeCombination, AttributeGroupInfo};
 
 #[component]
 pub fn SettingAttribute(
