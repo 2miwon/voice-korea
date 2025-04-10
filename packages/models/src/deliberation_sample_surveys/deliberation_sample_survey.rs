@@ -51,3 +51,23 @@ pub struct DeliberationSampleSurvey {
     #[serde(default)]
     pub responses: Vec<DeliberationResponse>,
 }
+
+impl Into<DeliberationSampleSurveyCreateRequest> for DeliberationSampleSurvey {
+    fn into(self) -> DeliberationSampleSurveyCreateRequest {
+        DeliberationSampleSurveyCreateRequest {
+            users: self.members.into_iter().map(|u| u.user_id).collect(),
+            surveys: self
+                .surveys
+                .into_iter()
+                .map(|s| s.questions)
+                .flatten()
+                .collect(),
+            started_at: self.started_at,
+            ended_at: self.ended_at,
+            title: self.title,
+            description: self.description,
+            estimate_time: self.estimate_time,
+            point: self.point,
+        }
+    }
+}

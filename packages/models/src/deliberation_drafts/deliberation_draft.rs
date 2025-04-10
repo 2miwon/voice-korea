@@ -52,3 +52,17 @@ pub struct DeliberationDraft {
     #[api_model(summary, one_to_many = deliberation_reports, foreign_key = deliberation_id)]
     pub reports: Vec<DeliberationReport>,
 }
+
+impl Into<DeliberationDraftCreateRequest> for DeliberationDraft {
+    fn into(self) -> DeliberationDraftCreateRequest {
+        DeliberationDraftCreateRequest {
+            users: self.members.into_iter().map(|u| u.user_id).collect(),
+            resources: self.resources.into_iter().map(|r| r.id).collect(),
+            surveys: self.surveys.into_iter().map(|s| s.id).collect(),
+            started_at: self.started_at,
+            ended_at: self.ended_at,
+            title: self.title,
+            description: self.description,
+        }
+    }
+}

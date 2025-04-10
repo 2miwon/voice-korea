@@ -61,7 +61,7 @@ pub fn RootLayout(lang: Language) -> Element {
                                 div { class: "w-[20px] h-[20px]",
                                     Logout { width: "20", height: "20" }
                                 }
-                                div { class: "ml-[5px] font-bold text-[#555462] text-[15px]",
+                                div { class: "ml-[5px] font-bold !text-davy-gray text-[15px]",
                                     "{tr.logout}"
                                 }
                             }

@@ -89,25 +89,25 @@ pub fn MemberPage(lang: Language) -> Element {
                 div { class: "flex flex-col w-full justify-start items-start bg-white border rounded-lg border-[#bfc8d9] mb-[30px]",
                     div { class: "flex flex-row w-full h-[55px] justify-start items-center",
                         div { class: "flex flex-row w-[355px] min-w-[355px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translates.name}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row w-[310px] min-w-[310px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translates.group}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row w-[310px] min-w-[310px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translates.role}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row w-full h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translates.project}"
                             }
                         }

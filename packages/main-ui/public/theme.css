@@ -1,7 +1,8 @@
-@theme static {
+@theme {
   /* App-specific colors */
   --spacing: 1px;
   --color-primary: #2a60d3;
+  --color-davy-gray: #555462;
 
   --color-error: #ff0000;
   --color-gray-border: #e0e0e0;
@@ -27,4 +28,5 @@
   --color-header-black: #3a3a3a;
 
   --color-necessary: #eb5757;
+  --color-neutral1: rgba(247, 247, 247, 1);
 }
