@@ -286,17 +286,17 @@ impl Controller {
 
         match cli.get_draft(org_id, creator_id).await {
             Ok(_d) => {
-                let _update_request = DeliberationRepositoryUpdateRequest {
-                    org_id: Some(org_id),
-                    started_at: Some(started_at),
-                    ended_at: Some(ended_at),
-                    thumbnail_image: Some(thumbnail_image),
-                    title: Some(title),
-                    description: Some(description),
-                    project_area: Some(project_area),
-                    status: Some(DeliberationStatus::Draft),
-                    creator_id: Some(creator_id),
-                };
+                // let _update_request = DeliberationRepositoryUpdateRequest {
+                //     org_id: Some(org_id),
+                //     started_at: Some(started_at),
+                //     ended_at: Some(ended_at),
+                //     thumbnail_image: Some(thumbnail_image),
+                //     title: Some(title),
+                //     description: Some(description),
+                //     project_area: Some(project_area),
+                //     status: Some(DeliberationStatus::Draft),
+                //     creator_id: Some(creator_id),
+                // };
 
                 // TODO: update the following fields
                 // match cli.update(d.id, update_request).await {
@@ -311,7 +311,7 @@ impl Controller {
 
                 // TODO: update sub structures
             }
-            Err(e) => {
+            Err(_) => {
                 match cli
                     .create(
                         org_id,
