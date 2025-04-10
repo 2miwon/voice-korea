@@ -1,16 +1,18 @@
+mod controllers;
+mod i18n;
+
+use bdk::prelude::*;
 use by_components::icons::upload_download::Download2;
-use by_macros::*;
-use dioxus::prelude::*;
-use dioxus_translate::*;
-use models::{
-    deliberation_basic_info::DeliberationBasicInfo, DeliberationBasicInfoQuery,
-    DeliberationBasicInfoSummary, Tab,
-};
+use dioxus::document::Style;
 
 use crate::{
-    components::icons::triangle::{TriangleDown, TriangleUp},
-    utils::time::formatted_timestamp,
+    pages::projects::_id::components::accordion::Accordion, utils::time::formatted_timestamp,
 };
+use models::tab::Tab;
+
+use controllers::Controller;
+use i18n::BasicInfoTranslate;
+
 #[component]
 pub fn BasicInfo(
     lang: Language,
@@ -22,7 +24,6 @@ pub fn BasicInfo(
     let basic_info = ctrl.basic_info()?;
 
     let tr: BasicInfoTranslate = translate(&lang);
-    let mut clicked1 = use_signal(|| true);
     let tab_title: &str = Tab::BasicInfo.translate(&lang);
 
     rsx! {
@@ -45,46 +46,33 @@ pub fn BasicInfo(
             }
             // information section
             div { class: "flex flex-col gap-10",
-
-                // introduction section
-                div { class: "w-full flex flex-col rounded-lg bg-white justify-start items-center py-14 px-20",
-                    div {
-                        class: "w-full flex justify-start items-center text-base font-bold cursor-pointer",
-                        onclick: move |_| {
-                            clicked1.set(!clicked1());
-                        },
-                        div { class: "w-full flex flex-row justify-between items-center",
-                            span { "{tr.main_title}" }
-                            if clicked1() {
-                                TriangleUp {}
-                            } else {
-                                TriangleDown {}
-                            }
-                        }
+                Accordion { title: tr.main_title, default_open: true,
+                    hr { class: "w-full h-1 mt-12 mb-12 border-line-gray" }
+                    div { class: "w-full justify-start mt-15 mb-20 font-bold text-lg",
+                        "{basic_info.title}"
                     }
-                    if clicked1() {
-                        //line
-                        hr { class: "w-full h-1 mt-12 mb-12 border-line-gray" }
-                        div { class: "w-full justify-start mt-15 mb-20 font-bold text-lg",
-                            "{basic_info.title}"
-                        }
-                        div { class: "w-full flex justify-start text-[15px]",
-                            "{basic_info.description}"
-                        }
-                        div { class: "w-full mt-20 flex flex-row justify-start gap-40",
-                            for member in basic_info.members {
-                                div { class: "flex flex-row justify-start gap-8",
-                                    img { class: "w-40 h-40 bg-profile-gray rounded-full" }
-                                    div { class: "flex flex-col justify-center",
-                                        p { class: "font-semibold text-[15px] justify-start",
-                                            {member.role.translate(&lang)}
-                                        }
+                    Style { href: "https://cdn.jsdelivr.net/npm/quill@2.0.0-dev.4/dist/quill.snow.css" }
+                    div {
+                        class: "w-full flex justify-start text-[15px] ql-editor",
+                        contenteditable: false,
+                        dangerous_inner_html: format!("{}", basic_info.description.replace("\n", "<br>")),
+                    
+                    // "{basic_info.description}"
+                    }
+                    div { class: "w-full mt-20 flex flex-row justify-start gap-40",
+                        for member in basic_info.members {
+                            div { class: "flex flex-row justify-start gap-8",
+                                img { class: "w-40 h-40 bg-profile-gray rounded-full" }
+                                div { class: "flex flex-col justify-center",
+                                    p { class: "font-semibold text-[15px] justify-start",
+                                        {member.role.translate(&lang)}
                                     }
                                 }
                             }
                         }
                     }
                 }
+
                 //Related Data
                 div { class: "w-full flex flex-col rounded-lg mb-40 bg-white justify-start items-center py-14 px-20",
                     // title and button
@@ -123,92 +111,5 @@ pub fn BasicInfo(
                 }
             }
         }
-    }
-}
-
-#[derive(Debug, Clone, Copy, DioxusController)]
-pub struct Controller {
-    #[allow(dead_code)]
-    lang: Language,
-    #[allow(dead_code)]
-    deliberation_id: ReadOnlySignal<i64>,
-
-    basic_info: Resource<DeliberationBasicInfoSummary>,
-}
-
-impl Controller {
-    pub fn new(
-        lang: Language,
-        deliberation_id: ReadOnlySignal<i64>,
-    ) -> std::result::Result<Self, RenderError> {
-        let basic_info = use_server_future(move || {
-            let deliberation_id = deliberation_id();
-            async move {
-                let res = DeliberationBasicInfo::get_client(&crate::config::get().api_url)
-                    .query(deliberation_id, DeliberationBasicInfoQuery::default())
-                    .await;
-                match res {
-                    Ok(v) => {
-                        if v.total_count == 1 {
-                            v.items[0].clone()
-                        } else {
-                            DeliberationBasicInfoSummary::default()
-                        }
-                    }
-                    _ => DeliberationBasicInfoSummary::default(),
-                }
-            }
-        })?;
-
-        let ctrl = Self {
-            lang,
-            deliberation_id,
-            basic_info,
-        };
-
-        Ok(ctrl)
-    }
-    #[allow(unused)]
-    pub async fn download_file(&self, name: String, url: Option<String>) {
-        if url.is_none() {
-            return;
-        }
-
-        let url = url.unwrap_or_default();
-
-        #[cfg(feature = "web")]
-        {
-            use wasm_bindgen::JsCast;
-
-            let window = web_sys::window().unwrap();
-            let document = window.document().unwrap();
-            let a = document.create_element("a").unwrap();
-            a.set_attribute("href", &url).unwrap();
-            a.set_attribute("download", &name).unwrap();
-
-            document.body().unwrap().append_child(&a).unwrap();
-            let a: web_sys::HtmlElement = a.unchecked_into();
-            a.click();
-            a.remove();
-        }
-    }
-}
-
-translate! {
-    BasicInfoTranslate;
-
-    main_title: {
-        ko: "소개글",
-        en: "Introduction"
-    }
-
-    public_opinion_committee_title: {
-        ko: "공론 위원회",
-        en: "Public opinion committee"
-    }
-
-    related_materials_title: {
-        ko: "관련 자료",
-        en: "Related materials"
     }
 }
