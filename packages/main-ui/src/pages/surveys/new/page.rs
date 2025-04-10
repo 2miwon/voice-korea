@@ -19,7 +19,9 @@ pub fn SurveyCreatePage(lang: Language, survey_id: Option<i64>) -> Element {
     // FIXME: impelement handling with survey_id
     let mut ctrl = Controller::new(lang, survey_id);
 
-    let attribute_options = ctrl.get_attribute_options();
+    let attribute_options = ctrl.attribute_options();
+    let selected_attributes = ctrl.selected_attributes();
+    let selected_tab = ctrl.selected_tab();
 
     rsx! {
         div { class: "flex flex-col gap-[40px] items-end justify-start mb-[40px]",
@@ -48,6 +50,29 @@ pub fn SurveyCreatePage(lang: Language, survey_id: Option<i64>) -> Element {
                     lang,
                     survey_id,
                     attribute_options,
+                    selected_attributes,
+                    selected_tab,
+
+                    change_selected_tab: move |selected: bool| {
+                        ctrl.change_selected_tab(selected);
+                    },
+
+                    add_selected_attribute: move |attribute: String| {
+                        ctrl.add_selected_attribute(attribute);
+                    },
+                    remove_selected_attribute: move |index: usize| {
+                        ctrl.remove_selected_attribute(index);
+                    },
+                    clear_selected_attributes: move |_| {
+                        ctrl.clear_selected_attributes();
+                    },
+
+                    remove_attribute_option: move |(key, name): (String, String)| {
+                        ctrl.remove_attribute_option(key, name);
+                    },
+                    update_attribute_rate: move |(key, name, rate): (String, String, i64)| {
+                        ctrl.update_attribute_rate(key, name, rate);
+                    },
                     visibility: ctrl.get_current_step() == CurrentStep::SettingPanel,
                 }
                         // SettingPanel {

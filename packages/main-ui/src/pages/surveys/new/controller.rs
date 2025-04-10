@@ -2,13 +2,17 @@ use std::collections::HashMap;
 
 use crate::pages::surveys::components::setting_reward_modal::SettingRewardModal;
 use bdk::prelude::btracing;
+use by_macros::DioxusController;
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_translate::{translate, Language};
+use models::attribute_v2::AgeV2;
 use models::{
+    attribute_v2::{GenderV2, RegionV2, SalaryV2},
     PanelCountsV2, PanelV2, PanelV2Action, PanelV2CreateRequest, PanelV2Query, PanelV2Summary,
     QueryResponse, SurveyV2,
 };
+use serde::{Deserialize, Serialize};
 
 use crate::{
     pages::surveys::{
@@ -18,11 +22,21 @@ use crate::{
 };
 
 use super::{
-    create_survey::CreateSurveyResponse, i18n::SurveyNewTranslate, setting_panel::PanelRequest,
+    create_survey::CreateSurveyResponse,
+    i18n::{SettingAttributeTranslate, SurveyNewTranslate},
+    setting_panel::PanelRequest,
 };
 use crate::pages::surveys::components::setting_reward_modal::SettingRewardModalTranslate;
 
-#[derive(Clone, Copy)]
+//FIXME: fix location to model directory
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Default)]
+pub struct AttributeGroupInfo {
+    pub name: String,
+    pub attribute: String,
+    pub rate: i64,
+}
+
+#[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     nav: Navigator,
     user: LoginService,
@@ -43,112 +57,67 @@ pub struct Controller {
 
     survey_id: Signal<Option<i64>>,
 
-    attribute_options: Signal<HashMap<String, Vec<String>>>,
+    attribute_options: Signal<HashMap<String, Vec<AttributeGroupInfo>>>,
+    selected_attributes: Signal<Vec<String>>,
+    selected_tab: Signal<bool>,
 }
 
 impl Controller {
     pub fn new(lang: dioxus_translate::Language, survey_id: Option<i64>) -> Self {
-        let mut attribute_options: HashMap<String, Vec<String>> = HashMap::new();
+        let tr: SettingAttributeTranslate = translate(&lang);
+        let mut attribute_options: HashMap<String, Vec<AttributeGroupInfo>> = HashMap::new();
 
-        attribute_options.insert(
-            "성별".to_string(),
-            vec!["남성".to_string(), "여성".to_string()],
-        );
-        attribute_options.insert(
-            "Gender".to_string(),
-            vec!["male".to_string(), "female".to_string()],
-        );
+        let gender = GenderV2::variants(&lang)
+            .into_iter()
+            .skip(1)
+            .map(|v| AttributeGroupInfo {
+                name: tr.gender.to_string(),
+                attribute: v,
+                rate: 0,
+            })
+            .collect::<Vec<_>>();
+        let region = RegionV2::variants(&lang)
+            .into_iter()
+            .skip(1)
+            .map(|v| AttributeGroupInfo {
+                name: tr.region.to_string(),
+                attribute: v,
+                rate: 0,
+            })
+            .collect::<Vec<_>>();
+        let salary = SalaryV2::variants(&lang)
+            .into_iter()
+            .skip(1)
+            .map(|v| AttributeGroupInfo {
+                name: tr.salary.to_string(),
+                attribute: v,
+                rate: 0,
+            })
+            .collect::<Vec<_>>();
+        let age = vec![
+            AgeV2::Teenager,
+            AgeV2::Twenty,
+            AgeV2::Thirty,
+            AgeV2::Fourty,
+            AgeV2::Fifty,
+            AgeV2::Sixty,
+            AgeV2::Over,
+        ]
+        .iter()
+        .map(|v| AttributeGroupInfo {
+            name: tr.age.to_string(),
+            attribute: v.translate(&lang).to_string(),
+            rate: 0,
+        })
+        .collect();
 
-        attribute_options.insert(
-            "지역".to_string(),
-            vec![
-                "서울".to_string(),
-                "부산".to_string(),
-                "대구".to_string(),
-                "인천".to_string(),
-                "광주".to_string(),
-                "대전".to_string(),
-                "울산".to_string(),
-                "세종".to_string(),
-                "경기".to_string(),
-                "강원".to_string(),
-                "충북".to_string(),
-                "충남".to_string(),
-                "전북".to_string(),
-                "전남".to_string(),
-                "경북".to_string(),
-                "경남".to_string(),
-                "제주".to_string(),
-            ],
-        );
-        attribute_options.insert(
-            "Region".to_string(),
-            vec![
-                "seoul".to_string(),
-                "busan".to_string(),
-                "daegu".to_string(),
-                "incheon".to_string(),
-                "gwangju".to_string(),
-                "daejeon".to_string(),
-                "ulsan".to_string(),
-                "sejong".to_string(),
-                "gyeonggi".to_string(),
-                "gangwon".to_string(),
-                "chungbuk".to_string(),
-                "chungnam".to_string(),
-                "jeonbuk".to_string(),
-                "jeonnam".to_string(),
-                "gyeongbuk".to_string(),
-                "gyeongnam".to_string(),
-                "jeju".to_string(),
-            ],
-        );
+        attribute_options.insert(tr.gender.to_string(), gender);
 
-        attribute_options.insert(
-            "연봉".to_string(),
-            vec![
-                "2400만원 이하".to_string(),
-                "2400만원 ~ 5000만원".to_string(),
-                "5000만원 ~ 8000만원".to_string(),
-                "8000만원 ~ 10000만원".to_string(),
-                "10000만원 이상".to_string(),
-            ],
-        );
-        attribute_options.insert(
-            "Salary".to_string(),
-            vec![
-                "Less than 24 million won".to_string(),
-                "24 million won ~ 50 million won".to_string(),
-                "50 million won ~ 80 million won".to_string(),
-                "80 million won ~ 100 million won".to_string(),
-                "More than 100 million won".to_string(),
-            ],
-        );
+        attribute_options.insert(tr.region.to_string(), region);
 
-        attribute_options.insert(
-            "나이".to_string(),
-            vec![
-                "17세 이하".to_string(),
-                "18~29세".to_string(),
-                "30대".to_string(),
-                "40대".to_string(),
-                "50대".to_string(),
-                "60대".to_string(),
-                "70대 이상".to_string(),
-            ],
-        );
-        attribute_options.insert(
-            "Age".to_string(),
-            vec![
-                "Under 17 years old".to_string(),
-                "18-29 years old".to_string(),
-                "30-39 years old".to_string(),
-                "40-49 years old".to_string(),
-                "50-59 years old".to_string(),
-                "60-69 years old".to_string(),
-                "Over 70s".to_string(),
-            ],
-        );
+        attribute_options.insert(tr.salary.to_string(), salary);
+
+        attribute_options.insert(tr.age.to_string(), age);
 
         let translates: SurveyNewTranslate = translate(&lang);
 
@@ -185,6 +154,8 @@ impl Controller {
             point: use_signal(|| 0),
 
             attribute_options: use_signal(|| attribute_options),
+            selected_attributes: use_signal(|| vec![]),
+            selected_tab: use_signal(|| false),
         };
 
         let survey_resource: Resource<Option<SurveyV2>> = use_resource({
@@ -229,8 +200,129 @@ impl Controller {
         ctrl
     }
 
-    pub fn get_attribute_options(&self) -> HashMap<String, Vec<String>> {
-        (self.attribute_options)()
+    pub fn change_selected_tab(&mut self, selected: bool) {
+        self.selected_tab.set(selected);
+        self.change_rate();
+    }
+
+    pub fn add_selected_attribute(&mut self, attribute: String) {
+        self.selected_attributes.with_mut(|attributes| {
+            attributes.push(attribute);
+        });
+
+        self.change_rate();
+    }
+
+    pub fn remove_selected_attribute(&mut self, index: usize) {
+        self.selected_attributes.with_mut(|attributes| {
+            attributes.remove(index);
+        });
+
+        self.change_rate();
+    }
+
+    pub fn clear_selected_attributes(&mut self) {
+        self.selected_attributes.with_mut(|attributes| {
+            attributes.clear();
+        });
+
+        self.change_rate();
+    }
+
+    pub fn update_attribute_manual_rate(&mut self) {
+        let selected_attributes = self.selected_attributes();
+        let mut attribute_options = self.attribute_options();
+
+        for key in &selected_attributes {
+            if let Some(groups) = attribute_options.get_mut(key) {
+                let len = groups.len();
+                if len == 0 {
+                    continue;
+                }
+
+                for i in 0..len {
+                    groups[i].rate = 0;
+                }
+            }
+        }
+
+        self.attribute_options.set(attribute_options);
+    }
+
+    pub fn update_attribute_equal_rate(&mut self) {
+        let selected_attributes = self.selected_attributes();
+        let mut attribute_options = self.attribute_options();
+
+        for key in &selected_attributes {
+            if let Some(groups) = attribute_options.get_mut(key) {
+                let len = groups.len();
+                if len == 0 {
+                    continue;
+                }
+
+                let d = 100 / len;
+                let m = 100 % len;
+
+                for i in 0..len {
+                    groups[i].rate = if i < len - m {
+                        d as i64
+                    } else {
+                        (d + 1) as i64
+                    };
+                }
+            }
+        }
+
+        self.attribute_options.set(attribute_options);
+    }
+
+    pub fn remove_attribute_option(&mut self, key: String, attribute_name: String) {
+        let mut should_remove_key = false;
+
+        self.attribute_options.with_mut(|options| {
+            if let Some(list) = options.get_mut(&key) {
+                list.retain(|item| item.attribute != attribute_name);
+
+                if list.is_empty() {
+                    should_remove_key = true;
+                }
+            }
+        });
+
+        if should_remove_key {
+            self.selected_attributes.with_mut(|attributes| {
+                attributes.retain(|k| k != &key);
+            });
+
+            self.attribute_options.with_mut(|options| {
+                options.remove(&key);
+            });
+        }
+
+        self.change_rate();
+    }
+
+    pub fn change_rate(&mut self) {
+        let selected = self.selected_tab();
+        if selected {
+            //true: equal, false: manual
+            self.update_attribute_equal_rate();
+        } else {
+            self.update_attribute_manual_rate();
+        }
+    }
+
+    pub fn update_attribute_rate(&mut self, key: String, attribute_name: String, rate: i64) {
+        self.attribute_options.with_mut(|option| {
+            if let Some(list) = option.get_mut(&key) {
+                for group in list.iter_mut() {
+                    if group.attribute == attribute_name {
+                        group.rate = rate;
+                        break;
+                    }
+                }
+            }
+        });
     }
 
     pub fn get_survey_id(&self) -> Option<i64> {
@@ -271,10 +363,6 @@ impl Controller {
 
     pub fn total_panels(&self) -> Vec<PanelV2Summary> {
         (self.panels)()
-    }
-
-    pub fn selected_panels(&self) -> Vec<PanelV2> {
-        (self.selected_panels)()
     }
 
     pub fn maximum_counts(&mut self) -> Vec<u64> {
@@ -373,42 +461,6 @@ impl Controller {
             .with_id("setting reward")
             .with_title(tr.title);
     }
-
-    // pub async fn save_survey(&self, req: PanelRequest) {
-    //     let org = self.user.get_selected_org();
-    //     if org.is_none() {
-    //         tracing::error!("Organization is not selected");
-    //         return;
-    //     }
-
-    //     let survey_request = (self.survey_request)();
-    //     if survey_request.is_none() {
-    //         tracing::error!("Survey request is not created");
-    //         return;
-    //     }
-
-    //     let survey_id = (self.survey_id)();
-
-    //     if survey_id.is_none() {
-    //         self.create_survey(
-    //             org.unwrap().id,
-    //             survey_request,
-    //             req.total_panels,
-    //             req.selected_panels,
-
-    //         )
-    //         .await;
-    //     } else {
-    //         self.update_survey(
-    //             survey_id.unwrap(),
-    //             org.unwrap().id,
-    //             survey_request,
-    //             req.total_panels,
-    //             req.selected_panels,
-    //         )
-    //         .await;
-    //     }
-    // }
 
     pub async fn update_survey(
         &self,

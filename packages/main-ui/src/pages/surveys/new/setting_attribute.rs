@@ -14,6 +14,8 @@ use crate::{
 #[cfg(feature = "web")]
 use crate::components::outside_hook::eventhook::use_outside_click;
 
+use super::controller::AttributeGroupInfo;
+
 #[component]
 pub fn SettingAttribute(
     lang: Language,
@@ -21,12 +23,20 @@ pub fn SettingAttribute(
 
     #[props(extends = GlobalAttributes)] attributes: Vec<Attribute>,
     survey_id: Option<i64>,
-    attribute_options: HashMap<String, Vec<String>>,
+    attribute_options: HashMap<String, Vec<AttributeGroupInfo>>,
+    selected_attributes: Vec<String>,
+    selected_tab: bool,
+
+    change_selected_tab: EventHandler<bool>,
+    add_selected_attribute: EventHandler<String>,
+    remove_selected_attribute: EventHandler<usize>,
+    clear_selected_attributes: EventHandler<MouseEvent>,
+    remove_attribute_option: EventHandler<(String, String)>,
+    update_attribute_rate: EventHandler<(String, String, i64)>,
 ) -> Element {
     let tr: SettingAttributeTranslate = translate(&lang);
 
     let mut max_value = use_signal(|| 0);
-    let mut selected_attributes = use_signal(|| vec![]);
 
     rsx! {
         div {
@@ -53,55 +63,61 @@ pub fn SettingAttribute(
                         }
                     }
 
-                    div { class: "flex flex-row w-full justify-start items-start gap-100",
-                        div { class: "flex flex-row w-fit justify-start items-center gap-20",
-                            div { class: "min-w-130 font-medium text-[15px] text-black leading-18",
-                                "{tr.total_people}"
+                    div { class: "flex flex-col w-full justify-start items-start gap-20",
+                        div { class: "flex flex-row w-full justify-start items-start gap-100",
+                            div { class: "flex flex-row w-fit justify-start items-center gap-20",
+                                div { class: "min-w-130 font-medium text-[15px] text-black leading-18",
+                                    "{tr.total_people}"
+                                }
+
+                                input {
+                                    r#type: "number",
+                                    class: "text-right flex flex-row w-215 rounded-10 p-15 placeholder-hint-gray bg-background-gray text-text-black focus:outline-none focus:border focus:border-focus",
+                                    placeholder: tr.total_people_hint,
+                                    value: max_value(),
+                                    oninput: move |e| {
+                                        if let Ok(v) = e.value().parse::<i64>() {
+                                            max_value.set(v);
+                                        }
+                                    },
+                                }
                             }
 
-                            input {
-                                r#type: "number",
-                                class: "text-right flex flex-row w-215 rounded-10 p-15 placeholder-hint-gray bg-background-gray text-text-black focus:outline-none focus:border focus:border-focus",
-                                placeholder: tr.total_people_hint,
-                                value: max_value(),
-                                oninput: move |e| {
-                                    if let Ok(v) = e.value().parse::<i64>() {
-                                        max_value.set(v);
-                                    }
-                                },
+                            div { class: "flex flex-row w-full justify-start items-center gap-20",
+                                div { class: "min-w-130 font-medium text-[15px] text-black leading-18",
+                                    "{tr.attribute_group}"
+                                }
+
+                                Dropdown {
+                                    id: "attribute_dropdown",
+                                    hint: tr.enter_contents,
+                                    selected_attributes: selected_attributes.clone(),
+                                    options: vec![
+                                        tr.gender.to_string(),
+                                        tr.region.to_string(),
+                                        tr.salary.to_string(),
+                                        tr.age.to_string(),
+                                    ],
+
+                                    add_selected_attribute,
+                                    remove_selected_attribute,
+                                    clear_selected_attributes,
+                                }
                             }
                         }
 
-                        div { class: "flex flex-row w-full justify-start items-center gap-20",
-                            div { class: "min-w-130 font-medium text-[15px] text-black leading-18",
-                                "{tr.attribute_group}"
-                            }
+                        div { class: "flex flex-row w-full h-1 bg-period-border-gray" }
 
-                            Dropdown {
-                                id: "attribute_dropdown",
-                                hint: tr.enter_contents,
-                                selected_attributes: selected_attributes(),
-                                options: vec![
-                                    tr.gender.to_string(),
-                                    tr.region.to_string(),
-                                    tr.salary.to_string(),
-                                    tr.age.to_string(),
-                                ],
-                                onchange: {
-                                    let attribute_options = attribute_options.clone();
-                                    move |options: Vec<String>| {
-                                        selected_attributes.set(options);
-                                        generate_combinations(selected_attributes(), &attribute_options);
-                                    }
-                                },
-                            }
+                        ParticipantDistributeTable {
+                            lang,
+                            attribute_options,
+                            selected_attributes,
+                            selected_tab,
+
+                            change_selected_tab,
+                            remove_attribute_option,
+                            update_attribute_rate,
                         }
-                    }
-
-                    ParticipantDistributeTable {
-                        lang,
-                        attribute_options,
-                        selected_attributes: selected_attributes(),
                     }
                 }
             }
@@ -115,10 +131,12 @@ pub fn Dropdown(
     hint: String,
     selected_attributes: Vec<String>,
     options: Vec<String>,
-    onchange: EventHandler<Vec<String>>,
+
+    add_selected_attribute: EventHandler<String>,
+    remove_selected_attribute: EventHandler<usize>,
+    clear_selected_attributes: EventHandler<MouseEvent>,
 ) -> Element {
     let mut is_focused = use_signal(|| false);
-    let mut selected_option: Signal<Vec<String>> = use_signal(|| selected_attributes);
 
     #[cfg(feature = "web")]
     use_outside_click(&id, move |_| is_focused.set(false));
@@ -134,20 +152,17 @@ pub fn Dropdown(
 
             div { class: "flex flex-row w-full items-center px-15 gap-[10px] justify-between",
 
-                if selected_option().len() != 0 {
+                if selected_attributes.len() != 0 {
                     div {
                         class: "flex flex-wrap flex-1 gap-4",
-                        visibility: if selected_option().len() != 0 { "flex" } else { "hidden" },
-                        for (i , option) in selected_option.iter().enumerate() {
+                        visibility: if selected_attributes.len() != 0 { "flex" } else { "hidden" },
+                        for (i , option) in selected_attributes.clone().iter().enumerate() {
                             CloseLabel {
                                 label: option.clone(),
                                 onremove: move |event: Event<MouseData>| {
                                     event.stop_propagation();
                                     event.prevent_default();
-                                    let mut so = selected_option();
-                                    so.remove(i);
-                                    selected_option.set(so);
-                                    onchange.call(selected_option());
+                                    remove_selected_attribute.call(i);
                                 },
                             }
                         }
@@ -157,8 +172,7 @@ pub fn Dropdown(
                         onclick: move |event: Event<MouseData>| {
                             event.stop_propagation();
                             event.prevent_default();
-                            selected_option.set(vec![]);
-                            onchange.call(selected_option());
+                            clear_selected_attributes.call(event);
                         },
                         Remove { width: "20", height: "20", fill: "#555462" }
                     }
@@ -178,15 +192,14 @@ pub fn Dropdown(
                     div { class: "flex flex-col w-full justify-start items-start",
                         div { class: format!("flex flex-col w-full justify-start items-center bg-white"),
                             for option in options {
-                                if !selected_option().iter().any(|selected| selected.clone() == option) {
+                                if !selected_attributes.iter().any(|selected| selected.clone() == option) {
                                     button {
                                         class: "flex flex-col w-full justify-start items-start px-12 py-20 hover:bg-background-gray hover:border-l-2 hover:border-hover",
                                         onclick: move |event: Event<MouseData>| {
                                             event.stop_propagation();
                                             event.prevent_default();
-                                            selected_option.push(option.clone());
+                                            add_selected_attribute.call(option.clone());
                                             is_focused.set(false);
-                                            onchange.call(selected_option());
                                         },
                                         div { class: "font-bold text-text-black text-[15px] mb-5",
                                             "{option}"
@@ -204,9 +217,9 @@ pub fn Dropdown(
 
 pub fn generate_combinations(
     selected: Vec<String>,
-    options: &HashMap<String, Vec<String>>,
-) -> Vec<String> {
-    let selected_values: Vec<Vec<String>> = selected
+    options: &HashMap<String, Vec<AttributeGroupInfo>>,
+) -> Vec<Vec<AttributeGroupInfo>> {
+    let selected_values: Vec<Vec<AttributeGroupInfo>> = selected
         .iter()
         .filter_map(|key| options.get(key))
         .cloned()
@@ -216,19 +229,20 @@ pub fn generate_combinations(
         return vec![];
     }
 
-    let initial: Vec<Vec<String>> = selected_values[0].iter().map(|x| vec![x.clone()]).collect();
+    let initial: Vec<Vec<AttributeGroupInfo>> =
+        selected_values[0].iter().map(|x| vec![x.clone()]).collect();
 
     let combinations = helper(initial, &selected_values[1..]);
 
     tracing::debug!("combinations: {:?}", combinations);
 
     combinations
-        .into_iter()
-        .map(|combo| combo.join(" / "))
-        .collect()
 }
 
-pub fn helper(acc: Vec<Vec<String>>, rest: &[Vec<String>]) -> Vec<Vec<String>> {
+pub fn helper(
+    acc: Vec<Vec<AttributeGroupInfo>>,
+    rest: &[Vec<AttributeGroupInfo>],
+) -> Vec<Vec<AttributeGroupInfo>> {
     if rest.is_empty() {
         return acc;
     }

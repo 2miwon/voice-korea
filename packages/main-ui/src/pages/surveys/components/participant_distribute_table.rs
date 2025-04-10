@@ -1,100 +1,84 @@
+use bdk::prelude::*;
 use std::collections::HashMap;
 
-use dioxus::prelude::*;
-use dioxus_translate::Language;
-use serde::{Deserialize, Serialize};
-
-use crate::components::{
-    checkbox::Checkbox,
-    icons::{Switch, Trash},
+use crate::{
+    components::{
+        icons::{Switch, Trash},
+        pagination::Pagination,
+        radio::RadioButton,
+    },
+    pages::surveys::new::controller::AttributeGroupInfo,
 };
-
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Default)]
-pub struct AttributeGroupInfo {
-    pub name: String,
-    pub attribute: String,
-    pub rate: i64,
-}
 
 #[component]
 pub fn ParticipantDistributeTable(
     lang: Language,
-    attribute_options: HashMap<String, Vec<String>>,
+    attribute_options: HashMap<String, Vec<AttributeGroupInfo>>,
     selected_attributes: Vec<String>,
+    selected_tab: bool,
+
+    change_selected_tab: EventHandler<bool>,
+    remove_attribute_option: EventHandler<(String, String)>,
+    update_attribute_rate: EventHandler<(String, String, i64)>,
 ) -> Element {
-    let is_initialize = use_signal(|| false);
+    let tr: ParticipantDistributeTableTranslate = translate(&lang);
     let mut attribute_groups = use_signal(|| vec![]);
 
-    use_effect(use_reactive(&selected_attributes, {
-        let options = attribute_options.clone();
+    let mut total_page = use_signal(|| 1);
+    let mut current_page = use_signal(|| 1);
 
-        move |selected_attributes| {
-            let mut new_groups = vec![];
-
-            let selected_values: Vec<Vec<String>> = selected_attributes
+    use_effect(use_reactive(&(attribute_options, selected_attributes), {
+        move |(attribute_options, selected_attributes)| {
+            let new_groups = attribute_options
                 .iter()
-                .filter_map(|key| {
-                    let attributes = options.get(key)?.clone();
-                    let group_name = key.clone();
-                    for attr in &attributes {
-                        new_groups.push(AttributeGroupInfo {
-                            name: group_name.clone(),
-                            attribute: attr.clone(),
-                            rate: 0,
-                        });
-                    }
-                    Some(attributes)
-                })
-                .collect();
+                .filter(|(key, _)| selected_attributes.contains(key))
+                .flat_map(|(_, groups)| groups.clone())
+                .collect::<Vec<AttributeGroupInfo>>();
 
-            let mut ind = 0;
-            for values in selected_values {
-                let len = values.len();
-                let d = 100 / len;
-                let m = 100 % len;
+            attribute_groups.set(new_groups.clone());
 
-                for _ in 0..(len - m) {
-                    new_groups[ind].rate = d as i64;
-                    ind += 1;
-                }
-                for _ in 0..m {
-                    new_groups[ind].rate = (d + 1) as i64;
-                    ind += 1;
-                }
-            }
-
-            attribute_groups.set(new_groups);
-
-            tracing::debug!("attributes: {:?} {:?}", is_initialize, attribute_groups);
+            let totals = new_groups.len().max(1);
+            total_page.set((totals - 1) / 7 + 1);
         }
     }));
 
+    let groups = attribute_groups();
+    let page = current_page();
+    let start_index = (page - 1) * 7;
+    let end_index = (start_index + 7).min(groups.len());
+
+    let paginated_groups: Vec<(usize, AttributeGroupInfo)> = groups[start_index..end_index]
+        .iter()
+        .cloned()
+        .enumerate()
+        .map(|(i, group)| (start_index + i, group))
+        .collect();
+
     rsx! {
-        div { class: "flex flex-col w-full justify-start items-start gap-[20px]",
+        div { class: "flex flex-col w-full justify-start items-start gap-20",
             div { class: "flex flex-row w-full justify-start items-center",
                 div { class: "min-w-150 font-medium text-[15px] text-black leading-18",
-                    "인원 분배"
+                    {tr.personnel_distribution}
                 }
                 div { class: "flex flex-row w-full justify-start items-center gap-50",
                     div { class: "flex flex-row w-fit justify-start items-center",
-                        Checkbox {
-                            id: "evenly",
-                            checked: Some(true),
-                            onchange: move |_| {},
-                        }
-                        div { class: "font-normal text-[15px] text-text-black leading-18",
-                            "균등 분배"
+                        RadioButton {
+                            name: "distribution",
+                            value: tr.equal_distribution,
+                            checked: selected_tab,
+                            onchange: move |_| {
+                                change_selected_tab.call(true);
+                            },
                         }
                     }
-
                     div { class: "flex flex-row w-fit justify-start items-center",
-                        Checkbox {
-                            id: "manual",
-                            checked: Some(false),
-                            onchange: move |_| {},
-                        }
-                        div { class: "font-normal text-[15px] text-text-black leading-18",
-                            "수동 지정"
+                        RadioButton {
+                            name: "distribution",
+                            value: tr.manual_specification,
+                            checked: !selected_tab,
+                            onchange: move |_| {
+                                change_selected_tab.call(false);
+                            },
                         }
                     }
                 }
@@ -103,21 +87,23 @@ pub fn ParticipantDistributeTable(
             div { class: "flex flex-col w-full justify-start items-start border rounded-lg border-label-border-gray",
                 div { class: "flex flex-row w-full min-h-55 justify-start items-center",
                     div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                        div { class: "text-table-text-gray font-semibold text-sm", "속성 그룹" }
+                        div { class: "text-table-text-gray font-semibold text-sm",
+                            {tr.attribute_group}
+                        }
                         Switch { width: "19", height: "19" }
                     }
                     div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                        div { class: "text-table-text-gray font-semibold text-sm", "속성" }
+                        div { class: "text-table-text-gray font-semibold text-sm", {tr.attribute} }
                         Switch { width: "19", height: "19" }
                     }
                     div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                        div { class: "text-table-text-gray font-semibold text-sm", "비율(%)" }
+                        div { class: "text-table-text-gray font-semibold text-sm", {tr.rate} }
                         Switch { width: "19", height: "19" }
                     }
                     div { class: "flex flex-row w-100 h-full justify-center items-center" }
                 }
 
-                for (index , group) in attribute_groups.iter().enumerate() {
+                for (real_index , group) in paginated_groups.clone() {
                     div { class: "flex flex-col w-full justify-start items-start",
                         div { class: "flex flex-row w-full h-1 bg-label-border-gray" }
                         div { class: "flex flex-row w-full min-h-55 h-fit py-5",
@@ -133,15 +119,11 @@ pub fn ParticipantDistributeTable(
                                     class: "flex flex-row w-50 bg-transparent text-text-black focus:outline-none",
                                     value: group.rate,
                                     oninput: {
-                                        let mut attribute_groups = attribute_groups.clone();
+                                        let name = group.name.clone();
+                                        let attribute = group.attribute.clone();
                                         move |e: Event<FormData>| {
                                             if let Ok(v) = e.value().parse::<i64>() {
-                                                attribute_groups
-                                                    .with_mut(|groups| {
-                                                        if let Some(g) = groups.get_mut(index) {
-                                                            g.rate = v;
-                                                        }
-                                                    });
+                                                update_attribute_rate.call((name.clone(), attribute.clone(), v));
                                             }
                                         }
                                     },
@@ -149,10 +131,17 @@ pub fn ParticipantDistributeTable(
                             }
                             div {
                                 class: "cursor-pointer flex flex-row w-100 h-full justify-center items-center",
-                                onclick: move |_| {},
+                                onclick: {
+                                    let name = group.name.clone();
+                                    let attribute = group.attribute.clone();
+                                    move |_| {
+                                        attribute_groups.remove(real_index);
+                                        remove_attribute_option.call((name.clone(), attribute.clone()));
+                                    }
+                                },
                                 div { class: "flex flex-row w-fit h-fit px-8 py-4 border border-delete-border-gray rounded-b-sm gap-5",
                                     div { class: "font-medium text-sm text-table-text-gray leading-22",
-                                        "삭제"
+                                        {tr.remove}
                                     }
                                     Trash { width: "18", height: "18" }
                                 }
@@ -160,6 +149,15 @@ pub fn ParticipantDistributeTable(
                         }
                     }
                 }
+            }
+
+            Pagination {
+                total_page: total_page(),
+                current_page: current_page(),
+                size: 7,
+                onclick: move |page| {
+                    current_page.set(page);
+                },
             }
         }
     }
@@ -171,5 +169,42 @@ pub fn AttributeLabel(label: String) -> Element {
         div { class: "flex flex-row w-fit h-fit px-8 py-3 rounded-sm bg-label-black",
             div { class: "font-semibold text-white text-sm leading-18", {label} }
         }
+    }
+}
+
+translate! {
+    ParticipantDistributeTableTranslate;
+
+    personnel_distribution: {
+        ko: "인원 분배",
+        en: "Personnal Distribution"
+    }
+
+    equal_distribution: {
+        ko: "균등 분배",
+        en: "Equal Distribution"
+    }
+
+    manual_specification: {
+        ko: "수동 지정",
+        en: "Manual Specification"
+    }
+
+    attribute_group: {
+        ko: "속성 그룹",
+        en: "Attribute Group"
+    }
+    attribute: {
+        ko: "속성",
+        en: "Attribute"
+    }
+    rate: {
+        ko: "비율(%)",
+        en: "Rate(%)"
+    }
+
+    remove: {
+        ko: "삭제",
+        en: "Remove"
     }
 }
