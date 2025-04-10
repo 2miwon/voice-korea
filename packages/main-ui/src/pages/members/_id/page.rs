@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use super::controller::{Controller, ProjectHistory, ProjectStatus, ProjectType};
 use super::i18n::MemberDetailTranslate;
 use dioxus::prelude::*;
@@ -246,36 +245,36 @@ pub fn ProfileHistory(
                 div { class: "flex flex-col w-full justify-start items-start bg-white border rounded-lg border-[#bfc8d9] mb-[30px]",
                     div { class: "flex flex-row w-full h-[55px] justify-start items-center",
                         div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{i18n.item}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row w-[200px] min-w-[200px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{i18n.project}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row w-[200px] min-w-[200px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{i18n.role}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row w-[200px] min-w-[200px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{i18n.panel}"
                             }
                         }
                         div { class: "flex flex-row w-[200px] min-w-[200px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{i18n.period}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{i18n.status}"
                             }
                             Switch { width: "19", height: "19" }

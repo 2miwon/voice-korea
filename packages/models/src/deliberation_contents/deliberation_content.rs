@@ -48,3 +48,17 @@ pub struct DeliberationContent {
     #[serde(default)]
     pub resources: Vec<ResourceFile>,
 }
+
+impl Into<DeliberationContentCreateRequest> for DeliberationContent {
+    fn into(self) -> DeliberationContentCreateRequest {
+        DeliberationContentCreateRequest {
+            users: self.members.into_iter().map(|u| u.user_id).collect(),
+            elearnings: self.elearnings.into_iter().map(|e| e.into()).collect(),
+            started_at: self.started_at,
+            ended_at: self.ended_at,
+            title: self.title,
+            description: self.description,
+            questions: self.questions,
+        }
+    }
+}

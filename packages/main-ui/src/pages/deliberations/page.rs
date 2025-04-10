@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use crate::{
     components::{
         icons::{RowOption, Search, Switch},
@@ -10,22 +9,37 @@ use crate::{
 
 use super::controller::Controller;
 use super::i18n::OpinionTranslate;
-use chrono::{NaiveDateTime, NaiveTime, Utc};
 use dioxus::prelude::*;
 use dioxus_translate::{translate, Language};
-use models::dto::deliberation_status::DeliberationStatus;
+use models::DeliberationStatus;
 
 #[component]
 pub fn DeliberationPage(lang: Language) -> Element {
-    let ctrl = Controller::new(lang)?;
+    let mut ctrl = Controller::new(lang)?;
     let translates: OpinionTranslate = translate(&lang);
-    let deliberations = ctrl.get_deliberations();
+    let deliberations = ctrl.deliberations()?.items;
     let mut is_focused = use_signal(|| false);
 
     let mut search_keyword = use_signal(|| "".to_string());
 
     rsx! {
-        div { class: "flex flex-col w-full justify-start items-start",
+        div {
+            class: "hidden aria-opened:!flex flex-col absolute fixed items-center justify-center bg-white w-239 z-50",
+            style: "box-shadow: 0px 8px 20px 0px rgba(20, 26, 62, 0.25); left: {ctrl.get_x()}px; top: {ctrl.get_y()}px;",
+            "aria-opened": ctrl.context_menu(),
+
+            button {
+                class: "w-full px-20 py-15 text-black cursor-pointer hover:!bg-neutral1",
+                onclick: move |_| ctrl.handle_edit(),
+                {translates.edit}
+            }
+        }
+
+        div {
+            class: "flex flex-col w-full justify-start items-start",
+            onclick: move |_| {
+                ctrl.context_menu.set(false);
+            },
             div { class: "text-[#9b9b9b] font-medium text-[14px] mb-[10px]",
                 "{translates.organization_management} / {translates.public_opinion_management}"
             }
@@ -85,7 +99,7 @@ pub fn DeliberationPage(lang: Language) -> Element {
                                 div {
                                     class: "text-white font-semibold text-[16px]",
                                     onclick: move |_| {},
-                                    "{translates.start_public_opinion}"
+                                    {translates.start_public_opinion}
                                 }
                             }
                         }
@@ -96,44 +110,44 @@ pub fn DeliberationPage(lang: Language) -> Element {
                     //header
                     div { class: "flex flex-row w-full h-[55px] justify-start items-center",
                         div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
-                                "{translates.field}"
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
+                                {translates.field}
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
-                                "{translates.project}"
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
+                                {translates.project}
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
-                                "{translates.response_rate}"
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
+                                {translates.response_rate}
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
-                                "{translates.panel}"
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
+                                {translates.panel}
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
-                                "{translates.period}"
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
+                                {translates.period}
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
-                                "{translates.status}"
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
+                                {translates.status}
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
-                                "{translates.view}"
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
+                                {translates.view}
                             }
                         }
                         div { class: "w-[90px] h-full justify-center items-center gap-[10px]" }
@@ -142,19 +156,19 @@ pub fn DeliberationPage(lang: Language) -> Element {
                     //data
                     for deliberation in deliberations {
                         div { class: "flex flex-row w-full min-h-[55px] justify-start items-center",
-                            div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center",
-                                div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "flex flex-row w-120 min-w-120 h-full justify-center items-center",
+                                div { class: "!text-davy-gray font-semibold text-[14px]",
                                     {deliberation.project_area.translate(&lang)}
                                 }
                             }
                             div { class: "flex flex-row flex-1 h-full justify-center items-center",
-                                div { class: "text-[#555462] font-semibold text-[14px]",
-                                    "{deliberation.title}"
+                                div { class: "!text-davy-gray font-semibold text-[14px]",
+                                    {deliberation.title}
                                 }
                             }
                             //FIXME: fix to real response data
                             div { class: "flex flex-row flex-1 h-full justify-center items-center",
-                                div { class: "text-[#555462] font-semibold text-[14px]",
+                                div { class: "!text-davy-gray font-semibold text-[14px]",
                                     "0% (0/0)"
                                 }
                             }
@@ -166,41 +180,43 @@ pub fn DeliberationPage(lang: Language) -> Element {
                             div { class: "flex flex-row flex-1 h-full justify-center items-center",
                                 div { class: "font-semibold text-[14px] text-[#222222] text-center",
                                     {
-                                        format!(
-                                            "{} ~ {}",
-                                            convert_timestamp_to_date(deliberation.started_at),
-                                            convert_timestamp_to_date(deliberation.ended_at),
-                                        )
+                                        if deliberation.started_at > 0 && deliberation.ended_at > 0 {
+                                            format!(
+                                                "{} ~ {}",
+                                                convert_timestamp_to_date(deliberation.started_at),
+                                                convert_timestamp_to_date(deliberation.ended_at),
+                                            )
+                                        } else {
+                                            "".to_string()
+                                        }
                                     }
                                 }
                             }
                             div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center",
                                 div { class: "font-semibold text-[14px] text-[#222222] text-center",
-                                    {
-                                        deliberation_status(deliberation.started_at, deliberation.ended_at)
-                                            .translate(&lang)
-                                    }
+                                    {deliberation.status.translate(&lang)}
                                 }
                             }
                             div { class: "cursor-pointer flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center",
-                                if deliberation_status(deliberation.started_at, deliberation.ended_at)
-                                    == DeliberationStatus::Finish
-                                {
+                                if deliberation.status == DeliberationStatus::Finish {
                                     div { class: "font-semibold text-[14px] text-[#2A60D3] text-center",
-                                        "{translates.view_result}"
+                                        {translates.view_result}
                                     }
                                 } else {
                                     div { class: "font-semibold text-[14px] text-[#2A60D3] text-center",
-                                        "{translates.view_more}"
+                                        {translates.view_more}
                                     }
                                 }
                             }
-                            div { class: "cursor-pointer flex flex-row w-[90px] h-full justify-center items-center",
+                            div {
+                                class: "cursor-pointer flex flex-row w-[90px] h-full justify-center items-center",
+                                onclick: move |evt| ctrl.handle_click_menu(deliberation.id, evt),
                                 RowOption { width: "24", height: "24" }
                             }
                         }
                     }
                 }
+
 
                 Pagination {
                     total_page: if ctrl.size != 0 { ctrl.total_pages() } else { 0 },
@@ -224,20 +240,5 @@ pub fn PanelLabel(label: String) -> Element {
         div { class: "flex flex-row h-[25px] justify-center items-center px-[8px] py-[3px] bg-[#35343f] rounded-[40px] font-semibold text-[14px] text-white",
             {label}
         }
-    }
-}
-
-pub fn deliberation_status(started_at: i64, ended_at: i64) -> DeliberationStatus {
-    let today = Utc::now().date_naive();
-    let naive_time = NaiveTime::from_hms_opt(0, 0, 0).expect("Invalid time");
-    let timestamp = NaiveDateTime::new(today, naive_time).and_utc().timestamp();
-
-    tracing::debug!("timestamp: {} {} {}", timestamp, started_at, ended_at);
-    if timestamp < started_at {
-        DeliberationStatus::Ready
-    } else if timestamp > ended_at {
-        DeliberationStatus::Finish
-    } else {
-        DeliberationStatus::InProgress
     }
 }

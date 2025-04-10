@@ -92,4 +92,9 @@ translate! {
         ko: "취소하기",
         en: "Cancel",
     },
+
+    edit: {
+        ko: "수정하기",
+        en: "Edit",
+    },
 }

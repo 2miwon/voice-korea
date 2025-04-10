@@ -45,3 +45,17 @@ pub struct DeliberationDiscussion {
     #[serde(default)]
     pub discussions: Vec<Discussion>,
 }
+
+impl Into<DeliberationDiscussionCreateRequest> for DeliberationDiscussion {
+    fn into(self) -> DeliberationDiscussionCreateRequest {
+        DeliberationDiscussionCreateRequest {
+            users: self.members.into_iter().map(|u| u.user_id).collect(),
+            resources: self.resources.into_iter().map(|r| r.id).collect(),
+            discussions: self.discussions.into_iter().map(|d| d.into()).collect(),
+            started_at: self.started_at,
+            ended_at: self.ended_at,
+            title: self.title,
+            description: self.description,
+        }
+    }
+}

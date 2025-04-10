@@ -1,9 +1,12 @@
+#![allow(unused_variables)]
+#![allow(unused_mut)]
 use dioxus::prelude::*;
 
 #[cfg(feature = "web")]
 use wasm_bindgen::JsCast;
 #[component]
 pub fn UploadButton(
+    #[props(default = "file-upload".to_string())] id: String,
     class: String,
     text: String,
     onuploaded: EventHandler<FormEvent>,
@@ -12,7 +15,7 @@ pub fn UploadButton(
 ) -> Element {
     rsx! {
         input {
-            id: "file-upload",
+            id: id.clone(),
             class: "hidden",
             r#type: "file",
             accept,
@@ -23,16 +26,19 @@ pub fn UploadButton(
         }
         button {
             class,
-            onclick: move |_| {
-                #[cfg(feature = "web")]
-                {
-                    let input = web_sys::window()
-                        .unwrap()
-                        .document()
-                        .unwrap()
-                        .get_element_by_id("file-upload")
-                        .unwrap();
-                    input.dyn_ref::<web_sys::HtmlInputElement>().unwrap().click();
+            onclick: {
+                let id = id.clone();
+                move |_| {
+                    #[cfg(feature = "web")]
+                    {
+                        let input = web_sys::window()
+                            .unwrap()
+                            .document()
+                            .unwrap()
+                            .get_element_by_id(&id.clone())
+                            .unwrap();
+                        input.dyn_ref::<web_sys::HtmlInputElement>().unwrap().click();
+                    }
                 }
             },
             {text}

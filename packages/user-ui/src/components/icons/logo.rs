@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 pub fn Logo(
     #[props(default = "39".to_string())] width: String,
     #[props(default = "26".to_string())] height: String,
-    #[props(default = "fill-[#555462]".to_string())] class: String,
+    #[props(default = "fill-davy-gray".to_string())] class: String,
 ) -> Element {
     rsx! {
         svg {

@@ -1,10 +1,7 @@
-use dioxus::prelude::*;
+use bdk::prelude::*;
 
 use crate::pages::attributes::AttributePage;
 use crate::pages::create::CreatePage;
-// use crate::pages::deliberations::new::routes::DeliberationNewRoute;
-use crate::pages::deliberations::new::*;
-use crate::pages::deliberations::page::DeliberationPage;
 use crate::pages::find_email::FindEmailPage;
 use crate::pages::groups::_id::page::GroupDetailPage;
 use crate::pages::groups::page::GroupPage;
@@ -18,8 +15,6 @@ use crate::pages::surveys::_id::update::page::SurveyUpdatePage;
 use crate::pages::surveys::new::page::SurveyCreatePage;
 use crate::pages::surveys::page::SurveyPage;
 use crate::pages::*;
-use crate::prelude::*;
-use dioxus_translate::Language;
 
 #[derive(Clone, Routable, Debug, PartialEq)]
 #[rustfmt::skip]
@@ -39,6 +34,9 @@ pub enum Route {
             #[layout(DeliberationNewLayout)]
                 #[route("/deliberations/new")]
                 DeliberationNewPage { lang: Language },
+                #[route("/deliberations/:deliberation_id/edit")]
+                DeliberationEditPage { lang: Language, deliberation_id: i64 },
+
                 #[route("/deliberations/new/committees")]
                 CompositionCommitee { lang: Language },
                 #[route("/deliberations/new/panels")]
