@@ -14,3 +14,5 @@ pub mod project_header;
 pub mod sample_survey;
 pub mod single_objective;
 pub mod subjective;
+
+pub mod accordion;
