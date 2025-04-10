@@ -186,11 +186,11 @@ impl Controller {
         });
     }
 
-    // pub fn save_content(&mut self, content: DeliberationContentCreateRequest) {
-    //     self.deliberation_requests.with_mut(|req| {
-    //         req.contents = vec![content];
-    //     });
-    // }
+    pub fn save_content(&mut self, content: DeliberationContentCreateRequest) {
+        self.deliberation_requests.with_mut(|req| {
+            req.contents = vec![content];
+        });
+    }
 
     pub fn save_discussion(&mut self, discussion: DeliberationDiscussionCreateRequest) {
         self.deliberation_requests.with_mut(|req| {
