@@ -1,6 +1,8 @@
 use bdk::prelude::*;
 
-use crate::ProjectArea;
+use crate::areas::area::Area;
+
+use super::DeliberationStatus;
 
 // TODO(web): using resource for project.
 #[api_model(base = "/v2/projects", custom_query_type = ProjectQueryBy, table = deliberations)]
@@ -19,8 +21,8 @@ pub struct DeliberationProject {
     pub title: String,
     #[api_model(summary)]
     pub description: String,
-    #[api_model(summary)]
-    pub project_area: ProjectArea,
+    #[api_model(summary, many_to_many = deliberation_areas, table_name = areas, foreign_primary_key = area_id, foreign_reference_key = deliberation_id)]
+    pub project_areas: Vec<Area>,
 
     #[api_model(summary, many_to_one = organizations)]
     pub org_id: i64,
@@ -28,6 +30,12 @@ pub struct DeliberationProject {
     pub participants: i64,
     #[api_model(summary, one_to_many = deliberation_votes, foreign_key = deliberation_id, aggregator = count)]
     pub votes: i64,
+
+    #[api_model(summary, type = INTEGER)]
+    pub status: DeliberationStatus,
+
+    #[api_model(summary)]
+    pub thumbnail_image: String,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, serde::Serialize, serde::Deserialize, Default)]
