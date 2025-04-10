@@ -1,26 +1,18 @@
-use chrono::{NaiveDateTime, NaiveTime, Utc};
 use dioxus::prelude::*;
-use dioxus_translate::{translate, Language, Translate};
-use models::{deliberation_project::DeliberationProject, Tab};
+use dioxus_logger::tracing;
+use dioxus_translate::{translate, Language};
+use models::{deliberation_project::DeliberationProject, DeliberationStatus, Tab};
 
 use crate::{
-    components::icons::{
-        adopted::Adopted, in_progress::InProgress, right_arrow::RightArrow, waiting::Waiting,
+    components::{
+        icons::{
+            adopted::Adopted, in_progress::InProgress, right_arrow::RightArrow, waiting::Waiting,
+        },
+        label::Label,
     },
     pages::projects::_id::components::i18n::HeaderTranslate,
     utils::time::formatted_timestamp,
 };
-
-#[derive(Debug, Translate, PartialEq, Eq, Default)]
-pub enum ProjectStatus {
-    #[default]
-    #[translate(ko = "준비", en = "Ready")]
-    Ready,
-    #[translate(ko = "진행중", en = "InProgress")]
-    InProgress,
-    #[translate(ko = "완료", en = "Finish")]
-    Finish,
-}
 
 #[component]
 pub fn ProjectHeader(
@@ -31,7 +23,7 @@ pub fn ProjectHeader(
     let tr: HeaderTranslate = translate(&lang);
     let mut set_active_tab = move |value: Tab| active_tab.set(value);
     let active_tab_value = active_tab.read();
-
+    tracing::debug!("active_tab_value: {:?}", deliberation);
     let started_at = formatted_timestamp(lang, deliberation.started_at);
     let ended_at = formatted_timestamp(lang, deliberation.ended_at);
 
@@ -41,39 +33,44 @@ pub fn ProjectHeader(
             //data section
             div { class: "w-full max-w-720 h-260 flex flex-col justify-center",
                 div { class: "flex flex-col justify-start",
-                    div { class: "w-full h-24 flex justify-start items-center font-semibold text-lg gap-8",
-                        match deliberation_status(deliberation.started_at, deliberation.ended_at) {
-                            ProjectStatus::Ready => rsx! {
-                                Waiting {}
-                            },
-                            ProjectStatus::InProgress => rsx! {
-                                InProgress {}
-                            },
-                            ProjectStatus::Finish => rsx! {
-                                Adopted {}
-                            },
+                    div { class: "w-full flex justify-start items-center font-medium text-lg/24 gap-8 h-fit",
+                        div { class: "w-24 h-24",
+                            match deliberation.status {
+                                DeliberationStatus::Ready => rsx! {
+                                    Waiting {}
+                                },
+                                DeliberationStatus::InProgress => rsx! {
+                                    InProgress {}
+                                },
+                                DeliberationStatus::Finish => rsx! {
+                                    Adopted {}
+                                },
+                            }
                         }
-                        div { "{started_at} ~ {ended_at}" }
+
+                        span { "{started_at} ~ {ended_at}" }
                     }
-                    div { class: "w-full flex justify-start items-center font-semibold text-[32px] leading-60",
+                    div { class: "w-full flex justify-start items-center font-semibold text-[32px]/60",
                         "{deliberation.title}"
                     }
                     div { class: "w-full flex justify-start items-center font-md text-sm gap-4",
-                        div { class: "py-2 px-12 leading-22 flex justify-center items-center border border-text-black rounded-[100px]",
-                            div { {deliberation.project_area.translate(&lang)} }
+                        for area in deliberation.project_areas.iter() {
+                            Label { name: area.project_area.translate(&lang) }
                         }
                     }
-                    div { class: "w-full my-20 flex flex-row justify-start items-center gap-8",
-                        img {
-                            class: "w-50 h-50",
-                            src: asset!("/public/images/organization.png"),
-                        }
-                        div {
-                            div { class: "flex justify-start items-center font-normal text-[15px]",
-                                "{tr.organization}"
-                            }
-                        }
-                    }
+
+                    // FIXME: add organization
+                    // div { class: "w-full my-20 flex flex-row justify-start items-center gap-8",
+                    //     img {
+                    //         class: "w-50 h-50",
+                    //         src: asset!("/public/images/organization.png"),
+                    //     }
+                    //     div {
+                    //         div { class: "flex justify-start items-center font-normal text-[15px]",
+                    //             "{tr.organization}"
+                    //         }
+                    //     }
+                    // }
                     div { class: "flex flex-row justify-start items-center gap-60",
                         div { class: "w-hug h-59 flex flex-col justify-center items-center",
                             div { class: "justify-center items-center font-semibold text-[24px]",
@@ -97,9 +94,10 @@ pub fn ProjectHeader(
             //img section
             div { class: "block",
                 img {
-                    class: "w-540 h-300 rounded-xl",
-                    src: asset!("/public/images/section_image.png"),
-                    alt: "Header Section Image",
+                    class: "w-540 h-300 rounded-xl bg-gray-100 object-cover",
+                    src: deliberation.thumbnail_image,
+                    alt: "Project Thumbnail Image",
+                
                 }
             }
         }
@@ -129,19 +127,5 @@ pub fn ProjectHeader(
                 div { class: "w-full h-1 bg-line-gray" }
             }
         }
-    }
-}
-
-pub fn deliberation_status(started_at: i64, ended_at: i64) -> ProjectStatus {
-    let today = Utc::now().date_naive();
-    let naive_time = NaiveTime::from_hms_opt(0, 0, 0).expect("Invalid time");
-    let timestamp = NaiveDateTime::new(today, naive_time).and_utc().timestamp();
-
-    if timestamp < started_at {
-        ProjectStatus::Ready
-    } else if timestamp > ended_at {
-        ProjectStatus::Finish
-    } else {
-        ProjectStatus::InProgress
     }
 }
