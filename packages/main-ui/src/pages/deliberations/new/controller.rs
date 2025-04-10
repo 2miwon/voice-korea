@@ -285,8 +285,8 @@ impl Controller {
         } = self.deliberation_requests();
 
         match cli.get_draft(org_id, creator_id).await {
-            Ok(d) => {
-                let update_request = DeliberationRepositoryUpdateRequest {
+            Ok(_d) => {
+                let _update_request = DeliberationRepositoryUpdateRequest {
                     org_id: Some(org_id),
                     started_at: Some(started_at),
                     ended_at: Some(ended_at),
