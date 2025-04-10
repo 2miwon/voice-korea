@@ -145,7 +145,7 @@ impl Controller {
     ) -> std::result::Result<Self, RenderError> {
         let deliberation = use_server_future(move || async move {
             let res = DeliberationContent::get_client(&crate::config::get().api_url)
-                .query(deliberation_id(), DeliberationContentQuery::default())
+                .query(deliberation_id(), DeliberationContentQuery::new(1))
                 .await
                 .unwrap_or_default();
             if res.items.is_empty() {

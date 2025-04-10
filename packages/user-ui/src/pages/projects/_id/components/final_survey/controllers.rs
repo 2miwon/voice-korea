@@ -68,7 +68,7 @@ impl Controller {
 
         let survey = use_server_future(move || async move {
             let res = DeliberationFinalSurvey::get_client(&crate::config::get().api_url)
-                .query(project_id(), DeliberationFinalSurveyQuery::default())
+                .query(project_id(), DeliberationFinalSurveyQuery::new(1))
                 .await
                 .unwrap_or_default();
             if res.items.is_empty() {
