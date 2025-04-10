@@ -23,3 +23,12 @@ pub struct DeliberationUser {
     #[api_model(action = create, type = INTEGER)]
     pub role: Role,
 }
+
+impl Into<DeliberationUserCreateRequest> for DeliberationUser {
+    fn into(self) -> DeliberationUserCreateRequest {
+        DeliberationUserCreateRequest {
+            user_id: self.user_id,
+            role: self.role,
+        }
+    }
+}

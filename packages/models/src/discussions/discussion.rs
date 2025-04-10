@@ -45,3 +45,17 @@ pub struct Discussion {
     #[serde(default)]
     pub resources: Vec<ResourceFile>,
 }
+
+impl Into<DiscussionCreateRequest> for Discussion {
+    fn into(self) -> DiscussionCreateRequest {
+        DiscussionCreateRequest {
+            resources: self.resources.into_iter().map(|r| r.id).collect(),
+            users: self.user_id.into_iter().map(|u| u.id).collect(),
+            started_at: self.started_at,
+            ended_at: self.ended_at,
+            name: self.name,
+            description: self.description,
+            maximum_count: self.maximum_count,
+        }
+    }
+}

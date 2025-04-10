@@ -138,7 +138,7 @@ pub fn UploadMaterial(
         //             }
         //         }
         //     },
-        //     div { class: " text-[16px] font-semibold text-[#555462] min-w-[120px] p-[15px]",
+        //     div { class: " text-[16px] font-semibold !text-davy-gray min-w-[120px] p-[15px]",
         //         "{upload_material_str}"
         //     }
         // }

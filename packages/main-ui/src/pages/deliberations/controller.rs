@@ -1,5 +1,4 @@
-use by_macros::DioxusController;
-use dioxus::prelude::*;
+use bdk::prelude::*;
 use dioxus_logger::tracing;
 use models::{
     deliberation::{Deliberation, DeliberationQuery, DeliberationSummary},
@@ -8,7 +7,7 @@ use models::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::service::login_service::LoginService;
+use crate::{routes::Route, service::login_service::LoginService};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Opinion {
@@ -23,16 +22,21 @@ pub struct Opinion {
     pub status: String,
 }
 
-#[derive(Debug, Clone, PartialEq, DioxusController)]
+#[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     pub deliberations: Resource<QueryResponse<DeliberationSummary>>,
     page: Signal<usize>,
     pub size: usize,
     pub search_keyword: Signal<String>,
+    pub selected_id: Signal<i64>,
+    pub context_menu: Signal<bool>,
+    pub mouse_pos: Signal<(f64, f64)>,
+    pub nav: Navigator,
+    pub lang: Language,
 }
 
 impl Controller {
-    pub fn new(_lang: dioxus_translate::Language) -> std::result::Result<Self, RenderError> {
+    pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
         let user: LoginService = use_context();
         let page = use_signal(|| 1);
         let size = 10;
@@ -85,10 +89,15 @@ impl Controller {
         })?;
 
         let ctrl = Self {
+            lang,
             deliberations,
             page,
             size,
             search_keyword,
+            selected_id: use_signal(|| 0),
+            context_menu: use_signal(|| false),
+            mouse_pos: use_signal(|| (0.0, 0.0)),
+            nav: use_navigator(),
         };
 
         Ok(ctrl)
@@ -96,6 +105,14 @@ impl Controller {
 
     pub fn set_page(&mut self, page: usize) {
         self.page.set(page);
+    }
+
+    pub fn get_x(&self) -> f64 {
+        self.mouse_pos.with(|v| v.0 - 239.0)
+    }
+
+    pub fn get_y(&self) -> f64 {
+        self.mouse_pos.with(|v| v.1 + 20.0)
     }
 
     pub fn total_pages(&self) -> usize {
@@ -113,10 +130,25 @@ impl Controller {
         }) as usize
     }
 
-    pub fn get_deliberations(&self) -> Vec<DeliberationSummary> {
-        self.deliberations.with(|v| match v {
-            Some(v) => v.clone().items,
-            None => vec![],
-        })
+    pub fn handle_click_menu(&mut self, id: i64, e: MouseEvent) {
+        e.prevent_default();
+        e.stop_propagation();
+
+        let should_open = !self.context_menu() || self.selected_id() != id;
+
+        self.context_menu.set(should_open);
+        self.selected_id.set(id);
+        let rect = e.page_coordinates();
+        self.mouse_pos.set((rect.x, rect.y));
+        tracing::debug!("opened: {} Mouse position: {:?}", should_open, rect);
+    }
+
+    pub fn handle_edit(&mut self) {
+        self.context_menu.set(false);
+
+        self.nav.push(Route::DeliberationEditPage {
+            lang: self.lang,
+            deliberation_id: self.selected_id(),
+        });
     }
 }

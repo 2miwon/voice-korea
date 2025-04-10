@@ -20,11 +20,11 @@ use models::ProjectArea;
 
 // TODO: implement setting deliberation
 #[component]
-pub fn DeliberationNewPage(lang: Language) -> Element {
+pub fn DeliberationNewPage(lang: Language, deliberation_id: Option<i64>) -> Element {
     let api: MetadataApi = use_context();
     let tr: SettingDeliberationTranslate = translate(&lang);
     let nav = use_navigator();
-    let mut ctrl = OverviewController::new(lang)?;
+    let mut ctrl = OverviewController::new(lang, deliberation_id)?;
 
     rsx! {
         div { class: format!("flex flex-col w-full justify-start items-start gap-10"),
@@ -39,11 +39,10 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
                             input {
                                 class: "flex flex-row w-full justify-start items-center bg-transparent focus:outline-none",
                                 r#type: "text",
+                                name: "deliberation-name",
                                 placeholder: tr.proj_title_placeholder,
                                 value: ctrl.title(),
-                                oninput: move |event| {
-                                    ctrl.title.set(event.value());
-                                },
+                                oninput: move |event| ctrl.parent.save_title(event.value()),
                             }
                         }
                     }
@@ -54,8 +53,9 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
                             textarea {
                                 class: "flex w-full h-full justify-start items-start bg-transparent focus:outline-none my-10 break-words whitespace-normal",
                                 placeholder: tr.proj_desc_placeholder,
+                                name: "deliberation-description",
                                 value: ctrl.description(),
-                                oninput: move |event| ctrl.description.set(event.value()),
+                                oninput: move |event| ctrl.parent.save_description(event.value()),
                             }
                         }
                     }
@@ -66,8 +66,11 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
                             id: "deliberation fields",
                             items: ProjectArea::variants(&lang),
                             hint: tr.deliberation_field_hint,
-                            onselect: move |selected_items: Vec<String>| ctrl.fields.set(selected_items.clone()),
-                            value: Some(ctrl.fields()),
+                            onselect: move |selected_items| ctrl.save_project_area(selected_items),
+                            value: ctrl.project_areas()
+                                .iter()
+                                .map(|area| area.translate(&lang).to_string())
+                                .collect::<Vec<String>>(),
                         }
                     }
                 }
@@ -78,20 +81,18 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
                                 UploadButton {
                                     class: "flex min-w-[130px] h-[40px] border bg-white border-[#2a60d3] rounded-sm text-[#2a60d3] text-center font-semibold text-sm justify-center items-center",
                                     text: tr.upload_directly,
-                                    onuploaded: move |event: FormEvent| {
-                                        spawn(async move {
-                                            #[cfg(feature = "web")]
-                                            if let Some(file_engine) = event.files() {
-                                                let result = handle_file_upload(file_engine, api).await;
-                                                if !result.is_empty() {
-                                                    if let Some(url) = result[0].url.as_ref() {
-                                                        ctrl.thumbnail_image.set(url.clone());
-                                                    }
-                                                } else {
-                                                    btracing::e!(lang, ApiError::DeliberationResourceException);
+                                    onuploaded: move |event: FormEvent| async move {
+                                        #[cfg(feature = "web")]
+                                        if let Some(file_engine) = event.files() {
+                                            let result = handle_file_upload(file_engine, api).await;
+                                            if !result.is_empty() {
+                                                if let Some(url) = result[0].url.as_ref() {
+                                                    ctrl.parent.save_thumbnail_image(url.clone());
                                                 }
+                                            } else {
+                                                btracing::e!(lang, ApiError::DeliberationResourceException);
                                             }
-                                        });
+                                        }
                                     },
                                 }
                                 input {
@@ -126,26 +127,16 @@ pub fn DeliberationNewPage(lang: Language) -> Element {
                     {tr.go_to_deliberation_management_list}
                 }
                 div {
-                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
-                    onclick: move |_| {
-                        tracing::debug!("Temporary save");
-                        ctrl.update_deliberation_requests();
-                        spawn(async move {
-                            ctrl.temp_save().await;
-                        });
+                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20 cursor-pointer hover:!bg-primary hover:!text-white",
+                    onclick: move |_| async move {
+                        ctrl.temp_save().await;
                     },
                     {tr.temporary_save}
                 }
                 div {
                     class: "aria-active:cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-disabled aria-active:!bg-hover font-semibold text-base text-white",
-                    "aria-active": ctrl.validation_check(),
-                    onclick: move |_| {
-                        if ctrl.validation_check() {
-                            tracing::debug!("Submit");
-                            ctrl.update_deliberation_requests();
-                            nav.push(Route::CompositionCommitee { lang });
-                        }
-                    },
+                    "aria-active": ctrl.is_valid(),
+                    onclick: move |_| ctrl.next(),
                     {tr.next}
                 }
             }

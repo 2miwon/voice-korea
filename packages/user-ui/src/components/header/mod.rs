@@ -120,7 +120,7 @@ pub fn SignupPopup(lang: Language, email: String, profile_url: String) -> Elemen
                                 checked_1.set(v);
                             },
                         }
-                        div { class: "font-medium text-[#555462] text-[16px]", "{tr.agree_1}" }
+                        div { class: "font-medium !text-davy-gray text-[16px]", "{tr.agree_1}" }
                         SeeDetailButton { lang }
                     }
                     div { class: "flex flex-row w-full gap-[10px]",
@@ -131,7 +131,7 @@ pub fn SignupPopup(lang: Language, email: String, profile_url: String) -> Elemen
                                 checked_2.set(v);
                             },
                         }
-                        div { class: "font-medium text-[#555462] text-[16px]", "{tr.agree_2}" }
+                        div { class: "font-medium !text-davy-gray text-[16px]", "{tr.agree_2}" }
                         SeeDetailButton { lang }
                     }
                     if check_error() != "" {

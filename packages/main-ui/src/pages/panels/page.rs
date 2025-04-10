@@ -97,7 +97,7 @@ pub fn AttributeList(lang: Language, attributes: Vec<AttributeInfo>) -> Element 
                 div { class: "flex flex-col w-full justify-start items-start border rounded-lg border-[#bfc8d9]",
                     div { class: "flex flex-row w-full h-[55px] justify-start items-center",
                         div { class: "flex flex-row w-[185px] min-w-[185px] h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translate.attribute_name}"
                             }
                             div { class: "w-[19px] h-[19px]",
@@ -105,7 +105,7 @@ pub fn AttributeList(lang: Language, attributes: Vec<AttributeInfo>) -> Element 
                             }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translate.attribute}"
                             }
                             div { class: "w-[19px] h-[19px]",
@@ -235,31 +235,31 @@ pub fn PanelList(
                 div { class: "flex flex-col w-full justify-start items-start border rounded-lg border-[#bfc8d9]",
                     div { class: "flex flex-row w-full min-h-[55px] justify-start items-center",
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translate.panel_name}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translate.age}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translate.gender}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translate.region}"
                             }
                             Switch { width: "19", height: "19" }
                         }
                         div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "text-[#555462] font-semibold text-[14px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
                                 "{translate.salary}"
                             }
                             Switch { width: "19", height: "19" }

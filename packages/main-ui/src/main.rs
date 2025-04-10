@@ -1,9 +1,9 @@
 #![allow(non_snake_case)]
 
+use bdk::prelude::*;
 use by_components::effects::HoverEffects;
 use dioxus_logger::tracing;
 
-use dioxus::prelude::*;
 use main_ui::service::metadata_api::MetadataApi;
 use main_ui::service::opinion_api::OpinionApi;
 use main_ui::service::organization_api::OrganizationApi;
@@ -37,6 +37,7 @@ fn App() -> Element {
     let css = include_str!("../public/theme.css");
 
     rsx! {
+        btracing::ToastTracing {}
         document::Link {
             rel: "icon",
             r#type: "image/x-icon",

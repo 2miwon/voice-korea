@@ -30,6 +30,7 @@ clean:
 node_modules:
 	npm i
 
+.PHONY: public/tailwind.css
 public/tailwind.css:
 	npx tailwindcss -i ./public/input.css -o ./public/tailwind.css
 
