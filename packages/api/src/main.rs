@@ -7,9 +7,9 @@ use controllers::{institutions::m1::InstitutionControllerM1, v2::Version2Control
 use deliberation_comment::DeliberationComment;
 use deliberation_resources::deliberation_resource::DeliberationResource;
 use discussions::Discussion;
-use models::elearnings::elearning::Elearning;
 use models::{
     areas::area::Area, deliberation::Deliberation,
+    deliberation_areas::deliberation_area::DeliberationArea,
     deliberation_basic_infos::deliberation_basic_info::DeliberationBasicInfo,
     deliberation_report::DeliberationReport, deliberation_response::DeliberationResponse,
     deliberation_user::DeliberationUser, deliberation_vote::DeliberationVote,
@@ -49,6 +49,10 @@ use models::{
     deliberation_final_survey_surveys::deliberation_final_survey_survey::DeliberationFinalSurveySurvey,
     deliberation_sample_surveys::deliberation_sample_survey::DeliberationSampleSurvey,
 };
+use models::{
+    discussion_groups::DiscussionGroup, discussion_resources::DiscussionResource,
+    elearnings::elearning::Elearning,
+};
 use models::{inquiry::Inquiry, step::Step};
 use models::{organization::Organization, *};
 use sqlx::postgres::PgPoolOptions;
@@ -87,10 +91,12 @@ async fn migration(pool: &sqlx::Pool<sqlx::Postgres>) -> Result<()> {
         Verification,
         Organization,
         User,
+        Deliberation,
         ResourceFile,
         PanelV2,
         SurveyV2,
         Area,
+        DeliberationArea,
         DeliberationBasicInfo,
         DeliberationBasicInfoMember,
         DeliberationBasicInfoResource,
@@ -104,13 +110,13 @@ async fn migration(pool: &sqlx::Pool<sqlx::Postgres>) -> Result<()> {
         DeliberationDiscussion,
         DeliberationDiscussionMember,
         DeliberationDiscussionResource,
+        DeliberationFinalSurvey,
         DeliberationFinalSurveyMember,
         DeliberationFinalSurveySurvey,
-        DeliberationFinalSurvey,
+        DeliberationDraft,
         DeliberationDraftMember,
         DeliberationDraftResource,
         DeliberationDraftSurvey,
-        DeliberationDraft,
         OrganizationMember,
         PanelSurveys,
         SurveyResponse,
@@ -118,7 +124,6 @@ async fn migration(pool: &sqlx::Pool<sqlx::Postgres>) -> Result<()> {
         GroupMemberV2,
         Invitation,
         Institution,
-        Deliberation,
         DeliberationReport,
         Review,
         DeliberationResponse,
@@ -128,6 +133,8 @@ async fn migration(pool: &sqlx::Pool<sqlx::Postgres>) -> Result<()> {
         Discussion,
         DeliberationResource,
         DeliberationComment,
+        DiscussionResource,
+        DiscussionGroup,
         Inquiry,
     );
 

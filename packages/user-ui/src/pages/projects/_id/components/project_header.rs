@@ -32,8 +32,8 @@ pub fn ProjectHeader(
     let mut set_active_tab = move |value: Tab| active_tab.set(value);
     let active_tab_value = active_tab.read();
 
-    let started_at = formatted_timestamp(deliberation.started_at);
-    let ended_at = formatted_timestamp(deliberation.ended_at);
+    let started_at = formatted_timestamp(lang, deliberation.started_at);
+    let ended_at = formatted_timestamp(lang, deliberation.ended_at);
 
     rsx! {
         div { class: " max-w-1300 h-fit mb-40 flex max-[1000px]:flex-col-reverse flex-row w-full justify-center items-center gap-40 px-10",
@@ -106,12 +106,13 @@ pub fn ProjectHeader(
         //menu
         div { class: "flex flex-col w-full justify-center items-center bg-box-gray whitespace-nowrap",
             div { class: "flex flex-col max-w-1300 w-full",
+
                 // Tab menu
                 div { class: "w-full h-42 flex flex-row justify-between items-center overflow-x-auto max-[1300px]:no-scrollbar",
                     for tab in Tab::all() {
                         div { class: "flex flex-col items-center min-w-160",
                             div {
-                                class: "w-160 h-30 flex justify-center items-center font-md text-[15px] cursor-pointer",
+                                class: "w-160 h-40 flex justify-center items-center font-md text-[15px] cursor-pointer",
                                 class: if *active_tab_value == tab { " font-semibold" } else { "text-text-black" },
                                 onclick: move |_| set_active_tab(tab),
                                 p { {tab.translate(&lang)} }
@@ -123,6 +124,7 @@ pub fn ProjectHeader(
                         }
                     }
                 }
+
                 // line
                 div { class: "w-full h-1 bg-line-gray" }
             }

@@ -1,6 +1,6 @@
 #![allow(non_snake_case, dead_code, unused_variables)]
 use bdk::prelude::*;
-use models::ProjectStatus;
+use models::{ProjectStatus, ProjectType};
 
 use crate::{
     components::{
@@ -196,7 +196,7 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
                                                 rsx! {
                                                     div {
                                                         class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center cursor-pointer",
-                                                        visibility: if survey.finished() { "hidden" } else { "" },
+                                                        visibility: if survey.finished() || survey.project_type == ProjectType::Deliberation { "hidden" } else { "" },
                                                         onclick: {
                                                             let id = survey.id.clone();
                                                             move |_| async move {

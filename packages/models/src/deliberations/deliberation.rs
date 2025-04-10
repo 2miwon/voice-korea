@@ -1,16 +1,21 @@
 use crate::areas::area::Area;
 use crate::deliberation_basic_infos::deliberation_basic_info::DeliberationBasicInfo;
+use crate::deliberation_basic_infos::deliberation_basic_info::DeliberationBasicInfoCreateRequest;
 use crate::deliberation_comment::DeliberationComment;
 use crate::deliberation_contents::deliberation_content::DeliberationContent;
+use crate::deliberation_contents::deliberation_content::DeliberationContentCreateRequest;
 use crate::deliberation_discussions::deliberation_discussion::DeliberationDiscussion;
+use crate::deliberation_discussions::deliberation_discussion::DeliberationDiscussionCreateRequest;
 use crate::deliberation_draft::DeliberationDraft;
+use crate::deliberation_drafts::deliberation_draft::DeliberationDraftCreateRequest;
 use crate::deliberation_final_surveys::deliberation_final_survey::DeliberationFinalSurvey;
+use crate::deliberation_final_surveys::deliberation_final_survey::DeliberationFinalSurveyCreateRequest;
 use crate::deliberation_response::DeliberationResponse;
 use crate::deliberation_sample_surveys::deliberation_sample_survey::DeliberationSampleSurvey;
+use crate::deliberation_sample_surveys::deliberation_sample_survey::DeliberationSampleSurveyCreateRequest;
 use crate::deliberation_user::{DeliberationUser, DeliberationUserCreateRequest};
 
 use bdk::prelude::*;
-use chrono::Utc;
 use validator::Validate;
 
 use crate::deliberation_report::DeliberationReport;
@@ -20,7 +25,7 @@ use crate::step::*;
 use crate::{PanelV2, ProjectArea, ResourceFile, SurveyV2};
 
 #[derive(Validate)]
-#[api_model(base = "/v2/organizations/:org-id/deliberations", action = [create(resource_ids = Vec<i64>, survey_ids = Vec<i64>, roles = Vec<DeliberationUserCreateRequest>, panel_ids = Vec<i64>, steps = Vec<StepCreateRequest>, elearning = Vec<i64>, discussions = Vec<DiscussionCreateRequest>)], table = deliberations)]
+#[api_model(base = "/v2/organizations/:org-id/deliberations", action = [create(project_areas = Vec<ProjectArea>, resource_ids = Vec<i64>, survey_ids = Vec<i64>, roles = Vec<DeliberationUserCreateRequest>, panel_ids = Vec<i64>, steps = Vec<StepCreateRequest>, elearning = Vec<i64>, basic_infos = Vec<DeliberationBasicInfoCreateRequest>, sample_surveys = Vec<DeliberationSampleSurveyCreateRequest>, contents = Vec<DeliberationContentCreateRequest>, deliberation_discussions = Vec<DeliberationDiscussionCreateRequest>, final_surveys = Vec<DeliberationFinalSurveyCreateRequest>, drafts = Vec<DeliberationDraftCreateRequest>)], act_by_id = [update(req = DeliberationCreateRequest)], table = deliberations)]
 pub struct Deliberation {
     #[api_model(summary, primary_key)]
     pub id: i64,
@@ -80,6 +85,7 @@ pub struct Deliberation {
 
     #[api_model(one_to_many = deliberation_basic_infos, foreign_key = deliberation_id)]
     #[serde(default)]
+    //Note: expected to contain only one field.
     pub basic_infos: Vec<DeliberationBasicInfo>,
     #[api_model(one_to_many = deliberation_sample_surveys, foreign_key = deliberation_id)]
     #[serde(default)]
@@ -115,37 +121,85 @@ pub struct Deliberation {
     #[api_model(summary, type = INTEGER, action = create)]
     #[serde(default)]
     pub project_area: ProjectArea,
+
+    #[api_model(summary, type = INTEGER, version = v0.1)]
+    #[serde(default)]
+    pub status: DeliberationStatus,
 }
 
-#[derive(Translate, PartialEq, Default, Debug)]
+#[derive(Clone, Copy, Translate, PartialEq, Default, Debug, ApiModel)]
+#[cfg_attr(feature = "server", derive(JsonSchema, aide::OperationIo))]
 pub enum DeliberationStatus {
     #[default]
     #[translate(ko = "준비", en = "Ready")]
-    Ready,
+    Ready = 1,
     #[translate(ko = "진행", en = "InProgress")]
-    InProgress,
+    InProgress = 2,
     #[translate(ko = "마감", en = "Finish")]
-    Finish,
+    Finish = 3,
 }
 
-impl Deliberation {
-    pub fn status(&self) -> DeliberationStatus {
-        let started_at = self.started_at;
-        let ended_at = self.ended_at;
-
-        let now = Utc::now();
-        let current = now.timestamp();
-
-        if started_at > 10000000000 {
-            return DeliberationStatus::default();
-        }
-
-        if started_at > current {
-            DeliberationStatus::Ready
-        } else if ended_at < current {
-            DeliberationStatus::Finish
-        } else {
-            DeliberationStatus::InProgress
+impl Into<DeliberationCreateRequest> for Deliberation {
+    fn into(self) -> DeliberationCreateRequest {
+        DeliberationCreateRequest {
+            title: self.title,
+            description: self.description,
+            project_area: self.project_area,
+            project_areas: self
+                .project_areas
+                .into_iter()
+                .map(|area| area.project_area)
+                .collect(),
+            started_at: self.started_at,
+            ended_at: self.ended_at,
+            thumbnail_image: self.thumbnail_image,
+            steps: self.steps.into_iter().map(|step| step.into()).collect(),
+            resource_ids: self
+                .resources
+                .clone()
+                .into_iter()
+                .map(|resource| resource.id)
+                .collect(),
+            survey_ids: self.surveys.into_iter().map(|survey| survey.id).collect(),
+            roles: self
+                .members
+                .into_iter()
+                .map(|member| member.into())
+                .collect(),
+            panel_ids: self.panels.into_iter().map(|panel| panel.id).collect(),
+            basic_infos: self
+                .basic_infos
+                .into_iter()
+                .map(|basic_info| basic_info.into())
+                .collect(),
+            sample_surveys: self
+                .sample_surveys
+                .into_iter()
+                .map(|sample_survey| sample_survey.into())
+                .collect(),
+            contents: self
+                .contents
+                .into_iter()
+                .map(|content| content.into())
+                .collect(),
+            deliberation_discussions: self
+                .deliberation_discussions
+                .into_iter()
+                .map(|discussion| discussion.into())
+                .collect(),
+            final_surveys: self
+                .final_surveys
+                .into_iter()
+                .map(|final_survey| final_survey.into())
+                .collect(),
+            drafts: self.drafts.into_iter().map(|draft| draft.into()).collect(),
+            // FIXME: it may be deprecated.
+            //        elearning is included in content.
+            elearning: self
+                .resources
+                .into_iter()
+                .map(|resource| resource.id)
+                .collect(),
         }
     }
 }

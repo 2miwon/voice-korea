@@ -90,3 +90,36 @@ pub fn current_timestamp() -> i64 {
     let timestamp_millis = now.timestamp();
     timestamp_millis
 }
+
+pub fn format_range_from_timestamp(started_at: i64, ended_at: i64) -> String {
+    let start = Utc
+        .timestamp_opt(started_at, 0)
+        .single()
+        .unwrap_or_else(Utc::now);
+
+    let end = Utc
+        .timestamp_opt(ended_at, 0)
+        .single()
+        .unwrap_or_else(Utc::now);
+
+    if start.year() == end.year() {
+        format!(
+            "{}.{} - {}.{}.{}",
+            start.day(),
+            start.month(),
+            end.day(),
+            end.month(),
+            end.year()
+        )
+    } else {
+        format!(
+            "{}.{}.{} - {}.{}.{}",
+            start.day(),
+            start.month(),
+            start.year(),
+            end.day(),
+            end.month(),
+            end.year()
+        )
+    }
+}

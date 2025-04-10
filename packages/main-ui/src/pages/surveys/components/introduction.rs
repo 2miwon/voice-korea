@@ -47,7 +47,7 @@ pub fn InputIntroduction(
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
             div { class: "font-medium text-[16px] text-black leading-[22px] mb-[10px]",
-                "{translate.necessary_info}"
+                {translate.necessary_info}
             }
             div {
                 class: "flex flex-col w-full justify-start items-start px-[40px] py-[24px] bg-white rounded-[8px]",
@@ -59,7 +59,7 @@ pub fn InputIntroduction(
                 }
 
                 div { class: "font-normal text-[#6d6d6d] text-[14px] leading-[17px] mb-[10px]",
-                    "{translate.introduction_description}"
+                    {translate.introduction_description}
                 }
 
                 div { class: "flex flex-row w-full justify-start items-center",

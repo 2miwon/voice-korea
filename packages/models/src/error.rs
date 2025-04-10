@@ -137,6 +137,9 @@ pub enum ApiError {
     )]
     DeliberationStepException,
 
+    #[translate(ko = "분야를 확인해주세요.", en = "Please check deliberation areas.")]
+    DeliberationAreaException,
+
     #[translate(
         ko = "첨부자료를 찾을 수 없습니다.",
         en = "Cannot find the attached file."
@@ -154,10 +157,37 @@ pub enum ApiError {
     DeliberationDiscussionException,
 
     #[translate(
+        ko = "최종 설문을 확인해주세요.",
+        en = "Please check deliberation final survey."
+    )]
+    DeliberationFinalSurveyException,
+
+    #[translate(
+        ko = "최종 권고안을 확인해주세요.",
+        en = "Please check deliberation final recommendation."
+    )]
+    DeliberationFinalRecommendationException,
+
+    #[translate(
         ko = "설정된 패널정보를 확인해주세요.",
         en = "Please check the set panel information."
     )]
     DeliberationPanelException,
+
+    #[translate(
+        ko = "기본 정보를 확인해주세요.",
+        en = "Please check deliberation basic information."
+    )]
+    DeliberationBasicInfoException,
+
+    #[translate(
+        ko = "표본 조사를 확인해주세요.",
+        en = "Please check deliberation sample survey."
+    )]
+    DeliberationSampleSurveyException,
+
+    #[translate(ko = "숙의를 확인해주세요.", en = "Please check deliberation.")]
+    DeliberationLearningException,
 
     #[translate(
         ko = "선택된 공론이 정상인지 확인해주세요.",

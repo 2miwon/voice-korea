@@ -14,13 +14,44 @@ use deliberation_resources::deliberation_resource::{
 use deliberation_surveys::DeliberationSurvey;
 use deliberation_user::{DeliberationUser, DeliberationUserCreateRequest};
 use discussion_resources::DiscussionResource;
-use discussions::{Discussion, DiscussionCreateRequest};
+use discussions::Discussion;
 use models::{
     deliberation::{
         Deliberation, DeliberationAction, DeliberationCreateRequest, DeliberationGetResponse,
         DeliberationParam, DeliberationQuery, DeliberationQueryActionType, DeliberationRepository,
         DeliberationSummary,
     },
+    deliberation_basic_info_members::deliberation_basic_info_member::DeliberationBasicInfoMember,
+    deliberation_basic_info_resources::deliberation_basic_info_resource::DeliberationBasicInfoResource,
+    deliberation_basic_info_surveys::deliberation_basic_info_survey::DeliberationBasicInfoSurvey,
+    deliberation_basic_infos::deliberation_basic_info::{
+        DeliberationBasicInfo, DeliberationBasicInfoCreateRequest,
+    },
+    deliberation_content_members::deliberation_content_member::DeliberationContentMember,
+    deliberation_contents::deliberation_content::{
+        DeliberationContent, DeliberationContentCreateRequest,
+    },
+    deliberation_discussion_members::deliberation_discussion_member::DeliberationDiscussionMember,
+    deliberation_discussion_resources::deliberation_discussion_resource::DeliberationDiscussionResource,
+    deliberation_discussions::deliberation_discussion::{
+        DeliberationDiscussion, DeliberationDiscussionCreateRequest,
+    },
+    deliberation_draft_members::deliberation_draft_member::DeliberationDraftMember,
+    deliberation_draft_resources::deliberation_draft_resource::DeliberationDraftResource,
+    deliberation_draft_surveys::deliberation_draft_survey::DeliberationDraftSurvey,
+    deliberation_drafts::deliberation_draft::{DeliberationDraft, DeliberationDraftCreateRequest},
+    deliberation_final_survey_members::deliberation_final_survey_member::DeliberationFinalSurveyMember,
+    deliberation_final_survey_surveys::deliberation_final_survey_survey::DeliberationFinalSurveySurvey,
+    deliberation_final_surveys::deliberation_final_survey::{
+        DeliberationFinalSurvey, DeliberationFinalSurveyCreateRequest,
+    },
+    deliberation_sample_survey_members::deliberation_sample_survey_member::DeliberationSampleSurveyMember,
+    deliberation_sample_survey_surveys::deliberation_sample_survey_survey::DeliberationSampleSurveySurvey,
+    deliberation_sample_surveys::deliberation_sample_survey::{
+        DeliberationSampleSurvey, DeliberationSampleSurveyCreateRequest,
+    },
+    discussion_groups::DiscussionGroup,
+    elearnings::elearning::Elearning,
     step::{Step, StepRepository},
     *,
 };
@@ -33,6 +64,7 @@ use crate::controllers::v2::organizations::OrganizationPath;
 #[derive(
     Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema, aide::OperationIo,
 )]
+#[serde(rename_all = "kebab-case")]
 pub struct DeliberationPath {
     pub org_id: i64,
     pub id: i64,
@@ -60,6 +92,7 @@ impl DeliberationController {
             started_at,
             ended_at,
             project_area,
+            project_areas,
             title,
             description,
             panel_ids,
@@ -68,11 +101,16 @@ impl DeliberationController {
             roles,
             steps,
             elearning,
-            discussions,
             thumbnail_image,
+            basic_infos,
+            sample_surveys,
+            contents,
+            deliberation_discussions,
+            final_surveys,
+            drafts,
         }: DeliberationCreateRequest,
     ) -> Result<Deliberation> {
-        if started_at >= ended_at {
+        if started_at > ended_at {
             return Err(ApiError::ValidationError(
                 "started_at should be less than ended_at".to_string(),
             )
@@ -82,9 +120,40 @@ impl DeliberationController {
         let du = DeliberationUser::get_repository(self.pool.clone());
         let dr = DeliberationResource::get_repository(self.pool.clone());
         let ds = DeliberationSurvey::get_repository(self.pool.clone());
-        let d = Discussion::get_repository(self.pool.clone());
-        let discussion_resource_repo = DiscussionResource::get_repository(self.pool.clone());
         let pd = PanelDeliberation::get_repository(self.pool.clone());
+        let s = SurveyV2::get_repository(self.pool.clone());
+
+        let basic_info = DeliberationBasicInfo::get_repository(self.pool.clone());
+        let basic_info_member = DeliberationBasicInfoMember::get_repository(self.pool.clone());
+        let basic_info_resource = DeliberationBasicInfoResource::get_repository(self.pool.clone());
+        let basic_info_survey = DeliberationBasicInfoSurvey::get_repository(self.pool.clone());
+
+        let sample_survey = DeliberationSampleSurvey::get_repository(self.pool.clone());
+        let sample_survey_member =
+            DeliberationSampleSurveyMember::get_repository(self.pool.clone());
+        let sample_survey_survey =
+            DeliberationSampleSurveySurvey::get_repository(self.pool.clone());
+
+        let deliberation_contents = DeliberationContent::get_repository(self.pool.clone());
+        let deliberation_contents_member =
+            DeliberationContentMember::get_repository(self.pool.clone());
+        let elearning_repo = Elearning::get_repository(self.pool.clone());
+
+        let discussion_repo = DeliberationDiscussion::get_repository(self.pool.clone());
+        let discussion_member = DeliberationDiscussionMember::get_repository(self.pool.clone());
+        let discussion_resource = DeliberationDiscussionResource::get_repository(self.pool.clone());
+        let disc_repo = Discussion::get_repository(self.pool.clone());
+        let disc_group = DiscussionGroup::get_repository(self.pool.clone());
+        let disc_res = DiscussionResource::get_repository(self.pool.clone());
+
+        let final_repo = DeliberationFinalSurvey::get_repository(self.pool.clone());
+        let final_member = DeliberationFinalSurveyMember::get_repository(self.pool.clone());
+        let final_survey = DeliberationFinalSurveySurvey::get_repository(self.pool.clone());
+
+        let draft_repo = DeliberationDraft::get_repository(self.pool.clone());
+        let draft_member = DeliberationDraftMember::get_repository(self.pool.clone());
+        let draft_survey = DeliberationDraftSurvey::get_repository(self.pool.clone());
+        let draft_resource = DeliberationDraftResource::get_repository(self.pool.clone());
 
         let mut tx = self.pool.begin().await?;
 
@@ -99,6 +168,7 @@ impl DeliberationController {
                 title,
                 description,
                 project_area,
+                DeliberationStatus::Ready,
             )
             .await?
             .ok_or(ApiError::DeliberationException)?;
@@ -157,34 +227,356 @@ impl DeliberationController {
                 .ok_or(ApiError::DeliberationStepException)?;
         }
 
-        for DiscussionCreateRequest {
-            description,
-            ended_at,
-            name,
-            resources,
+        for DeliberationBasicInfoCreateRequest {
             started_at,
-            maximum_count,
-        } in discussions
+            ended_at,
+            title,
+            description,
+            users,
+            resources,
+            surveys,
+        } in basic_infos
         {
-            let discussion = d
+            if started_at > ended_at {
+                return Err(ApiError::ValidationError(
+                    "started_at should be less than ended_at".to_string(),
+                )
+                .into());
+            }
+
+            let info = basic_info
                 .insert_with_tx(
                     &mut *tx,
-                    deliberation.id,
                     started_at,
                     ended_at,
-                    name,
+                    title,
                     description,
-                    maximum_count,
+                    deliberation.id,
+                )
+                .await?
+                .ok_or(ApiError::DeliberationBasicInfoException)?;
+
+            for user_id in users {
+                let _ = basic_info_member
+                    .insert_with_tx(&mut *tx, user_id, info.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationBasicInfoException)?;
+            }
+
+            for resource_id in resources {
+                let _ = basic_info_resource
+                    .insert_with_tx(&mut *tx, resource_id, info.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationBasicInfoException)?;
+            }
+
+            for survey_id in surveys {
+                let _ = basic_info_survey
+                    .insert_with_tx(&mut *tx, survey_id, info.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationBasicInfoException)?;
+            }
+        }
+
+        for DeliberationSampleSurveyCreateRequest {
+            started_at,
+            ended_at,
+            title,
+            description,
+            estimate_time,
+            point,
+            users,
+            surveys,
+        } in sample_surveys
+        {
+            if started_at > ended_at {
+                return Err(ApiError::ValidationError(
+                    "started_at should be less than ended_at".to_string(),
+                )
+                .into());
+            }
+
+            let sample = sample_survey
+                .insert_with_tx(
+                    &mut *tx,
+                    started_at,
+                    ended_at,
+                    title.clone(),
+                    description.clone(),
+                    deliberation.id,
+                    estimate_time,
+                    point,
+                )
+                .await?
+                .ok_or(ApiError::DeliberationSampleSurveyException)?;
+
+            for user_id in users {
+                let _ = sample_survey_member
+                    .insert_with_tx(&mut *tx, user_id, sample.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationSampleSurveyException)?;
+            }
+
+            let survey = s
+                .insert_with_tx(
+                    &mut *tx,
+                    title,
+                    ProjectType::Deliberation,
+                    project_areas
+                        .clone()
+                        .get(0)
+                        .unwrap_or(&ProjectArea::Economy)
+                        .clone(),
+                    ProjectStatus::InProgress,
+                    started_at,
+                    ended_at,
+                    description,
+                    0, //FIXME: fix quota
+                    org_id,
+                    surveys,
+                    vec![], //FIXME: fix panel count
+                    estimate_time,
+                    point,
                     None,
+                )
+                .await?
+                .ok_or(ApiError::DeliberationSampleSurveyException)?;
+
+            let _ = sample_survey_survey
+                .insert_with_tx(&mut *tx, survey.id, sample.id)
+                .await?
+                .ok_or(ApiError::DeliberationSampleSurveyException)?;
+        }
+
+        for DeliberationContentCreateRequest {
+            started_at,
+            ended_at,
+            title,
+            description,
+            questions,
+            users,
+            elearnings,
+        } in contents
+        {
+            if started_at > ended_at {
+                return Err(ApiError::ValidationError(
+                    "started_at should be less than ended_at".to_string(),
+                )
+                .into());
+            }
+
+            let content = deliberation_contents
+                .insert_with_tx(
+                    &mut *tx,
+                    started_at,
+                    ended_at,
+                    title,
+                    description,
+                    deliberation.id,
+                    questions,
+                )
+                .await?
+                .ok_or(ApiError::DeliberationLearningException)?;
+
+            for user_id in users {
+                let _ = deliberation_contents_member
+                    .insert_with_tx(&mut *tx, user_id, content.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationLearningException)?;
+            }
+
+            for elearning in elearnings {
+                let _ = elearning_repo
+                    .insert_with_tx(
+                        &mut *tx,
+                        content.id,
+                        elearning.title,
+                        elearning.resources,
+                        elearning.necessary,
+                    )
+                    .await?
+                    .ok_or(ApiError::DeliberationLearningException)?;
+            }
+        }
+
+        for DeliberationDiscussionCreateRequest {
+            started_at,
+            ended_at,
+            title,
+            description,
+            users,
+            resources,
+            discussions,
+        } in deliberation_discussions
+        {
+            if started_at > ended_at {
+                return Err(ApiError::ValidationError(
+                    "started_at should be less than ended_at".to_string(),
+                )
+                .into());
+            }
+
+            let discussion = discussion_repo
+                .insert_with_tx(
+                    &mut *tx,
+                    started_at,
+                    ended_at,
+                    title,
+                    description,
+                    deliberation.id,
                 )
                 .await?
                 .ok_or(ApiError::DeliberationDiscussionException)?;
 
-            for resource_id in resources {
-                discussion_resource_repo
-                    .insert_with_tx(&mut *tx, discussion.id, resource_id)
+            for user_id in users {
+                let _ = discussion_member
+                    .insert_with_tx(&mut *tx, user_id, discussion.id)
                     .await?
-                    .ok_or(ApiError::DiscussionResourceException)?;
+                    .ok_or(ApiError::DeliberationDiscussionException)?;
+            }
+
+            for resource_id in resources {
+                let _ = discussion_resource
+                    .insert_with_tx(&mut *tx, resource_id, discussion.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationDiscussionException)?;
+            }
+
+            for disc in discussions {
+                let d = disc_repo
+                    .insert_with_tx(
+                        &mut *tx,
+                        deliberation.id,
+                        disc.started_at,
+                        disc.ended_at,
+                        disc.name,
+                        disc.description,
+                        disc.maximum_count,
+                        None,
+                    )
+                    .await?
+                    .ok_or(ApiError::DeliberationDiscussionException)?;
+
+                for user_id in disc.users {
+                    let _ = disc_group
+                        .insert_with_tx(&mut *tx, d.id, user_id)
+                        .await?
+                        .ok_or(ApiError::DeliberationDiscussionException)?;
+                }
+
+                for res_id in disc.resources {
+                    let _ = disc_res
+                        .insert_with_tx(&mut *tx, d.id, res_id)
+                        .await?
+                        .ok_or(ApiError::DeliberationDiscussionException)?;
+                }
+            }
+        }
+
+        for DeliberationFinalSurveyCreateRequest {
+            started_at,
+            ended_at,
+            title,
+            description,
+            estimate_time,
+            point,
+            users,
+            surveys,
+        } in final_surveys
+        {
+            let d = final_repo
+                .insert_with_tx(
+                    &mut *tx,
+                    started_at,
+                    ended_at,
+                    title.clone(),
+                    description.clone(),
+                    deliberation.id,
+                    estimate_time,
+                    point,
+                )
+                .await?
+                .ok_or(ApiError::DeliberationFinalSurveyException)?;
+
+            for user_id in users {
+                let _ = final_member
+                    .insert_with_tx(&mut *tx, user_id, d.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationFinalSurveyException)?;
+            }
+
+            let survey = s
+                .insert_with_tx(
+                    &mut *tx,
+                    title,
+                    ProjectType::Deliberation,
+                    project_areas
+                        .clone()
+                        .get(0)
+                        .unwrap_or(&ProjectArea::Economy)
+                        .clone(),
+                    ProjectStatus::InProgress,
+                    started_at,
+                    ended_at,
+                    description,
+                    0, //FIXME: fix quota
+                    org_id,
+                    surveys,
+                    vec![], //FIXME: fix panel count
+                    estimate_time,
+                    point,
+                    None,
+                )
+                .await?
+                .ok_or(ApiError::DeliberationFinalSurveyException)?;
+
+            let _ = final_survey
+                .insert_with_tx(&mut *tx, survey.id, d.id)
+                .await?
+                .ok_or(ApiError::DeliberationFinalSurveyException)?;
+        }
+
+        for DeliberationDraftCreateRequest {
+            started_at,
+            ended_at,
+            title,
+            description,
+            users,
+            resources,
+            surveys,
+        } in drafts
+        {
+            let d = draft_repo
+                .insert_with_tx(
+                    &mut *tx,
+                    started_at,
+                    ended_at,
+                    title,
+                    description,
+                    deliberation.id,
+                )
+                .await?
+                .ok_or(ApiError::DeliberationFinalRecommendationException)?;
+
+            for user_id in users {
+                let _ = draft_member
+                    .insert_with_tx(&mut *tx, user_id, d.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationFinalRecommendationException)?;
+            }
+
+            for survey_id in surveys {
+                let _ = draft_survey
+                    .insert_with_tx(&mut *tx, survey_id, d.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationFinalRecommendationException)?;
+            }
+
+            for resource_id in resources {
+                let _ = draft_resource
+                    .insert_with_tx(&mut *tx, resource_id, d.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationFinalRecommendationException)?;
             }
         }
 
@@ -370,6 +762,12 @@ mod tests {
                 format!("test deliberation {now}"),
                 "test description".to_string(),
                 ProjectArea::City,
+                vec![],
+                vec![],
+                vec![],
+                vec![],
+                vec![],
+                vec![],
                 vec![],
                 vec![],
                 vec![],

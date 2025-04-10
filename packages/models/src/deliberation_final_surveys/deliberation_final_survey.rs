@@ -2,11 +2,13 @@
 use bdk::prelude::*;
 use validator::Validate;
 
+use crate::deliberation_response::DeliberationResponse;
 use crate::deliberation_user::DeliberationUser;
+use crate::Question;
 use crate::SurveyV2;
 
 #[derive(Validate)]
-#[api_model(base = "/v2/deliberations/:deliberation-id/final-surveys", table = deliberation_final_surveys)]
+#[api_model(base = "/v2/deliberations/:deliberation-id/final-surveys", table = deliberation_final_surveys, action = [create(users = Vec<i64>, surveys = Vec<Question>)])]
 pub struct DeliberationFinalSurvey {
     #[api_model(summary, primary_key)]
     pub id: i64,
@@ -44,4 +46,31 @@ pub struct DeliberationFinalSurvey {
     #[api_model(summary, many_to_many = deliberation_final_survey_surveys, foreign_table_name = surveys, foreign_primary_key = survey_id, foreign_reference_key = final_survey_id)]
     #[serde(default)]
     pub surveys: Vec<SurveyV2>,
+
+    #[api_model(summary, one_to_many = deliberation_responses, foreign_key = deliberation_id)]
+    #[serde(default)]
+    pub responses: Vec<DeliberationResponse>,
+    // NOTE: skipped data for chart, responses per question types
+    #[api_model(summary, one_to_many = deliberation_responses, foreign_key = deliberation_id, aggregator = count)]
+    pub response_count: i64,
+}
+
+impl Into<DeliberationFinalSurveyCreateRequest> for DeliberationFinalSurvey {
+    fn into(self) -> DeliberationFinalSurveyCreateRequest {
+        DeliberationFinalSurveyCreateRequest {
+            users: self.members.into_iter().map(|u| u.user_id).collect(),
+            surveys: self
+                .surveys
+                .into_iter()
+                .map(|s| s.questions)
+                .flatten()
+                .collect(),
+            started_at: self.started_at,
+            ended_at: self.ended_at,
+            title: self.title,
+            description: self.description,
+            estimate_time: self.estimate_time,
+            point: self.point,
+        }
+    }
 }

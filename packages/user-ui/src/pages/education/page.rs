@@ -75,7 +75,7 @@ pub fn HeaderSection(lang: Language) -> Element {
                             Logo {
                                 width: "40",
                                 height: "25",
-                                class: "fill-[#555462]",
+                                class: "fill-davy-gray",
                             }
                             div { class: "font-extrabold text-white text-sm", "{tr.voice_korea}" }
                         }

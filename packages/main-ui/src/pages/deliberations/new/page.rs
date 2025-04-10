@@ -1,203 +1,143 @@
-#![allow(non_snake_case)]
-use crate::pages::deliberations::new::composition_commitee::CompositionCommitee;
-use crate::pages::deliberations::new::composition_deliberation::CompositionDeliberation;
-use crate::pages::deliberations::new::composition_panel::CompositionPanel;
-use crate::pages::deliberations::new::controller::MeetingInfo;
-use crate::pages::deliberations::new::input_deliberation::InputDeliberation;
-use crate::pages::deliberations::new::preview::Preview;
-use crate::pages::deliberations::new::setting_discussion::SettingDiscussion;
-
+#![allow(unused_variables)]
+use super::controller::OverviewController;
+use super::i18n::*;
+#[cfg(feature = "web")]
+use crate::components::drop_zone::handle_file_upload;
+#[allow(non_snake_case)]
 use crate::{
-    components::{icons::ArrowLeft, stepper::Stepper},
-    pages::deliberations::new::controller::{Controller, CurrentStep},
+    components::{
+        dropdown::Dropdown,
+        section::{MainSection, SubSection},
+        upload_button::UploadButton,
+    },
     routes::Route,
+    service::metadata_api::MetadataApi,
 };
+use bdk::prelude::*;
+#[cfg(feature = "web")]
+use models::ApiError;
+use models::ProjectArea;
 
-use super::i18n::DeliberationNewTranslate;
-use dioxus::prelude::*;
-use dioxus_translate::{translate, Language};
-use models::deliberation_user::DeliberationUserCreateRequest;
-use models::step::StepCreateRequest;
-use models::{File, PanelV2Summary, ResourceFileSummary, Role, SurveyV2Summary};
-
+// TODO: implement setting deliberation
 #[component]
-pub fn OpinionCreatePage(lang: Language) -> Element {
-    let translates: DeliberationNewTranslate = translate(&lang.clone());
-    let mut ctrl = Controller::new(lang)?;
-    let surveys = ctrl.surveys()?;
-    let metadatas = ctrl.metadatas()?;
-    let members = ctrl.members()?;
-    let panels = ctrl.panels()?;
-
-    let sequences = ctrl.get_deliberation_sequences();
-    let informations = ctrl.get_deliberation_informations();
-    let resources = ctrl.resources();
-    let step = ctrl.get_current_step();
-    let selected_surveys = ctrl.selected_surveys();
-    let selected_panels = ctrl.get_selected_panels();
-    let committees = ctrl.get_committees();
-    let discussions = ctrl.get_discussions();
-    let discussion_resources = ctrl.get_discussion_resources();
+pub fn DeliberationNewPage(lang: Language, deliberation_id: Option<i64>) -> Element {
+    let api: MetadataApi = use_context();
+    let tr: SettingDeliberationTranslate = translate(&lang);
+    let nav = use_navigator();
+    let mut ctrl = OverviewController::new(lang, deliberation_id)?;
 
     rsx! {
-        div { class: "flex flex-col w-full justify-start items-start",
-            div { class: "text-[#9b9b9b] font-medium text-[14px] mb-[10px]",
-                "{translates.organization_management} / {translates.public_opinion_management}"
-            }
-            div { class: "flex flex-row w-full justify-start items-center mb-[25px]",
-                Link { class: "mr-[6px]", to: Route::DeliberationPage { lang },
-                    ArrowLeft { width: "24", height: "24", color: "#3a3a3a" }
+        div { class: format!("flex flex-col w-full justify-start items-start gap-10"),
+            div { class: "font-medium text-base text-text-black", {tr.overview} }
+            MainSection {
+                required: true,
+                header: tr.title.to_string(),
+                description: tr.description.to_string(),
+                SubSection { required: true, title: tr.proj_title.to_string(),
+                    div { class: "flex flex-row w-full focus:outline-none justify-start items-center bg-background-gray rounded-[4px] h-54",
+                        div { class: "flex px-15 w-full",
+                            input {
+                                class: "flex flex-row w-full justify-start items-center bg-transparent focus:outline-none",
+                                r#type: "text",
+                                name: "deliberation-name",
+                                placeholder: tr.proj_title_placeholder,
+                                value: ctrl.title(),
+                                oninput: move |event| ctrl.parent.save_title(event.value()),
+                            }
+                        }
+                    }
                 }
-                div { class: "text-[#3a3a3a] font-semibold text-[28px] mr-[20px]",
-                    "{translates.start_public_opinion}"
+                SubSection { required: true, title: tr.proj_desc.to_string(),
+                    div { class: "flex flex-row w-full focus:outline-none justify-start items-start bg-background-gray rounded-[4px] h-248",
+                        div { class: "flex px-15 py-10 w-full h-full justify-start items-start",
+                            textarea {
+                                class: "flex w-full h-full justify-start items-start bg-transparent focus:outline-none my-10 break-words whitespace-normal",
+                                placeholder: tr.proj_desc_placeholder,
+                                name: "deliberation-description",
+                                value: ctrl.description(),
+                                oninput: move |event| ctrl.parent.save_description(event.value()),
+                            }
+                        }
+                    }
                 }
-            }
+                SubSection { required: true, title: tr.deliberation_field.to_string(),
+                    div { class: "flex w-full",
+                        Dropdown {
+                            id: "deliberation fields",
+                            items: ProjectArea::variants(&lang),
+                            hint: tr.deliberation_field_hint,
+                            onselect: move |selected_items| ctrl.save_project_area(selected_items),
+                            value: ctrl.project_areas()
+                                .iter()
+                                .map(|area| area.translate(&lang).to_string())
+                                .collect::<Vec<String>>(),
+                        }
+                    }
+                }
+                SubSection { required: true, title: tr.thumbnail.to_string(),
+                    div { class: "flex flex-col w-full focus:outline-none justify-center items-center gap-10",
+                        div { class: "flex flex-col w-full",
+                            div { class: "flex flex-row gap-20 px-15 w-full h-54 bg-background-gray rounded-sm justify-center items-center",
+                                UploadButton {
+                                    class: "flex min-w-[130px] h-[40px] border bg-white border-[#2a60d3] rounded-sm text-[#2a60d3] text-center font-semibold text-sm justify-center items-center",
+                                    text: tr.upload_directly,
+                                    onuploaded: move |event: FormEvent| async move {
+                                        #[cfg(feature = "web")]
+                                        if let Some(file_engine) = event.files() {
+                                            let result = handle_file_upload(file_engine, api).await;
+                                            if !result.is_empty() {
+                                                if let Some(url) = result[0].url.as_ref() {
+                                                    ctrl.parent.save_thumbnail_image(url.clone());
+                                                }
+                                            } else {
+                                                btracing::e!(lang, ApiError::DeliberationResourceException);
+                                            }
+                                        }
+                                    },
+                                }
+                                input {
+                                    class: "flex flex-row w-full justify-start items-center bg-transparent text-disabled focus:outline-none",
+                                    r#type: "text",
+                                    placeholder: tr.no_file,
+                                    readonly: true,
+                                    value: ctrl.get_file_name(),
+                                }
+                            }
+                            p { class: "text-text-gray text-start w-full text-sm font-normal",
+                                {tr.upload_desc}
+                            }
+                        }
+                        div { class: "flex flex-col w-full",
 
-            div { class: "flex flex-col w-full justify-start items-center mt-[20px] mb-[80px]",
-                div { class: "flex flex-row w-[1400px] min-w-[1400px] justify-center items-center",
-                    Stepper {
-                        current_step: if step == CurrentStep::PublicOpinionComposition { 1 } else if step == CurrentStep::InputInformation { 2 } else if step == CurrentStep::CommitteeComposition { 3 } else if step == CurrentStep::PanelComposition { 4 } else if step == CurrentStep::DiscussionSetting { 5 } else { 6 },
-                        steps: vec![
-                            "공론 구성 및 기간".to_string(),
-                            "필수정보 입력".to_string(),
-                            "공론 위원회 구성".to_string(),
-                            "참여자 패널 구성".to_string(),
-                            "토론 설정".to_string(),
-                            "전체 미리보기".to_string(),
-                        ],
+                            if !ctrl.thumbnail_image().is_empty() {
+                                img {
+                                    class: "w-250 h-250 bg-background-gray",
+                                    src: ctrl.thumbnail_image(),
+                                    alt: "thumbnail preview",
+                                }
+                            }
+                        }
                     }
                 }
             }
-
-            if step == CurrentStep::PublicOpinionComposition {
-                CompositionDeliberation {
-                    lang,
-                    deliberation_sequences: ctrl.get_deliberation_sequences(),
-                    check_sequence: ctrl.check_deliberation_info(),
-                    onadd: move |_| {
-                        let _ = ctrl.add_deliberation_info();
-                    },
-                    onupdate: move |(index, opinion): (usize, StepCreateRequest)| {
-                        let _ = ctrl.update_deliberation_info(index, opinion);
-                    },
-                    ondelete: move |index: usize| {
-                        let _ = ctrl.delete_deliberation_info(index);
-                    },
-                    onstep: move |step: CurrentStep| {
-                        ctrl.change_step(step);
-                    },
+            div { class: "flex flex-row w-full justify-end items-end mt-30 mb-50",
+                Link {
+                    class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                    to: Route::DeliberationPage { lang },
+                    {tr.go_to_deliberation_management_list}
                 }
-            } else if step == CurrentStep::InputInformation {
-                InputDeliberation {
-                    lang,
-                    resources,
-                    surveys,
-                    selected_surveys,
-                    metadatas,
-                    fields: ctrl.get_total_fields(),
-                    information: ctrl.get_deliberation_informations(),
-
-                    oncreate: move |file: File| async move {
-                        let _ = ctrl.create_resource(file).await;
+                div {
+                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20 cursor-pointer hover:!bg-primary hover:!text-white",
+                    onclick: move |_| async move {
+                        ctrl.temp_save().await;
                     },
-                    onremove: move |id: i64| {
-                        let _ = ctrl.delete_resource(id);
-                    },
-                    onadd: move |resource: ResourceFileSummary| {
-                        let _ = ctrl.add_resource(resource.into());
-                    },
-                    onstep: move |step: CurrentStep| {
-                        ctrl.change_step(step);
-                    },
-                    update_projects: move |surveys: Vec<SurveyV2Summary>| {
-                        ctrl.set_projects(surveys);
-                    },
-                    change_information: move |information| {
-                        ctrl.update_deliberation_information(information);
-                    },
+                    {tr.temporary_save}
                 }
-            } else if step == CurrentStep::CommitteeComposition {
-                CompositionCommitee {
-                    lang,
-                    members,
-                    committees,
-                    add_committee: move |committee: DeliberationUserCreateRequest| {
-                        ctrl.add_committee(committee);
-                    },
-                    remove_committee: move |(user_id, role): (i64, Role)| {
-                        ctrl.remove_committee(user_id, role);
-                    },
-                    clear_committee: move |role: Role| {
-                        ctrl.clear_committee(role);
-                    },
-                    onstep: move |step: CurrentStep| {
-                        ctrl.change_step(step);
-                    },
-                }
-            } else if step == CurrentStep::PanelComposition {
-                CompositionPanel {
-                    lang,
-                    panels,
-                    selected_panels,
-                    add_panel: move |panel: PanelV2Summary| {
-                        ctrl.add_selected_panel(panel);
-                    },
-                    remove_panel: move |id: i64| {
-                        ctrl.remove_selected_panel(id);
-                    },
-                    clear_panel: move |_| {
-                        ctrl.clear_selected_panel();
-                    },
-                    change_selected_panel_by_index: move |(index, value): (usize, u64)| {
-                        ctrl.change_selected_panel_by_index(index, value);
-                    },
-                    onstep: move |step: CurrentStep| {
-                        ctrl.change_step(step);
-                    },
-                }
-            } else if step == CurrentStep::DiscussionSetting {
-                SettingDiscussion {
-                    lang,
-                    discussions,
-                    add_discussion: move |_| {
-                        ctrl.add_discussion();
-                    },
-                    remove_discussion: move |index: usize| {
-                        ctrl.remove_discussion(index);
-                    },
-                    update_discussion: move |(index, discussion): (usize, MeetingInfo)| {
-                        ctrl.update_discussion(index, discussion);
-                    },
-
-                    discussion_resources,
-                    create_resource: move |file: File| async move {
-                        let _ = ctrl.create_discussion_resource(file).await;
-                    },
-                    remove_resource: move |id: i64| {
-                        let _ = ctrl.remove_discussion_resource(id);
-                    },
-                    clear_resource: move |_| {
-                        let _ = ctrl.clear_discussion_resource();
-                    },
-                    onstep: move |step: CurrentStep| {
-                        ctrl.change_step(step);
-                    },
-                }
-            } else {
-                Preview {
-                    lang,
-                    sequences,
-                    informations,
-                    committees,
-                    members,
-                    selected_panels,
-
-                    onstep: move |step: CurrentStep| {
-                        ctrl.change_step(step);
-                    },
-                    onsend: move |_| async move {
-                        let _ = ctrl.create_deliberation(lang).await;
-                    },
+                div {
+                    class: "aria-active:cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-disabled aria-active:!bg-hover font-semibold text-base text-white",
+                    "aria-active": ctrl.is_valid(),
+                    onclick: move |_| ctrl.next(),
+                    {tr.next}
                 }
             }
         }

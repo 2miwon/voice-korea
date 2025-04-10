@@ -1,7 +1,34 @@
-@theme static {
+@theme {
   /* App-specific colors */
   --spacing: 1px;
-  
+  --color-primary: #2a60d3;
+  --color-davy-gray: #555462;
+
+  --color-error: #ff0000;
+  --color-gray-border: #e0e0e0;
+  --color-text-black: #222222;
+
+  --color-text-gray: #6d6d6d;
+  --color-hint-gray: #b4b4b4;
+  --color-background-gray: #f7f7f7;
+  --color-label-border-gray: #bfc8d9;
+  --color-table-text-gray: #555462;
+  --color-delete-border-gray: #adadad;
+  --color-period-border-gray: #ebeff5;
+  --color-header-gray: #9b9b9b;
+  --color-active: #2a60d3;
+  --color-disabled: #b4b4b4;
+  --color-primary-deep: #d7dced;
+
+  --color-third: #7c8292;
+  --color-focus: #8095ea;
+  --color-hover: #2a60d3;
+
+  --color-label-black: #35343f;
+  --color-header-black: #3a3a3a;
+
+  --color-necessary: #eb5757;
+
   --color-error: #FF0000;
   --color-gray-border: #E0E0E0;
   --color-text-black: #222222;
@@ -18,4 +45,6 @@
   --color-hover: #2A60D3;
 
   --color-label-black: #35343F;
+
+  --color-neutral1: rgba(247, 247, 247, 1);
 }

@@ -2,14 +2,16 @@ use by_components::icons::edit::Edit1;
 use dioxus::prelude::*;
 use dioxus_translate::{translate, Language};
 
-use crate::pages::deliberations::new::{controller::CurrentStep, i18n::PreviewComponentTranslate};
+use crate::pages::deliberations::new::{
+    controller::DeliberationNewStep, i18n::PreviewComponentTranslate,
+};
 
 #[component]
 pub fn PreviewComponent(
     lang: Language,
     label: String,
-    onstep: EventHandler<CurrentStep>,
-    step: CurrentStep,
+    onstep: EventHandler<DeliberationNewStep>,
+    step: DeliberationNewStep,
     title: String,
     children: Element,
 ) -> Element {
@@ -21,7 +23,7 @@ pub fn PreviewComponent(
                 div { class: "flex flex-row w-full justify-between items-center",
                     div { class: "font-bold text-[18px] text-[#222222]", "{title}" }
                     div {
-                        class: "cursor-pointer flex flex-row gap-[5px] px-[10px] py-[8px] bg-white rounded-[4px] border border-[#555462]",
+                        class: "cursor-pointer flex flex-row gap-[5px] px-[10px] py-[8px] bg-white rounded-[4px] border border-davy-gray",
                         onclick: move |_| {
                             onstep.call(step);
                         },

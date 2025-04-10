@@ -21,3 +21,14 @@ pub struct Step {
     #[api_model(summary, action = create)]
     pub ended_at: i64,
 }
+
+impl Into<StepCreateRequest> for Step {
+    fn into(self) -> StepCreateRequest {
+        StepCreateRequest {
+            step_type: self.step_type,
+            name: self.name,
+            started_at: self.started_at,
+            ended_at: self.ended_at,
+        }
+    }
+}
