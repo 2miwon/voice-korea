@@ -392,9 +392,10 @@ pub struct OverviewController {
 impl OverviewController {
     pub fn new(
         lang: Language,
-        deliberation_id: Option<i64>,
+        by_componentsdeliberation_id: Option<i64>,
     ) -> std::result::Result<Self, RenderError> {
-        let mut parent: Controller = use_context();
+        // let mut parent: Controller = use_context();
+        let parent: Controller = use_context();
 
         let title = use_memo(move || parent.deliberation_requests().title);
         let description = use_memo(move || parent.deliberation_requests().description);
