@@ -232,7 +232,7 @@ impl DeliberationProjectController {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use models::ProjectArea;
+    use models::{ProjectArea, ProjectStatus};
 
     use crate::tests::{setup, TestContext};
     #[tokio::test]
@@ -255,6 +255,8 @@ mod tests {
                 format!("title"),
                 format!("test description {now}"),
                 ProjectArea::City,
+                ProjectStatus::Ready,
+                user.id,
                 vec![],
                 vec![],
                 vec![],
@@ -305,6 +307,8 @@ mod tests {
                 format!("title"),
                 format!("test description"),
                 ProjectArea::City,
+                ProjectStatus::Ready,
+                user.id,
                 vec![],
                 vec![],
                 vec![],
@@ -380,6 +384,8 @@ mod tests {
                 format!("title"),
                 format!("test description"),
                 ProjectArea::City,
+                ProjectStatus::Ready,
+                user.id,
                 vec![],
                 vec![],
                 vec![],

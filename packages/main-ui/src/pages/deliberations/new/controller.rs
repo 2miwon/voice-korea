@@ -57,9 +57,7 @@ impl Controller {
         let current_step = route.clone().into();
         let deliberation_requests = use_signal(|| DeliberationCreateRequest::default());
 
-        // TODO: read draft from DB
-
-        let ctrl = Self {
+        let mut ctrl = Self {
             lang,
             user,
             current_step,
@@ -67,6 +65,30 @@ impl Controller {
             deliberation_requests,
             deliberation_id: use_signal(|| None),
         };
+
+        use_future(move || async move {
+            if let Some(creator_id) = ctrl.user.get_user_id() {
+                let org_id = if let Some(org) = ctrl.user.get_selected_org() {
+                    org.id
+                } else {
+                    btracing::e!(lang, ApiError::OrganizationNotFound);
+                    return;
+                };
+
+                let client = Deliberation::get_client(config::get().api_url);
+
+                match client.get_draft(org_id, creator_id).await {
+                    Ok(d) => {
+                        ctrl.deliberation_id.set(Some(d.clone().id));
+                        ctrl.deliberation_requests.set(d.into());
+                    }
+                    Err(e) => {
+                        tracing::error!("Failed to get draft: {:?}", e);
+                    }
+                }
+            }
+        });
+
         use_context_provider(|| ctrl);
         Ok(ctrl)
     }
@@ -373,24 +395,6 @@ impl OverviewController {
         deliberation_id: Option<i64>,
     ) -> std::result::Result<Self, RenderError> {
         let mut parent: Controller = use_context();
-        use_future(move || async move {
-            tracing::debug!("Deliberation ID: {:?}", deliberation_id);
-            if let Some(deliberation_id) = deliberation_id {
-                let client = Deliberation::get_client(config::get().api_url);
-                let org_id = parent.user.get_selected_org();
-                if org_id.is_none() {
-                    tracing::error!("Organization ID is missing");
-                    return;
-                }
-                let org_id = org_id.unwrap().id;
-                let deliberation = client
-                    .get(org_id, deliberation_id)
-                    .await
-                    .unwrap_or_default();
-                parent.deliberation_requests.set(deliberation.into());
-                parent.deliberation_id.set(Some(deliberation_id));
-            }
-        });
 
         let title = use_memo(move || parent.deliberation_requests().title);
         let description = use_memo(move || parent.deliberation_requests().description);
@@ -405,6 +409,27 @@ impl OverviewController {
             thumbnail_image,
             project_areas: use_memo(move || parent.deliberation_requests().project_areas),
         };
+
+        // use_future(move || async move {
+        //     tracing::debug!("Deliberation ID: {:?}", deliberation_id);
+        //     if let Some(deliberation_id) = deliberation_id {
+        //         let org_id = if let Some(org) = parent.user.get_selected_org() {
+        //             org.id
+        //         } else {
+        //             btracing::e!(lang, ApiError::OrganizationNotFound);
+        //             return;
+        //         };
+
+        //         let client = Deliberation::get_client(config::get().api_url);
+
+        //         let deliberation = client
+        //             .get(org_id, deliberation_id)
+        //             .await
+        //             .unwrap_or_default();
+        //         parent.deliberation_requests.set(deliberation.into());
+        //         parent.deliberation_id.set(Some(deliberation_id));
+        //     }
+        // });
 
         Ok(ctrl)
     }

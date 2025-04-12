@@ -272,7 +272,7 @@ mod deliberation_comment_tests {
 
     // use crate::tests::{setup, TestContext};
 
-    async fn create_deliberation(endpoint: &str, org_id: i64, now: i64) -> i64 {
+    async fn create_deliberation(endpoint: &str, org_id: i64, now: i64, user_id: i64) -> i64 {
         let cli = Deliberation::get_client(endpoint);
         let res = cli
             .create(
@@ -283,6 +283,8 @@ mod deliberation_comment_tests {
                 format!("test deliberation {now}"),
                 "test description".to_string(),
                 ProjectArea::City,
+                ProjectStatus::Ready,
+                user_id,
                 vec![],
                 vec![],
                 vec![],
