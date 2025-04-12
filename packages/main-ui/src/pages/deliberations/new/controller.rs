@@ -43,7 +43,7 @@ pub struct Controller {
     #[allow(dead_code)]
     popup_service: Signal<PopupService>,
     current_step: DeliberationNewStep,
-    user: LoginService,
+    pub user: LoginService,
 
     deliberation_requests: Signal<DeliberationCreateRequest>,
     deliberation_id: Signal<Option<i64>>,
@@ -265,8 +265,6 @@ impl Controller {
                         btracing::e!(self.lang, e);
                     }
                 }
-
-                // TODO: update sub structures
             }
             Err(_) => {
                 match cli
@@ -302,8 +300,6 @@ impl Controller {
                     }
                     Err(e) => btracing::e!(self.lang, e),
                 }
-
-                // TODO: update deliberation_areas in DB
             }
         }
     }

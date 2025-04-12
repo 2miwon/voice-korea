@@ -3,11 +3,11 @@ use models::{
     deliberation_user::DeliberationUserCreateRequest, DeliberationBasicInfoCreateRequest,
     DeliberationContentCreateRequest, DeliberationDiscussionCreateRequest,
     DeliberationFinalSurveyCreateRequest, DeliberationSampleSurveyCreateRequest,
-    OrganizationMember, OrganizationMemberQuery, OrganizationMemberSummary, PanelV2, PanelV2Query,
-    PanelV2Summary, Role,
+    DeliberationStatus, Info, OrganizationMember, OrganizationMemberQuery,
+    OrganizationMemberSummary, PanelV2, PanelV2Query, PanelV2Summary, Role, *,
 };
 
-use crate::{routes::Route, service::login_service::LoginService};
+use crate::{config, routes::Route, service::login_service::LoginService};
 
 use super::ParentController;
 
@@ -177,8 +177,125 @@ impl Controller {
         self.parent.temporary_save().await;
     }
 
-    pub fn start_deliberation(&mut self) {
+    pub async fn start_deliberation(&mut self) {
         tracing::debug!("start button click");
+
+        let cli = Deliberation::get_client(config::get().api_url);
+
+        let org = self.parent.user.get_selected_org();
+        if org.is_none() {
+            btracing::e!(self.lang, ApiError::OrganizationNotFound);
+            return;
+        }
+
+        let org_id = org.unwrap().id;
+        let creator_id = if let Some(user_id) = self.parent.user.get_user_id() {
+            user_id
+        } else {
+            btracing::e!(self.lang, ApiError::Unauthorized);
+            return;
+        };
+
+        let DeliberationCreateRequest {
+            started_at,
+            ended_at,
+            thumbnail_image,
+            title,
+            description,
+            project_area,
+            project_areas,
+            resource_ids,
+            survey_ids,
+            roles,
+            panel_ids,
+            steps,
+            elearning,
+            basic_infos,
+            sample_surveys,
+            contents,
+            deliberation_discussions,
+            final_surveys,
+            drafts,
+            ..
+        } = self.parent.deliberation_requests();
+
+        match cli.get_draft(org_id, creator_id).await {
+            Ok(d) => {
+                match cli
+                    .update(
+                        org_id,
+                        d.id,
+                        DeliberationCreateRequest {
+                            started_at,
+                            ended_at,
+                            thumbnail_image,
+                            title,
+                            description,
+                            project_area,
+                            project_areas,
+                            status: DeliberationStatus::Ready,
+                            creator_id,
+                            resource_ids,
+                            survey_ids,
+                            roles,
+                            panel_ids,
+                            steps,
+                            elearning,
+                            basic_infos,
+                            sample_surveys,
+                            contents,
+                            deliberation_discussions,
+                            final_surveys,
+                            drafts,
+                        },
+                    )
+                    .await
+                {
+                    Ok(_) => {
+                        btracing::i!(self.lang, Info::Save);
+                        self.nav.push(Route::DeliberationPage { lang: self.lang });
+                    }
+                    Err(e) => {
+                        btracing::e!(self.lang, e);
+                    }
+                }
+            }
+            Err(_) => {
+                match cli
+                    .create(
+                        org_id,
+                        started_at,
+                        ended_at,
+                        thumbnail_image,
+                        title,
+                        description,
+                        project_area,
+                        DeliberationStatus::Ready,
+                        creator_id,
+                        project_areas,
+                        resource_ids,
+                        survey_ids,
+                        roles,
+                        panel_ids,
+                        steps,
+                        elearning,
+                        basic_infos,
+                        sample_surveys,
+                        contents,
+                        deliberation_discussions,
+                        final_surveys,
+                        drafts,
+                    )
+                    .await
+                {
+                    Ok(_) => {
+                        btracing::i!(self.lang, Info::Save);
+                        self.nav.push(Route::DeliberationPage { lang: self.lang });
+                    }
+                    Err(e) => btracing::e!(self.lang, e),
+                }
+            }
+        }
     }
 
     pub fn convert_user_ids_to_members(
