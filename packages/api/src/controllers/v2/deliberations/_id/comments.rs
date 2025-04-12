@@ -283,7 +283,7 @@ mod deliberation_comment_tests {
                 format!("test deliberation {now}"),
                 "test description".to_string(),
                 ProjectArea::City,
-                ProjectStatus::Ready,
+                DeliberationStatus::Ready,
                 user_id,
                 vec![],
                 vec![],

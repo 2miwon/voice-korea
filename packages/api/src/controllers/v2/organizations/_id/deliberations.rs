@@ -14,7 +14,8 @@ use deliberation_user::*;
 use discussion_resources::DiscussionResource;
 use discussions::Discussion;
 use models::{
-    deliberation::*, deliberation_basic_info_members::deliberation_basic_info_member::*,
+    deliberation::*, deliberation_areas::deliberation_area::*,
+    deliberation_basic_info_members::deliberation_basic_info_member::*,
     deliberation_basic_info_resources::deliberation_basic_info_resource::*,
     deliberation_basic_info_surveys::deliberation_basic_info_survey::*,
     deliberation_basic_infos::deliberation_basic_info::*,
@@ -73,6 +74,7 @@ pub struct DeliberationController {
     deliberation_user: DeliberationUserRepository,
     deliberation_resource: DeliberationResourceRepository,
     deliberation_survey: DeliberationSurveyRepository,
+    deliberation_area: DeliberationAreaRepository,
     panel_deliberation: PanelDeliberationRepository,
     survey: SurveyV2Repository,
     basic_info: DeliberationBasicInfoRepository,
@@ -152,12 +154,11 @@ impl DeliberationController {
             .await?
             .ok_or(ApiError::DeliberationException)?;
 
-        for DeliberationUserCreateRequest { user_id, role } in roles {
-            self.deliberation_user
-                .insert_with_tx(&mut *tx, user_id, org_id, deliberation.id, role)
-                .await?
-                .ok_or(ApiError::DeliberationUserException)?;
-        }
+        self.insert_deliberation_areas(&mut *tx, deliberation.id, project_areas.clone())
+            .await?;
+
+        self.insert_deliberation_users(&mut *tx, org_id, deliberation.id, roles.clone())
+            .await?;
 
         for resource_id in resource_ids {
             self.deliberation_resource
@@ -240,6 +241,78 @@ impl DeliberationController {
                 .await?
                 .ok_or(ApiError::DeliberationPanelException)?;
         }
+
+        tx.commit().await?;
+
+        Ok(deliberation)
+    }
+
+    #[allow(unused_variables)]
+    #[allow(dead_code)]
+    pub async fn update(
+        &self,
+        id: i64,
+        org_id: i64,
+        param: DeliberationUpdateRequest,
+    ) -> Result<Deliberation> {
+        let DeliberationCreateRequest {
+            started_at,
+            ended_at,
+            project_area,
+            project_areas,
+            title,
+            description,
+            panel_ids,
+            resource_ids,
+            survey_ids,
+            roles,
+            steps,
+            elearning,
+            thumbnail_image,
+            basic_infos,
+            sample_surveys,
+            contents,
+            deliberation_discussions,
+            final_surveys,
+            drafts,
+            status,
+            creator_id,
+        } = param.req;
+
+        self.validate_inputs(
+            // org_id,
+            started_at, ended_at, status,
+        )?;
+
+        let mut tx = self.pool.begin().await?;
+
+        let deliberation = self
+            .repo
+            .update_with_tx(
+                &mut *tx,
+                id,
+                DeliberationRepositoryUpdateRequest {
+                    org_id: Some(org_id),
+                    started_at: Some(started_at),
+                    ended_at: Some(ended_at),
+                    thumbnail_image: Some(thumbnail_image),
+                    title: Some(title),
+                    description: Some(description),
+                    project_area: Some(project_area),
+                    status: Some(status),
+                    creator_id: Some(creator_id),
+                },
+            )
+            .await?
+            .ok_or(ApiError::DeliberationException)?;
+
+        // FIXME: does not work
+        // self.upsert_deliberation_areas(&mut *tx, id, project_areas.clone())
+        //     .await?;
+
+        // FIXME: does not work
+        // self.upsert_deliberation_users(&mut *tx, org_id, id, roles.clone())
+        //     .await?;
 
         tx.commit().await?;
 
@@ -692,23 +765,107 @@ impl DeliberationController {
         Ok(())
     }
 
-    pub async fn get_draft(&self, org_id: i64, user_id: Option<i64>) -> Result<Deliberation> {
-        if user_id.is_none() {
-            return Err(ApiError::ValidationError("user_id is required".to_string()).into());
+    async fn insert_deliberation_areas(
+        &self,
+        tx: &mut sqlx::PgConnection,
+        deliberation_id: i64,
+        project_areas: Vec<ProjectArea>,
+    ) -> Result<()> {
+        for project_area in project_areas {
+            self.deliberation_area
+                .insert_with_tx(
+                    &mut *tx,
+                    project_area as i64, // FIXME: it should not be id value
+                    deliberation_id,
+                )
+                .await?
+                .ok_or(ApiError::DeliberationResourceException)?;
         }
+        Ok(())
+    }
 
-        let user_id = user_id.unwrap();
-
-        let deliberation = Deliberation::query_builder()
-            .org_id_equals(org_id)
-            .status_equals(DeliberationStatus::Draft)
-            .creator_id_equals(user_id)
+    #[allow(dead_code)]
+    async fn upsert_deliberation_areas(
+        &self,
+        tx: &mut sqlx::PgConnection,
+        deliberation_id: i64,
+        project_areas: Vec<ProjectArea>,
+    ) -> Result<()> {
+        //
+        // FIXME: querybuilder does not work (with no sql debug log)
+        //
+        let remain_project_areas = DeliberationArea::query_builder()
+            .deliberation_id_equals(deliberation_id)
             .query()
-            .map(Deliberation::from)
-            .fetch_one(&self.pool)
+            .map(DeliberationArea::from)
+            .fetch_all(&self.pool)
             .await?;
 
-        Ok(deliberation)
+        tracing::debug!("remain_project_areas: {:?}", remain_project_areas);
+
+        for remain in remain_project_areas {
+            self.deliberation_area
+                .delete_with_tx(&mut *tx, remain.id)
+                .await?
+                .ok_or(ApiError::DeliberationResourceException)?;
+        }
+
+        tracing::debug!("project_areas: {:?}", project_areas.clone());
+
+        self.insert_deliberation_areas(tx, deliberation_id, project_areas.clone())
+            .await?;
+
+        tracing::debug!("project_areas2: {:?}", project_areas);
+
+        Ok(())
+    }
+
+    async fn insert_deliberation_users(
+        &self,
+        tx: &mut sqlx::PgConnection,
+        org_id: i64,
+        deliberation_id: i64,
+        roles: Vec<DeliberationUserCreateRequest>,
+    ) -> Result<()> {
+        for DeliberationUserCreateRequest { user_id, role } in roles {
+            self.deliberation_user
+                .insert_with_tx(&mut *tx, user_id, org_id, deliberation_id, role)
+                .await?
+                .ok_or(ApiError::DeliberationUserException)?;
+        }
+
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    async fn upsert_deliberation_users(
+        &self,
+        tx: &mut sqlx::PgConnection,
+        org_id: i64,
+        deliberation_id: i64,
+        roles: Vec<DeliberationUserCreateRequest>,
+    ) -> Result<()> {
+        //
+        // FIXME: querybuilder does not work (with no sql debug log)
+        //
+        let remain_users = DeliberationUser::query_builder()
+            .deliberation_id_equals(deliberation_id)
+            .query()
+            .map(DeliberationUser::from)
+            .fetch_all(&self.pool)
+            .await?;
+
+        for remain in remain_users {
+            self.deliberation_user
+                .delete_with_tx(&mut *tx, remain.id)
+                .await?
+                .ok_or(ApiError::DeliberationResourceException)?;
+        }
+
+        self.insert_deliberation_users(tx, org_id, deliberation_id, roles.clone())
+            .await?;
+
+        Ok(())
     }
 }
 
@@ -719,6 +876,7 @@ impl DeliberationController {
         let deliberation_user = DeliberationUser::get_repository(pool.clone());
         let deliberation_resource = DeliberationResource::get_repository(pool.clone());
         let deliberation_survey = DeliberationSurvey::get_repository(pool.clone());
+        let deliberation_area = DeliberationArea::get_repository(pool.clone());
         let panel_deliberation = PanelDeliberation::get_repository(pool.clone());
         let survey = SurveyV2::get_repository(pool.clone());
         let basic_info = DeliberationBasicInfo::get_repository(pool.clone());
@@ -751,6 +909,7 @@ impl DeliberationController {
             deliberation_user,
             deliberation_resource,
             deliberation_survey,
+            deliberation_area,
             panel_deliberation,
             survey,
             basic_info,
@@ -783,7 +942,7 @@ impl DeliberationController {
         Ok(by_axum::axum::Router::new()
             .route(
                 "/:id",
-                get(Self::get_deliberation_by_id), // .post(Self::act_deliberation_by_id)
+                get(Self::get_deliberation_by_id).post(Self::act_deliberation_by_id), // .post(Self::act_deliberation_by_id)
             )
             .with_state(self.clone())
             .route(
@@ -851,22 +1010,19 @@ impl DeliberationController {
         ))
     }
 
-    // pub async fn get_deliberation_by_id(
-    //     State(ctrl): State<DeliberationController>,
-    //     Extension(_auth): Extension<Option<Authorization>>,
-    //     Path(DeliberationPath { org_id, id }): Path<DeliberationPath>,
-    // ) -> Result<Json<Deliberation>> {
-    //     tracing::debug!("get_deliberation {} {:?}", org_id, id);
-    //     Ok(Json(
-    //         Deliberation::query_builder()
-    //             .id_equals(id)
-    //             .org_id_equals(org_id)
-    //             .query()
-    //             .map(Deliberation::from)
-    //             .fetch_one(&ctrl.pool)
-    //             .await?,
-    //     ))
-    // }
+    pub async fn act_deliberation_by_id(
+        State(ctrl): State<DeliberationController>,
+        Extension(_auth): Extension<Option<Authorization>>,
+        Path(DeliberationPath { org_id, id }): Path<DeliberationPath>,
+        Json(body): Json<DeliberationByIdAction>,
+    ) -> Result<Json<Deliberation>> {
+        tracing::debug!("get_deliberation {} {:?}", org_id, id);
+        match body {
+            DeliberationByIdAction::Update(param) => {
+                Ok(Json(ctrl.update(id, org_id, param).await?))
+            }
+        }
+    }
 
     pub async fn get_deliberation(
         State(ctrl): State<DeliberationController>,
@@ -892,6 +1048,25 @@ impl DeliberationController {
                 )));
             }
         }
+    }
+
+    pub async fn get_draft(&self, org_id: i64, user_id: Option<i64>) -> Result<Deliberation> {
+        if user_id.is_none() {
+            return Err(ApiError::ValidationError("user_id is required".to_string()).into());
+        }
+
+        let user_id = user_id.unwrap();
+
+        let deliberation = Deliberation::query_builder()
+            .org_id_equals(org_id)
+            .status_equals(DeliberationStatus::Draft)
+            .creator_id_equals(user_id)
+            .query()
+            .map(Deliberation::from)
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(deliberation)
     }
 }
 
