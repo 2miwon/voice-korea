@@ -10,7 +10,7 @@ use crate::{
 #[component]
 pub fn CombinationTable(
     lang: Language,
-    attribute_combinations: Vec<AttributeCombination>,
+    attribute_combinations: ReadOnlySignal<Vec<AttributeCombination>>,
     change_attribute_combination_value: EventHandler<(usize, usize)>,
 
     combination_error: bool,
@@ -27,14 +27,12 @@ pub fn CombinationTable(
         }
     });
 
-    use_effect(use_reactive(&attribute_combinations.clone(), {
-        move |attribute_combinations| {
-            combinations.set(attribute_combinations);
-        }
-    }));
+    use_effect(move || {
+        combinations.set(attribute_combinations);
+    });
 
-    let paginated_combinations = {
-        let all = combinations();
+    let paginated_combinations = use_memo(move || {
+        let all = combinations()();
         let total_len = all.len();
         let page = current_page();
         let mut start_index = (page - 1) * 7;
@@ -51,7 +49,7 @@ pub fn CombinationTable(
             .enumerate()
             .map(|(i, combination)| (start_index + i, combination))
             .collect::<Vec<(usize, AttributeCombination)>>()
-    };
+    });
 
     rsx! {
         div {
@@ -84,7 +82,7 @@ pub fn CombinationTable(
                     }
                 }
 
-                for (real_index , combination) in paginated_combinations {
+                for (real_index , combination) in paginated_combinations() {
                     div { class: "flex flex-row w-full min-h-55 justify-start items-center",
                         div { class: "flex flex-wrap flex-1 w-full min-h-55 justify-center items-center gap-10",
                             for attribute in combination.group {

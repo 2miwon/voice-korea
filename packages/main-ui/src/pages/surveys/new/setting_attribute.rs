@@ -178,7 +178,7 @@ pub fn Dropdown(
     use_outside_click(&id, move |_| is_focused.set(false));
 
     rsx! {
-        div {
+        button {
             id,
             class: "cursor-pointer relative flex flex-row w-full h-55 justify-center items-center bg-background-gray rounded-md",
             onclick: move |_| {
