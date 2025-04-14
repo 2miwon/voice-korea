@@ -41,7 +41,7 @@ pub struct SurveyV2 {
     #[api_model(summary, action = create, action_by_id = update)]
     pub description: String,
     #[api_model(summary, action = create, action_by_id = update)]
-    pub quotes: i64,
+    pub quotas: i64,
 
     #[api_model(summary, many_to_one = organizations)]
     pub org_id: i64,
@@ -464,13 +464,13 @@ impl SurveyV2Summary {
 
         format!(
             "{}% ({}/{})",
-            if self.quotes == 0 {
+            if self.quotas == 0 {
                 0
             } else {
-                responses / self.quotes * 100
+                responses / self.quotas * 100
             },
             responses,
-            self.quotes
+            self.quotas
         )
     }
 }

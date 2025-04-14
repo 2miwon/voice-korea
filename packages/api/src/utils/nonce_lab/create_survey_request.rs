@@ -46,7 +46,7 @@ impl From<SurveyV2> for NonceLabCreateSurveyRequest {
             } else {
                 None
             },
-            expected_responses: survey.quotes as u64,
+            expected_responses: survey.quotas as u64,
             estimated_minutes: survey.estimate_time as u64,
             reward_points: survey.point as u64,
         }

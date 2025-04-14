@@ -189,7 +189,7 @@ impl Controller {
                 if let Some(Some(survey)) = survey_resource.value()() {
                     let combinations = survey.attribute_quotas.clone();
                     let attributes = survey.attribute_distributes.clone();
-                    let quotas = survey.quotes.clone();
+                    let quotas = survey.quotas.clone();
                     let mut selected_groups = vec![];
                     let mut attribute_combination = vec![];
 
@@ -300,7 +300,7 @@ impl Controller {
 
                     ctrl.estimate_time.set(survey.estimate_time);
                     ctrl.point.set(survey.point);
-                    ctrl.total_counts.set(survey.quotes);
+                    ctrl.total_counts.set(survey.quotas);
                     ctrl.selected_attributes.set(selected_groups);
                     ctrl.attribute_combinations.set(attribute_combination);
                     ctrl.attribute_options.set(attribute_options.clone());

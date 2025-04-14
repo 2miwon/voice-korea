@@ -426,7 +426,7 @@ pub fn SurveySummaryReport(lang: Language, survey: SurveyV2) -> Element {
         div { class: "flex flex-row w-full justify-start items-start gap-[10px]",
             SurveyResponseBox {
                 title: "{tr.total_survey_target}",
-                value: survey.quotes.to_formatted_string(&Locale::en),
+                value: survey.quotas.to_formatted_string(&Locale::en),
             }
             SurveyResponseBox {
                 title: "{tr.number_of_responses}",
@@ -434,7 +434,7 @@ pub fn SurveySummaryReport(lang: Language, survey: SurveyV2) -> Element {
             }
             SurveyResponseBox {
                 title: "{tr.rate_of_responses}",
-                value: if survey.quotes == 0 { "0%" } else { "{survey.response_count * 100 / survey.quotes}%" },
+                value: if survey.quotas == 0 { "0%" } else { "{survey.response_count * 100 / survey.quotas}%" },
             }
             SurveyResponseBox {
                 title: "{tr.remaining_period}",

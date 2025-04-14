@@ -175,7 +175,7 @@ impl SurveyResponseController {
 
         tracing::debug!("responses {} total_count {}", responses.len(), total_count);
 
-        if survey.quotes <= total_count {
+        if survey.quotas <= total_count {
             return Err(ApiError::SurveyResponsePanelQuotaExceeded);
         }
 
