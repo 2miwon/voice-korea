@@ -398,7 +398,7 @@ mod discussion_tests {
 
     use super::*;
 
-    async fn create_deliberation(endpoint: &str, org_id: i64, now: i64) -> i64 {
+    async fn create_deliberation(endpoint: &str, org_id: i64, now: i64, user_id: i64) -> i64 {
         let get_client = Deliberation::get_client(endpoint);
         let cli = get_client;
         let res = cli
@@ -410,6 +410,8 @@ mod discussion_tests {
                 format!("test deliberation {now}"),
                 "test description".to_string(),
                 ProjectArea::City,
+                DeliberationStatus::Ready,
+                user_id,
                 vec![],
                 vec![],
                 vec![],
@@ -440,7 +442,7 @@ mod discussion_tests {
         } = setup().await.unwrap();
         let org_id = user.orgs[0].id;
 
-        let deliberation_id = create_deliberation(&endpoint, org_id, now).await;
+        let deliberation_id = create_deliberation(&endpoint, org_id, now, user.id).await;
 
         let cli = Discussion::get_client(&endpoint);
         let started_at = now;

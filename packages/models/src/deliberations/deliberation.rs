@@ -25,7 +25,7 @@ use crate::step::*;
 use crate::{PanelV2, ProjectArea, ResourceFile, SurveyV2};
 
 #[derive(Validate)]
-#[api_model(base = "/v2/organizations/:org-id/deliberations", action = [create(project_areas = Vec<ProjectArea>, resource_ids = Vec<i64>, survey_ids = Vec<i64>, roles = Vec<DeliberationUserCreateRequest>, panel_ids = Vec<i64>, steps = Vec<StepCreateRequest>, elearning = Vec<i64>, basic_infos = Vec<DeliberationBasicInfoCreateRequest>, sample_surveys = Vec<DeliberationSampleSurveyCreateRequest>, contents = Vec<DeliberationContentCreateRequest>, deliberation_discussions = Vec<DeliberationDiscussionCreateRequest>, final_surveys = Vec<DeliberationFinalSurveyCreateRequest>, drafts = Vec<DeliberationDraftCreateRequest>)], act_by_id = [update(req = DeliberationCreateRequest)], table = deliberations)]
+#[api_model(base = "/v2/organizations/:org-id/deliberations", action = [create(project_areas = Vec<ProjectArea>, resource_ids = Vec<i64>, survey_ids = Vec<i64>, roles = Vec<DeliberationUserCreateRequest>, panel_ids = Vec<i64>, steps = Vec<StepCreateRequest>, elearning = Vec<i64>, basic_infos = Vec<DeliberationBasicInfoCreateRequest>, sample_surveys = Vec<DeliberationSampleSurveyCreateRequest>, contents = Vec<DeliberationContentCreateRequest>, deliberation_discussions = Vec<DeliberationDiscussionCreateRequest>, final_surveys = Vec<DeliberationFinalSurveyCreateRequest>, drafts = Vec<DeliberationDraftCreateRequest>)], action_by_id = [update(req = DeliberationCreateRequest)], table = deliberations)]
 pub struct Deliberation {
     #[api_model(summary, primary_key)]
     pub id: i64,
@@ -48,7 +48,7 @@ pub struct Deliberation {
     #[serde(default)]
     pub steps: Vec<Step>,
 
-    #[api_model(many_to_many = deliberation_areas, table_name = areas, foreign_primary_key = area_id, foreign_reference_key = deliberation_id)]
+    #[api_model(summary, many_to_many = deliberation_areas, table_name = areas, foreign_primary_key = area_id, foreign_reference_key = deliberation_id)]
     #[serde(default)]
     pub project_areas: Vec<Area>,
     #[api_model(summary, action = create, version = v0.5)]
@@ -122,15 +122,20 @@ pub struct Deliberation {
     #[serde(default)]
     pub project_area: ProjectArea,
 
-    #[api_model(summary, type = INTEGER, version = v0.1)]
+    #[api_model(summary, type = INTEGER, action = create, version = v0.2)]
     #[serde(default)]
     pub status: DeliberationStatus,
+
+    #[api_model(summary, many_to_one = users, action = create, read_action = get_draft)]
+    pub creator_id: i64,
 }
 
 #[derive(Clone, Copy, Translate, PartialEq, Default, Debug, ApiModel)]
 #[cfg_attr(feature = "server", derive(JsonSchema, aide::OperationIo))]
 pub enum DeliberationStatus {
     #[default]
+    #[translate(ko = "초안", en = "Draft")]
+    Draft = 0,
     #[translate(ko = "준비", en = "Ready")]
     Ready = 1,
     #[translate(ko = "진행", en = "InProgress")]
@@ -200,6 +205,8 @@ impl Into<DeliberationCreateRequest> for Deliberation {
                 .into_iter()
                 .map(|resource| resource.id)
                 .collect(),
+            status: self.status,
+            creator_id: self.creator_id,
         }
     }
 }

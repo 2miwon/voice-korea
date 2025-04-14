@@ -1,6 +1,6 @@
 use bdk::prelude::*;
 use by_macros::DioxusController;
-use models::{deliberation_user::DeliberationUserCreateRequest, *};
+use models::{deliberation_user::DeliberationUserCreateRequest, DeliberationStatus, *};
 
 use crate::{
     config,
@@ -43,7 +43,7 @@ pub struct Controller {
     #[allow(dead_code)]
     popup_service: Signal<PopupService>,
     current_step: DeliberationNewStep,
-    user: LoginService,
+    pub user: LoginService,
 
     deliberation_requests: Signal<DeliberationCreateRequest>,
     deliberation_id: Signal<Option<i64>>,
@@ -57,7 +57,7 @@ impl Controller {
         let current_step = route.clone().into();
         let deliberation_requests = use_signal(|| DeliberationCreateRequest::default());
 
-        let ctrl = Self {
+        let mut ctrl = Self {
             lang,
             user,
             current_step,
@@ -65,6 +65,31 @@ impl Controller {
             deliberation_requests,
             deliberation_id: use_signal(|| None),
         };
+
+        use_future(move || async move {
+            if let Some(creator_id) = ctrl.user.get_user_id() {
+                let org_id = if let Some(org) = ctrl.user.get_selected_org() {
+                    org.id
+                } else {
+                    btracing::e!(lang, ApiError::OrganizationNotFound);
+                    return;
+                };
+
+                let client = Deliberation::get_client(config::get().api_url);
+
+                match client.get_draft(org_id, creator_id).await {
+                    Ok(d) => {
+                        tracing::debug!("Draft: {:?}", d);
+                        ctrl.deliberation_id.set(Some(d.clone().id));
+                        ctrl.deliberation_requests.set(d.into());
+                    }
+                    Err(e) => {
+                        tracing::error!("Failed to get draft: {:?}", e);
+                    }
+                }
+            }
+        });
+
         use_context_provider(|| ctrl);
         Ok(ctrl)
     }
@@ -73,94 +98,10 @@ impl Controller {
         self.current_step
     }
 
-    // pub fn use_service() -> Self {
-    //     use_context()
-    // }
-
-    // pub async fn create_metadata(&self, file: File) -> Result<ResourceFile> {
-    //     let org = self.user.get_selected_org();
-    //     if org.is_none() {
-    //         return Err(models::ApiError::OrganizationNotFound);
-    //     }
-    //     let org_id = org.unwrap().id;
-    //     let client = models::ResourceFile::get_client(&config::get().api_url);
-
-    //     client
-    //         .create(
-    //             org_id,
-    //             file.name.clone(),
-    //             None,
-    //             None,
-    //             None,
-    //             None,
-    //             None,
-    //             vec![file],
-    //         )
-    //         .await
-    // }
-
-    // pub async fn create_deliberation(&self, lang: Language) -> Result<()> {
-    //     let navigator = use_navigator();
-
-    //     let endpoint = crate::config::get().api_url;
-    //     let client = Deliberation::get_client(endpoint);
-
-    //     let org_id = self.user.get_selected_org();
-    //     if org_id.is_none() {
-    //         tracing::error!("Organization ID is missing");
-    //         return Err(ApiError::OrganizationNotFound);
-    //     }
-
-    //     let req = self.deliberation_requests();
-
-    //     match client
-    //         .create(
-    //             org_id.unwrap().id,
-    //             req.started_at,
-    //             req.ended_at,
-    //             req.thumbnail_image,
-    //             req.title.clone(),
-    //             req.description.clone(),
-    //             req.project_area,
-    //             req.project_areas,
-    //             req.resource_ids,
-    //             req.survey_ids,
-    //             req.roles,
-    //             req.panel_ids,
-    //             req.steps,
-    //             req.elearning,
-    //             req.basic_infos,
-    //             req.sample_surveys,
-    //             req.contents,
-    //             req.deliberation_discussions,
-    //             req.final_surveys,
-    //             req.drafts,
-    //         )
-    //         .await
-    //     {
-    //         Ok(_) => {
-    //             btracing::debug!("success to create deliberation");
-    //             navigator.push(Route::DeliberationPage { lang });
-    //             Ok(())
-    //         }
-    //         Err(e) => {
-    //             btracing::error!("failed to create deliberation: {}", e.translate(&lang));
-    //             return Err(e);
-    //         }
-    //     }
-    // }
-
     pub fn project_areas(&self) -> Vec<ProjectArea> {
         self.deliberation_requests
             .with(|req| req.project_areas.clone())
     }
-
-    // pub fn get_deliberation_time(&self, steps: Vec<StepCreateRequest>) -> (i64, i64) {
-    //     let started_at = steps.iter().map(|s| s.started_at).min().unwrap_or(0);
-    //     let ended_at = steps.iter().map(|s| s.ended_at).max().unwrap_or(0);
-
-    //     (started_at, ended_at)
-    // }
 
     pub fn save_panels(&mut self, panel_ids: Vec<i64>) {
         self.deliberation_requests.with_mut(|req| {
@@ -245,6 +186,22 @@ impl Controller {
     }
 
     pub async fn temporary_save(&mut self) {
+        let cli = Deliberation::get_client(config::get().api_url);
+
+        let org = self.user.get_selected_org();
+        if org.is_none() {
+            btracing::e!(self.lang, ApiError::OrganizationNotFound);
+            return;
+        }
+
+        let org_id = org.unwrap().id;
+        let creator_id = if let Some(user_id) = self.user.get_user_id() {
+            user_id
+        } else {
+            btracing::e!(self.lang, ApiError::Unauthorized);
+            return;
+        };
+
         let DeliberationCreateRequest {
             started_at,
             ended_at,
@@ -265,50 +222,86 @@ impl Controller {
             deliberation_discussions,
             final_surveys,
             drafts,
+            ..
         } = self.deliberation_requests();
-        let org = self.user.get_selected_org();
-        if org.is_none() {
-            btracing::e!(self.lang, ApiError::OrganizationNotFound);
-            return;
-        }
 
-        let org_id = org.unwrap().id;
-
-        // FIXME: update if deliberation_id is not None
-        //        And also set deliberation_id after temporary save.
-        match Deliberation::get_client(config::get().api_url)
-            .create(
-                org_id,
-                started_at,
-                ended_at,
-                thumbnail_image,
-                title,
-                description,
-                project_area,
-                project_areas,
-                resource_ids,
-                survey_ids,
-                roles,
-                panel_ids,
-                steps,
-                elearning,
-                basic_infos,
-                sample_surveys,
-                contents,
-                deliberation_discussions,
-                final_surveys,
-                drafts,
-            )
-            .await
-        {
+        match cli.get_draft(org_id, creator_id).await {
             Ok(d) => {
-                btracing::i!(self.lang, Info::TempSave);
-                self.deliberation_id.set(Some(d.id));
+                match cli
+                    .update(
+                        org_id,
+                        d.id,
+                        DeliberationCreateRequest {
+                            started_at,
+                            ended_at,
+                            thumbnail_image,
+                            title,
+                            description,
+                            project_area,
+                            project_areas,
+                            status: DeliberationStatus::Draft,
+                            creator_id,
+                            resource_ids,
+                            survey_ids,
+                            roles,
+                            panel_ids,
+                            steps,
+                            elearning,
+                            basic_infos,
+                            sample_surveys,
+                            contents,
+                            deliberation_discussions,
+                            final_surveys,
+                            drafts,
+                        },
+                    )
+                    .await
+                {
+                    Ok(_) => {
+                        btracing::i!(self.lang, Info::TempSave);
+                        self.deliberation_id.set(Some(d.id));
+                    }
+                    Err(e) => {
+                        btracing::e!(self.lang, e);
+                    }
+                }
             }
-            Err(e) => btracing::e!(self.lang, e),
+            Err(_) => {
+                match cli
+                    .create(
+                        org_id,
+                        started_at,
+                        ended_at,
+                        thumbnail_image,
+                        title,
+                        description,
+                        project_area,
+                        DeliberationStatus::Draft,
+                        creator_id,
+                        project_areas,
+                        resource_ids,
+                        survey_ids,
+                        roles,
+                        panel_ids,
+                        steps,
+                        elearning,
+                        basic_infos,
+                        sample_surveys,
+                        contents,
+                        deliberation_discussions,
+                        final_surveys,
+                        drafts,
+                    )
+                    .await
+                {
+                    Ok(d) => {
+                        btracing::i!(self.lang, Info::TempSave);
+                        self.deliberation_id.set(Some(d.id));
+                    }
+                    Err(e) => btracing::e!(self.lang, e),
+                }
+            }
         }
-
-        // TODO: update deliberation_areas in DB
     }
 }
 
@@ -325,30 +318,14 @@ pub struct OverviewController {
     pub project_areas: Memo<Vec<ProjectArea>>,
 }
 
+#[allow(unused_variables)]
 impl OverviewController {
     pub fn new(
         lang: Language,
-        deliberation_id: Option<i64>,
+        #[allow(unused_variables)] deliberation_id: Option<i64>,
     ) -> std::result::Result<Self, RenderError> {
-        let mut parent: Controller = use_context();
-        use_future(move || async move {
-            tracing::debug!("Deliberation ID: {:?}", deliberation_id);
-            if let Some(deliberation_id) = deliberation_id {
-                let client = Deliberation::get_client(config::get().api_url);
-                let org_id = parent.user.get_selected_org();
-                if org_id.is_none() {
-                    tracing::error!("Organization ID is missing");
-                    return;
-                }
-                let org_id = org_id.unwrap().id;
-                let deliberation = client
-                    .get(org_id, deliberation_id)
-                    .await
-                    .unwrap_or_default();
-                parent.deliberation_requests.set(deliberation.into());
-                parent.deliberation_id.set(Some(deliberation_id));
-            }
-        });
+        // let mut parent: Controller = use_context();
+        let parent: Controller = use_context();
 
         let title = use_memo(move || parent.deliberation_requests().title);
         let description = use_memo(move || parent.deliberation_requests().description);
@@ -374,11 +351,6 @@ impl OverviewController {
             .collect();
         self.parent.save_project_areas(project_areas);
     }
-
-    // pub fn back(&mut self) {
-    //     self.nav
-    //         .replace(Route::DeliberationPage { lang: self.lang });
-    // }
 
     pub async fn temp_save(&mut self) {
         self.parent.save_overview(

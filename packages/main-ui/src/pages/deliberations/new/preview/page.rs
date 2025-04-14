@@ -3,7 +3,6 @@ use crate::pages::deliberations::new::preview::{
     controller::Controller,
     i18n::PreviewTranslate,
 };
-
 use bdk::prelude::*;
 
 #[component]
@@ -65,7 +64,9 @@ pub fn Preview(lang: Language) -> Element {
                 div {
                     class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
                     onclick: move |_| {
-                        ctrl.start_deliberation();
+                        spawn(async move {
+                            ctrl.start_deliberation().await;
+                        });
                     },
                     {tr.start}
                 }
