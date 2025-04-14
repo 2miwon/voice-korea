@@ -27,7 +27,7 @@ pub fn MainSection(
     let mut opened = use_signal(|| open.unwrap_or(true));
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
-            div { class: "flex flex-col w-full justify-start items-start rounded-lg bg-white px-40 py-20 mb-20 gap-10",
+            div { class: "flex flex-col w-full justify-start items-start rounded-lg bg-white px-40 py-20 gap-10",
                 BlockHeader {
                     required,
                     header,

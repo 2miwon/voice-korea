@@ -48,6 +48,7 @@ pub mod components {
     pub mod dropdown;
     pub mod expandable_card;
     pub mod file_list;
+    pub mod form_field;
     pub mod icons;
     pub mod input;
     pub mod label;
