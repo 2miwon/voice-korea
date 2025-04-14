@@ -56,6 +56,7 @@ pub mod components {
     pub mod pagination;
     pub mod pi_graph;
     pub mod popup;
+    pub mod radio;
     pub mod section;
     pub mod select;
     pub mod stepper;

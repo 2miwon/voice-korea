@@ -1,9 +1,16 @@
+use std::collections::HashMap;
+
 use crate::pages::surveys::components::setting_reward_modal::SettingRewardModal;
+use crate::pages::surveys::models::attribute_combination::AttributeCombination;
+use crate::pages::surveys::models::attribute_group_info::AttributeGroupInfo;
 use bdk::prelude::btracing;
+use by_macros::DioxusController;
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_translate::{translate, Language};
+use models::attribute_v2::AgeV2;
 use models::{
+    attribute_v2::{GenderV2, RegionV2, SalaryV2},
     PanelCountsV2, PanelV2, PanelV2Action, PanelV2CreateRequest, PanelV2Query, PanelV2Summary,
     QueryResponse, SurveyV2,
 };
@@ -16,11 +23,13 @@ use crate::{
 };
 
 use super::{
-    create_survey::CreateSurveyResponse, i18n::SurveyNewTranslate, setting_panel::PanelRequest,
+    create_survey::CreateSurveyResponse,
+    i18n::{SettingAttributeTranslate, SurveyNewTranslate},
+    setting_panel::PanelRequest,
 };
 use crate::pages::surveys::components::setting_reward_modal::SettingRewardModalTranslate;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     nav: Navigator,
     user: LoginService,
@@ -40,10 +49,74 @@ pub struct Controller {
     point: Signal<i64>,
 
     survey_id: Signal<Option<i64>>,
+
+    attribute_options: Signal<HashMap<String, Vec<AttributeGroupInfo>>>,
+    selected_attributes: Signal<Vec<String>>,
+    selected_tab: Signal<bool>,
+    total_counts: Signal<i64>,
+
+    combination_error: Signal<bool>,
+
+    attribute_combinations: Signal<Vec<AttributeCombination>>,
 }
 
 impl Controller {
     pub fn new(lang: dioxus_translate::Language, survey_id: Option<i64>) -> Self {
+        let tr: SettingAttributeTranslate = translate(&lang);
+        let mut attribute_options: HashMap<String, Vec<AttributeGroupInfo>> = HashMap::new();
+
+        let gender = GenderV2::variants(&lang)
+            .into_iter()
+            .skip(1)
+            .map(|v| AttributeGroupInfo {
+                name: tr.gender.to_string(),
+                attribute: v,
+                rate: 0,
+            })
+            .collect::<Vec<_>>();
+        let region = RegionV2::variants(&lang)
+            .into_iter()
+            .skip(1)
+            .map(|v| AttributeGroupInfo {
+                name: tr.region.to_string(),
+                attribute: v,
+                rate: 0,
+            })
+            .collect::<Vec<_>>();
+        let salary = SalaryV2::variants(&lang)
+            .into_iter()
+            .skip(1)
+            .map(|v| AttributeGroupInfo {
+                name: tr.salary.to_string(),
+                attribute: v,
+                rate: 0,
+            })
+            .collect::<Vec<_>>();
+        let age = vec![
+            AgeV2::Teenager,
+            AgeV2::Twenty,
+            AgeV2::Thirty,
+            AgeV2::Fourty,
+            AgeV2::Fifty,
+            AgeV2::Sixty,
+            AgeV2::Over,
+        ]
+        .iter()
+        .map(|v| AttributeGroupInfo {
+            name: tr.age.to_string(),
+            attribute: v.translate(&lang).to_string(),
+            rate: 0,
+        })
+        .collect();
+
+        attribute_options.insert(tr.gender.to_string(), gender);
+
+        attribute_options.insert(tr.region.to_string(), region);
+
+        attribute_options.insert(tr.salary.to_string(), salary);
+
+        attribute_options.insert(tr.age.to_string(), age);
+
         let translates: SurveyNewTranslate = translate(&lang);
 
         let login_service: LoginService = use_context();
@@ -77,6 +150,15 @@ impl Controller {
 
             estimate_time: use_signal(|| 0),
             point: use_signal(|| 0),
+
+            attribute_options: use_signal(|| attribute_options),
+            selected_attributes: use_signal(|| vec![]),
+            selected_tab: use_signal(|| true),
+
+            attribute_combinations: use_signal(|| vec![]),
+            total_counts: use_signal(|| 0),
+
+            combination_error: use_signal(|| false),
         };
 
         let survey_resource: Resource<Option<SurveyV2>> = use_resource({
@@ -121,6 +203,222 @@ impl Controller {
         ctrl
     }
 
+    pub fn set_total_counts(&mut self, total_counts: i64) {
+        self.total_counts.set(total_counts);
+        self.generate_combinations_with_meta();
+    }
+
+    pub fn helper(
+        &self,
+        acc: Vec<Vec<AttributeGroupInfo>>,
+        rest: &[Vec<AttributeGroupInfo>],
+    ) -> Vec<Vec<AttributeGroupInfo>> {
+        if rest.is_empty() {
+            return acc;
+        }
+
+        let mut result = vec![];
+        for a in &acc {
+            for r in &rest[0] {
+                let mut new_comb = a.clone();
+                new_comb.push(r.clone());
+                result.push(new_comb);
+            }
+        }
+
+        self.helper(result, &rest[1..])
+    }
+
+    pub fn generate_combinations_with_meta(&mut self) {
+        let selected_attributes = self.selected_attributes();
+        let options = self.attribute_options();
+
+        let selected_values: Vec<Vec<AttributeGroupInfo>> = selected_attributes
+            .iter()
+            .filter_map(|key| options.get(key))
+            .cloned()
+            .collect();
+
+        if selected_values.is_empty() {
+            return;
+        }
+
+        let initial: Vec<Vec<AttributeGroupInfo>> =
+            selected_values[0].iter().map(|x| vec![x.clone()]).collect();
+
+        let raw_combinations = self.helper(initial, &selected_values[1..]);
+        let total_counts = self.total_counts();
+
+        let mut sum_counts: i64 = 0;
+
+        let mut v: Vec<AttributeCombination> = raw_combinations
+            .into_iter()
+            .map(|group| {
+                let total_rate = (group.iter().map(|v| v.rate as f64 / 100.0).product::<f64>()
+                    * 100.0)
+                    .floor() as i64;
+
+                let total_count: usize =
+                    ((total_counts as f64) * (total_rate as f64 / 100.0)).floor() as usize;
+
+                sum_counts += total_count as i64;
+
+                AttributeCombination {
+                    group,
+                    total_rate,
+                    total_count,
+                }
+            })
+            .collect();
+
+        if (total_counts > sum_counts) && !v.is_empty() {
+            let last_index = v.len() - 1;
+            let last = &mut v[last_index];
+            last.total_count =
+                (last.total_count as usize + (total_counts - sum_counts) as usize) as usize;
+        }
+
+        self.attribute_combinations.set(v);
+    }
+
+    pub fn change_selected_tab(&mut self, selected: bool) {
+        self.selected_tab.set(selected);
+        self.change_rate();
+        self.generate_combinations_with_meta();
+    }
+
+    pub fn add_selected_attribute(&mut self, attribute: String) {
+        self.selected_attributes.with_mut(|attributes| {
+            attributes.push(attribute);
+        });
+
+        self.change_rate();
+        self.generate_combinations_with_meta();
+    }
+
+    pub fn remove_selected_attribute(&mut self, index: usize) {
+        self.selected_attributes.with_mut(|attributes| {
+            attributes.remove(index);
+        });
+
+        self.change_rate();
+        self.generate_combinations_with_meta();
+    }
+
+    pub fn clear_selected_attributes(&mut self) {
+        self.selected_attributes.with_mut(|attributes| {
+            attributes.clear();
+        });
+
+        self.change_rate();
+        self.generate_combinations_with_meta();
+    }
+
+    pub fn update_attribute_manual_rate(&mut self) {
+        let selected_attributes = self.selected_attributes();
+        let mut attribute_options = self.attribute_options();
+
+        for key in &selected_attributes {
+            if let Some(groups) = attribute_options.get_mut(key) {
+                let len = groups.len();
+                if len == 0 {
+                    continue;
+                }
+
+                for i in 0..len {
+                    groups[i].rate = 0;
+                }
+            }
+        }
+
+        self.attribute_options.set(attribute_options);
+    }
+
+    pub fn update_attribute_equal_rate(&mut self) {
+        let selected_attributes = self.selected_attributes();
+        let mut attribute_options = self.attribute_options();
+
+        for key in &selected_attributes {
+            if let Some(groups) = attribute_options.get_mut(key) {
+                let len = groups.len();
+                if len == 0 {
+                    continue;
+                }
+
+                let d = 100 / len;
+                let m = 100 % len;
+
+                for i in 0..len {
+                    groups[i].rate = if i < len - m {
+                        d as i64
+                    } else {
+                        (d + 1) as i64
+                    };
+                }
+            }
+        }
+
+        self.attribute_options.set(attribute_options);
+    }
+
+    pub fn remove_attribute_option(&mut self, key: String, attribute_name: String) {
+        let mut should_remove_key = false;
+
+        self.attribute_options.with_mut(|options| {
+            if let Some(list) = options.get_mut(&key) {
+                list.retain(|item| item.attribute != attribute_name);
+
+                if list.is_empty() {
+                    should_remove_key = true;
+                }
+            }
+        });
+
+        if should_remove_key {
+            self.selected_attributes.with_mut(|attributes| {
+                attributes.retain(|k| k != &key);
+            });
+
+            self.attribute_options.with_mut(|options| {
+                options.remove(&key);
+            });
+        }
+
+        self.change_rate();
+        self.generate_combinations_with_meta();
+    }
+
+    pub fn change_rate(&mut self) {
+        let selected = self.selected_tab();
+        if selected {
+            //true: equal, false: manual
+            self.update_attribute_equal_rate();
+        } else {
+            self.update_attribute_manual_rate();
+        }
+    }
+
+    pub fn change_attribute_combination_value(&mut self, index: usize, total_count: usize) {
+        self.attribute_combinations.with_mut(|combi| {
+            combi[index].total_count = total_count;
+        });
+    }
+
+    pub fn update_attribute_rate(&mut self, key: String, attribute_name: String, rate: i64) {
+        self.attribute_options.with_mut(|option| {
+            if let Some(list) = option.get_mut(&key) {
+                for group in list.iter_mut() {
+                    if group.attribute == attribute_name {
+                        group.rate = rate;
+                        break;
+                    }
+                }
+            }
+        });
+
+        self.generate_combinations_with_meta();
+    }
+
     pub fn get_survey_id(&self) -> Option<i64> {
         (self.survey_id)()
     }
@@ -161,10 +459,6 @@ impl Controller {
         (self.panels)()
     }
 
-    pub fn selected_panels(&self) -> Vec<PanelV2> {
-        (self.selected_panels)()
-    }
-
     pub fn maximum_counts(&mut self) -> Vec<u64> {
         (self.maximum_panel_count)()
     }
@@ -181,6 +475,24 @@ impl Controller {
         self.selected_panels.set(vec![]);
         self.maximum_panel_count.set(vec![]);
         self.total_panel_members.set(0);
+    }
+
+    pub fn clicked_complete_button(&mut self) {
+        let combi = self.attribute_combinations();
+        let totals = self.total_counts();
+
+        let mut sum = 0;
+        for c in combi {
+            sum += c.total_count as i64;
+        }
+
+        if totals != sum {
+            self.combination_error.set(true);
+            return;
+        }
+
+        self.combination_error.set(false);
+        tracing::debug!("complete button clicked");
     }
 
     pub async fn open_setting_reward_modal(&self, lang: Language, req: PanelRequest) {
@@ -261,42 +573,6 @@ impl Controller {
             .with_id("setting reward")
             .with_title(tr.title);
     }
-
-    // pub async fn save_survey(&self, req: PanelRequest) {
-    //     let org = self.user.get_selected_org();
-    //     if org.is_none() {
-    //         tracing::error!("Organization is not selected");
-    //         return;
-    //     }
-
-    //     let survey_request = (self.survey_request)();
-    //     if survey_request.is_none() {
-    //         tracing::error!("Survey request is not created");
-    //         return;
-    //     }
-
-    //     let survey_id = (self.survey_id)();
-
-    //     if survey_id.is_none() {
-    //         self.create_survey(
-    //             org.unwrap().id,
-    //             survey_request,
-    //             req.total_panels,
-    //             req.selected_panels,
-
-    //         )
-    //         .await;
-    //     } else {
-    //         self.update_survey(
-    //             survey_id.unwrap(),
-    //             org.unwrap().id,
-    //             survey_request,
-    //             req.total_panels,
-    //             req.selected_panels,
-    //         )
-    //         .await;
-    //     }
-    // }
 
     pub async fn update_survey(
         &self,
