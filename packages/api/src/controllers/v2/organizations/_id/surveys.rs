@@ -13,7 +13,12 @@ use by_axum::{
 use excel::SurveyResponseExcel;
 use models::{
     attribute_combination_surveys::attribute_combination_survey::AttributeCombinationSurvey,
-    attribute_combinations::attribute_combination::AttributeCombination, response::*,
+    attribute_combinations::attribute_combination::AttributeCombination,
+    attribute_group_surveys::attribute_group_survey::{
+        AttributeGroupSurvey, AttributeGroupSurveyRepository,
+    },
+    attribute_groups::attribute_group::{AttributeGroup, AttributeGroupRepository},
+    response::*,
 };
 use models::{
     attribute_combination_surveys::attribute_combination_survey::AttributeCombinationSurveyRepository,
@@ -30,6 +35,9 @@ pub struct SurveyControllerV2 {
 
     attribute_combination_repo: AttributeCombinationRepository,
     attribute_combination_survey_repo: AttributeCombinationSurveyRepository,
+
+    attribute_group_repo: AttributeGroupRepository,
+    attribute_group_survey_repo: AttributeGroupSurveyRepository,
     pool: sqlx::Pool<sqlx::Postgres>,
     nonce_lab: NonceLabClient,
 }
@@ -43,12 +51,17 @@ impl SurveyControllerV2 {
         let attribute_combination_survey_repo =
             AttributeCombinationSurvey::get_repository(pool.clone());
 
+        let attribute_group_repo = AttributeGroup::get_repository(pool.clone());
+        let attribute_group_survey_repo = AttributeGroupSurvey::get_repository(pool.clone());
+
         Self {
             repo,
             panel_survey_repo,
             pool,
             attribute_combination_repo,
             attribute_combination_survey_repo,
+            attribute_group_repo,
+            attribute_group_survey_repo,
             nonce_lab: NonceLabClient::new(),
         }
     }
@@ -430,6 +443,7 @@ impl SurveyControllerV2 {
             estimate_time,
             point,
             attributes,
+            attribute_groups,
         }: SurveyV2CreateRequest,
     ) -> Result<Json<SurveyV2>> {
         tracing::debug!("create {:?}", org_id,);
@@ -473,6 +487,22 @@ impl SurveyControllerV2 {
             let _ = self
                 .attribute_combination_survey_repo
                 .insert_with_tx(&mut *tx, survey.id, combination.id)
+                .await?;
+        }
+
+        for req in attribute_groups.clone() {
+            let group = match self
+                .attribute_group_repo
+                .insert_with_tx(&mut *tx, req.attribute, req.rate)
+                .await?
+            {
+                Some(v) => v,
+                None => return Err(ApiError::AttributeCreationFailed),
+            };
+
+            let _ = self
+                .attribute_group_survey_repo
+                .insert_with_tx(&mut *tx, survey.id, group.id)
                 .await?;
         }
 
@@ -523,6 +553,7 @@ pub mod tests {
                 vec![],
                 0,
                 0,
+                vec![],
                 vec![],
             )
             .await;

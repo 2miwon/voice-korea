@@ -1,5 +1,7 @@
 #![allow(unused_variables, unused)]
 use crate::attribute_combinations::attribute_combination::AttributeCombinationCreateRequest;
+use crate::attribute_groups::attribute_group::AttributeGroup;
+use crate::attribute_groups::attribute_group::AttributeGroupCreateRequest;
 use crate::{
     attribute_combinations::attribute_combination::AttributeCombination, PanelCountSurveys,
     PanelCountsV2, PanelV2, ProjectArea, ProjectStatus, ProjectType, Result,
@@ -12,7 +14,7 @@ use validator::ValidationError;
 use super::response::{Answer, SurveyResponse};
 
 // If you want to know how to use Y macro, refer to https://github.com/biyard/rust-sdk/tree/main/packages/by-macros
-#[api_model(base = "/v2/organizations/:org-id/surveys", table = surveys, action = [create(attributes = Vec<AttributeCombinationCreateRequest>)], action_by_id = [start_survey, update(panel_ids = Vec<i64>)], iter_type=QueryResponse)]
+#[api_model(base = "/v2/organizations/:org-id/surveys", table = surveys, action = [create(attributes = Vec<AttributeCombinationCreateRequest>, attribute_groups = Vec<AttributeGroupCreateRequest>)], action_by_id = [start_survey, update(panel_ids = Vec<i64>)], iter_type=QueryResponse)]
 pub struct SurveyV2 {
     #[api_model(summary, primary_key, action = delete, read_action = find_by_id)]
     pub id: i64,
@@ -52,6 +54,10 @@ pub struct SurveyV2 {
     #[api_model(summary, many_to_many = attribute_combination_surveys, foreign_table_name = attribute_combinations, foreign_primary_key = combination_id, foreign_reference_key = survey_id)]
     #[serde(default)]
     pub attribute_combinations: Vec<AttributeCombination>,
+
+    #[api_model(summary, many_to_many = attribute_group_surveys, foreign_table_name = attribute_groups, foreign_primary_key = attribute_group_id, foreign_reference_key = survey_id)]
+    #[serde(default)]
+    pub attribute_groups: Vec<AttributeGroup>,
 
     #[api_model(summary, action = create, many_to_many = panel_surveys, foreign_table_name = panels, foreign_primary_key = panel_id, foreign_reference_key = survey_id,)]
     #[serde(default)]

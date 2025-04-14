@@ -6,5 +6,6 @@ pub mod participant_distribute_table;
 pub mod reward;
 pub mod setting;
 pub mod setting_reward_modal;
+pub mod start_project_modal;
 pub mod survey;
 pub mod type_selection;

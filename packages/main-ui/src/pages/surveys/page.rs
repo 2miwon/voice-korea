@@ -232,10 +232,10 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
                                                             height: "24",
                                                         }
                                                     }
-                                                    nav { class: "border-2 bg-white invisible border-none shadow-lg rounded w-60 absolute right-0 top-full transition-all opacity-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-1 group-focus-within:z-20",
+                                                    nav { class: "border-2 bg-white invisible border-none shadow-lg rounded w-fit absolute right-0 top-full transition-all opacity-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-1 group-focus-within:z-20",
                                                         ul { class: "py-1",
                                                             li {
-                                                                class: "p-3 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
+                                                                class: "px-20 py-15 min-w-[200px] w-full text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
                                                                 onclick: move |_| {
                                                                     navigator
                                                                         .push(Route::SurveyUpdatePage {
@@ -246,7 +246,7 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
                                                                 "{translate.update_survey}"
                                                             }
                                                             li {
-                                                                class: "p-3 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
+                                                                class: "px-20 py-15 min-w-[200px] w-full  text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
                                                                 onclick: move |_| {
                                                                     let id = survey.id.clone();
                                                                     async move {
@@ -256,7 +256,7 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
                                                                 "{translate.remove_survey}"
                                                             }
                                                             li {
-                                                                class: "p-3 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
+                                                                class: "px-20 py-15 min-w-[200px] w-full  text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
                                                                 onclick: {
                                                                     let survey = survey.clone();
                                                                     move |_| {
