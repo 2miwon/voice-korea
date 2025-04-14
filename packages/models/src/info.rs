@@ -4,4 +4,6 @@ use bdk::prelude::*;
 pub enum Info {
     #[translate(ko = "임시저장되었습니다.", en = "Temporary save completed.")]
     TempSave,
+    #[translate(ko = "저장되었습니다.", en = "Save completed.")]
+    Save,
 }

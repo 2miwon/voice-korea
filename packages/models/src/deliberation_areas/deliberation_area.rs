@@ -11,8 +11,8 @@ pub struct DeliberationArea {
     #[api_model(summary, auto = [insert, update], version = v0.1)]
     pub updated_at: i64,
 
-    #[api_model(many_to_one = areas)]
+    #[api_model(summary, many_to_one = areas, version = v0.2)]
     pub area_id: i64,
-    #[api_model(many_to_one = deliberations)]
+    #[api_model(summary, many_to_one = deliberations)]
     pub deliberation_id: i64,
 }

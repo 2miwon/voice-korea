@@ -7,6 +7,7 @@ pub struct LoginService {
     pub email: Signal<Option<String>>,
     pub orgs: Signal<Vec<Organization>>,
     pub selected_org: Signal<Option<Organization>>,
+    pub user_id: Signal<Option<i64>>,
     // pub token: Signal<String>,
 }
 
@@ -16,6 +17,7 @@ impl LoginService {
             email: use_signal(|| None),
             orgs: use_signal(|| vec![]),
             selected_org: use_signal(|| None),
+            user_id: use_signal(|| None),
             // token: use_signal(|| "".to_string()),
         };
 
@@ -29,6 +31,7 @@ impl LoginService {
                     Ok(user) => {
                         tracing::debug!("User(refreshed): {:?}", user);
                         srv.set_orgs(user.orgs);
+                        srv.set_user_id(user.id);
                     }
                     Err(e) => {
                         tracing::error!("Failed to refresh user: {:?}", e);
@@ -36,7 +39,7 @@ impl LoginService {
                 };
             });
         });
-
+        tracing::debug!("LoginService::user_id {:?}", srv.get_user_id());
         use_context_provider(|| srv);
     }
 
@@ -45,6 +48,14 @@ impl LoginService {
             self.selected_org.set(Some(orgs[0].clone()));
         }
         self.orgs.set(orgs);
+    }
+
+    pub fn set_user_id(&mut self, id: i64) {
+        self.user_id.set(Some(id));
+    }
+
+    pub fn get_user_id(&self) -> Option<i64> {
+        (self.user_id)()
     }
 
     pub fn get_orgs(&self) -> Vec<Organization> {
@@ -134,9 +145,11 @@ impl LoginService {
     }
 
     #[allow(unused_variables)]
-    pub async fn setup(&mut self, email: String, token: String) {
-        self.email.set(Some(email));
+    pub async fn setup(&mut self, user: User, token: String) {
+        self.email.set(Some(user.email));
         // self.token.set(token);
+        self.set_orgs(user.orgs);
+        self.set_user_id(user.id);
 
         #[cfg(feature = "web")]
         self.set_cookie(token.as_str());
