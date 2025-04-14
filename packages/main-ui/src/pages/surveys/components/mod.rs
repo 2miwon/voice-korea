@@ -3,6 +3,7 @@ pub mod create_panel_modal;
 pub mod error_box;
 pub mod introduction;
 pub mod participant_distribute_table;
+pub mod reward;
 pub mod setting;
 pub mod setting_reward_modal;
 pub mod survey;

@@ -17,7 +17,9 @@ pub struct AttributeCombination {
     pub updated_at: i64,
 
     #[api_model(summary, action = [create], action_by_id = update)]
-    pub user_count: u64,
+    pub user_count: i64,
+    #[api_model(summary, action = [create], action_by_id = update)]
+    pub rate: i64,
     #[api_model(summary, action = [create], action_by_id = update, type = JSONB, version = v0.1, nullable)]
     #[serde(default)]
     pub attributes: Vec<Attribute>,

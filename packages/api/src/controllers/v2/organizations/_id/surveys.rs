@@ -463,7 +463,7 @@ impl SurveyControllerV2 {
         for req in attributes.clone() {
             let combination = match self
                 .attribute_combination_repo
-                .insert_with_tx(&mut *tx, req.user_count, req.attributes)
+                .insert_with_tx(&mut *tx, req.user_count, req.rate, req.attributes)
                 .await?
             {
                 Some(v) => v,

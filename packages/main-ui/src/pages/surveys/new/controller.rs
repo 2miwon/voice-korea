@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use crate::pages::surveys::components::setting_reward_modal::SettingRewardModal;
 use crate::pages::surveys::models::attribute_combination::AttributeCombination;
@@ -8,7 +9,9 @@ use by_macros::DioxusController;
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_translate::{translate, Language};
+use models::attribute_combinations::attribute_combination::AttributeCombinationCreateRequest;
 use models::attribute_v2::AgeV2;
+use models::response::AgeV3;
 use models::{
     attribute_v2::{GenderV2, RegionV2, SalaryV2},
     PanelCountsV2, PanelV2, PanelV2Action, PanelV2CreateRequest, PanelV2Query, PanelV2Summary,
@@ -191,6 +194,9 @@ impl Controller {
                     end_date: survey.ended_at,
                     area: survey.project_area,
                     questions: survey.clone().questions,
+
+                    point: survey.point,
+                    estimate_time: survey.estimate_time,
                 }));
 
                 ctrl.estimate_time.set(survey.estimate_time);
@@ -477,12 +483,22 @@ impl Controller {
         self.total_panel_members.set(0);
     }
 
-    pub fn clicked_complete_button(&mut self) {
+    pub async fn clicked_complete_button(&mut self) {
+        let org = self.user.get_selected_org();
+        if org.is_none() {
+            tracing::error!("Organization is not selected");
+            return;
+        }
+
+        let org_id = org.unwrap().id;
+
+        let cli = SurveyV2::get_client(crate::config::get().api_url);
+
         let combi = self.attribute_combinations();
         let totals = self.total_counts();
 
         let mut sum = 0;
-        for c in combi {
+        for c in combi.clone() {
             sum += c.total_count as i64;
         }
 
@@ -492,7 +508,83 @@ impl Controller {
         }
 
         self.combination_error.set(false);
-        tracing::debug!("complete button clicked");
+
+        let mut attribute_combinations = vec![];
+        let total_panels = self.total_counts();
+
+        for attr in combi {
+            let attributes = attr
+                .group
+                .iter()
+                .map(|v| {
+                    let name = v.attribute.clone();
+
+                    let attr = if AgeV3::from_str(&name).is_ok() {
+                        models::prelude::response::Attribute::Age(
+                            AgeV3::from_str(&name).unwrap_or_default(),
+                        )
+                    } else if GenderV2::from_str(&name).is_some() {
+                        models::prelude::response::Attribute::Gender(
+                            GenderV2::from_str(&name).unwrap_or_default(),
+                        )
+                    } else if RegionV2::from_str(&name).is_ok() {
+                        models::prelude::response::Attribute::Region(
+                            RegionV2::from_str(&name).unwrap_or_default(),
+                        )
+                    } else {
+                        models::prelude::response::Attribute::Salary(
+                            SalaryV2::from_str(&name).unwrap_or_default(),
+                        )
+                    };
+
+                    attr
+                })
+                .collect();
+            attribute_combinations.push(AttributeCombinationCreateRequest {
+                user_count: attr.total_count as i64,
+                rate: attr.total_rate,
+                attributes,
+            });
+        }
+
+        let CreateSurveyResponse {
+            title,
+            description,
+            start_date,
+            end_date,
+            area,
+            questions,
+
+            point,
+            estimate_time,
+        } = self.survey_request().unwrap();
+
+        match cli
+            .create(
+                org_id,
+                title,
+                area,
+                start_date,
+                end_date,
+                description,
+                total_panels,
+                questions,
+                vec![],
+                vec![],
+                estimate_time,
+                point,
+                attribute_combinations,
+            )
+            .await
+        {
+            Ok(_) => {
+                btracing::debug!("success to create survey");
+                self.nav.go_back();
+            }
+            Err(e) => {
+                btracing::error!("Failed to create survey with error: {:?}", e);
+            }
+        };
     }
 
     pub async fn open_setting_reward_modal(&self, lang: Language, req: PanelRequest) {
@@ -545,8 +637,6 @@ impl Controller {
                                             survey_request,
                                             req.total_panels,
                                             selected_panels,
-                                            estimate_time,
-                                            point,
                                         )
                                         .await;
                                 } else {
@@ -556,8 +646,6 @@ impl Controller {
                                             survey_request,
                                             req.total_panels,
                                             selected_panels,
-                                            estimate_time,
-                                            point,
                                         )
                                         .await;
                                 }
@@ -581,9 +669,6 @@ impl Controller {
         survey_request: Option<CreateSurveyResponse>,
         total_panels: i64,
         selected_panels: Vec<PanelV2>,
-
-        estimate_time: i64,
-        point: i64,
     ) {
         let cli = SurveyV2::get_client(crate::config::get().api_url);
 
@@ -594,6 +679,9 @@ impl Controller {
             end_date,
             area,
             questions,
+
+            point,
+            estimate_time,
         } = survey_request.unwrap();
 
         match cli
@@ -641,9 +729,6 @@ impl Controller {
         survey_request: Option<CreateSurveyResponse>,
         total_panels: i64,
         selected_panels: Vec<PanelV2>,
-
-        estimate_time: i64,
-        point: i64,
     ) {
         let cli = SurveyV2::get_client(crate::config::get().api_url);
 
@@ -654,6 +739,9 @@ impl Controller {
             end_date,
             area,
             questions,
+
+            point,
+            estimate_time,
         } = survey_request.unwrap();
 
         let panel_counts = selected_panels

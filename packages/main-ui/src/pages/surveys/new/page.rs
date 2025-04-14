@@ -61,8 +61,8 @@ pub fn SurveyCreatePage(lang: Language, survey_id: Option<i64>) -> Element {
 
                     combination_error: ctrl.combination_error(),
 
-                    clicked_complete_button: move |_| {
-                        ctrl.clicked_complete_button();
+                    clicked_complete_button: move |_| async move {
+                        ctrl.clicked_complete_button().await;
                     },
 
                     change_selected_tab: move |selected: bool| {
