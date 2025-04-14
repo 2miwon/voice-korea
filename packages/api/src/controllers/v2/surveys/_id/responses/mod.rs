@@ -144,38 +144,25 @@ impl SurveyResponseController {
             }
         }
 
-        let mut panel_id = 0;
-        for panel in survey.panels.into_iter() {
-            if panel == attributes {
-                panel_id = panel.id;
+        let mut matched = false;
+        for quota in survey.attribute_quotas.into_iter() {
+            if quota == attributes {
+                matched = true;
+                break;
             }
         }
 
-        let panel_quota = survey
-            .panel_counts
-            .iter()
-            .filter(|e| e.panel_id == panel_id)
-            .collect::<Vec<_>>()
-            .first()
-            .ok_or(ApiError::SurveyResponseNoMatchedPanelId)?
-            .user_count;
-
-        if panel_id == 0 {
+        if !matched {
             tracing::error!("no matched attribute group {:?}", attributes);
             return Err(ApiError::SurveyResponseNoMatchedAttributeGroup);
         }
 
         let mut total_count = 0;
 
-        tracing::debug!(
-            "fetch_all for survey_id {} panel_id {}",
-            survey_id,
-            panel_id
-        );
+        tracing::debug!("fetch_all for survey_id {}", survey_id);
 
         let responses: Vec<SurveyResponse> = SurveyResponse::query_builder()
             .with_count()
-            .panel_id_equals(panel_id)
             .survey_id_equals(survey_id)
             .query()
             .map(|r: sqlx::postgres::PgRow| {
@@ -186,21 +173,15 @@ impl SurveyResponseController {
             .fetch_all(&self.pool)
             .await?;
 
-        tracing::debug!(
-            "responses {} panel_quota {} total_count {}",
-            responses.len(),
-            panel_quota,
-            total_count
-        );
+        tracing::debug!("responses {} total_count {}", responses.len(), total_count);
 
-        if panel_quota <= total_count {
+        if survey.quotes <= total_count {
             return Err(ApiError::SurveyResponsePanelQuotaExceeded);
         }
 
         tracing::debug!(
-            "respond_answer {} {} {} {:?} {:?}",
+            "respond_answer {} {} {:?} {:?}",
             survey_id,
-            panel_id,
             proof_id,
             attributes,
             answers
@@ -208,7 +189,7 @@ impl SurveyResponseController {
 
         let res = self
             .repo
-            .insert(panel_id, proof_id, attributes, answers, survey_id)
+            .insert(0, proof_id, attributes, answers, survey_id)
             .await?;
 
         Ok(Json(res))

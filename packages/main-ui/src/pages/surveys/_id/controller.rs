@@ -28,7 +28,7 @@ pub struct Panel {
 
 #[derive(Clone, Default, PartialEq)]
 pub struct SurveyResponses {
-    pub answers: IndexMap<i64, (String, i64, HashMap<i64, ParsedQuestion>)>, // question_id, (title, response_count, <panel_id, answer>)
+    pub answers: IndexMap<i64, (String, i64, ParsedQuestion)>, // question_id, (title, response_count, <panel_id, answer>)
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -203,19 +203,19 @@ impl Controller {
 
             let survey: SurveyV2 = survey.unwrap();
             let responses: Vec<SurveyResponseSummary> = responses.unwrap().items;
-            let panels: Vec<PanelV2Summary> = panels.unwrap().items;
+            // let panels: Vec<PanelV2Summary> = panels.unwrap().items;
 
-            let panel_responses = PanelResponses {
-                quotes: survey.quotes,
-                response_count: survey.response_count,
-                panels: ctrl.parsing_panels(panels, responses.clone()),
-            };
+            // let panel_responses = PanelResponses {
+            //     quotes: survey.quotes,
+            //     response_count: survey.response_count,
+            //     panels: ctrl.parsing_panels(panels, responses.clone()),
+            // };
 
             let survey_responses = SurveyResponses {
                 answers: ctrl.parsing_answers(survey, responses.clone()),
             };
 
-            ctrl.panel_responses.set(panel_responses);
+            // ctrl.panel_responses.set(panel_responses);
             ctrl.survey_responses.set(survey_responses);
         });
 
@@ -226,13 +226,10 @@ impl Controller {
         &self,
         survey: SurveyV2,
         responses: Vec<SurveyResponseSummary>,
-    ) -> IndexMap<i64, (String, i64, HashMap<i64, ParsedQuestion>)> {
-        let mut survey_maps: IndexMap<i64, (String, i64, HashMap<i64, ParsedQuestion>)> =
-            IndexMap::new();
+    ) -> IndexMap<i64, (String, i64, ParsedQuestion)> {
+        let mut survey_maps: IndexMap<i64, (String, i64, ParsedQuestion)> = IndexMap::new();
 
         for response in responses {
-            let id = response.panel_id;
-
             for (i, answer) in response.answers.iter().enumerate() {
                 let questions = survey.questions.clone();
                 let question = &questions[i];
@@ -243,78 +240,68 @@ impl Controller {
 
                 survey_maps
                     .entry(i as i64)
-                    .and_modify(|survey_data| {
-                        survey_data
-                            .2
-                            .entry(id)
-                            .and_modify(|existing| match existing {
-                                ParsedQuestion::SingleChoice { response_count, .. } => {
-                                    if let Answer::SingleChoice { answer } = answer {
-                                        response_count[(answer - 1) as usize] += 1;
-                                    }
-                                }
-                                ParsedQuestion::MultipleChoice { response_count, .. } => {
-                                    if let Answer::MultipleChoice { answer } = answer {
-                                        for ans in answer {
-                                            response_count[(ans - 1) as usize] += 1;
-                                        }
-                                    }
-                                }
-                                ParsedQuestion::ShortAnswer { answers } => {
-                                    if let Answer::ShortAnswer { answer } = answer {
-                                        answers.push(answer.clone());
-                                    }
-                                }
-                                ParsedQuestion::Subjective { answers } => {
-                                    if let Answer::Subjective { answer } = answer {
-                                        answers.push(answer.clone());
-                                    }
-                                }
-                            })
-                            .or_insert_with(|| parsed_question.clone());
-                    })
-                    .or_insert_with(|| {
+                    .and_modify(|(_, _, existing)| match (existing, answer) {
                         (
-                            title,
-                            response_count,
-                            HashMap::from([(id, parsed_question)]),
-                        )
-                    });
+                            ParsedQuestion::SingleChoice { response_count, .. },
+                            Answer::SingleChoice { answer },
+                        ) => {
+                            response_count[(answer - 1) as usize] += 1;
+                        }
+                        (
+                            ParsedQuestion::MultipleChoice { response_count, .. },
+                            Answer::MultipleChoice { answer },
+                        ) => {
+                            for ans in answer {
+                                response_count[(ans - 1) as usize] += 1;
+                            }
+                        }
+                        (
+                            ParsedQuestion::ShortAnswer { answers },
+                            Answer::ShortAnswer { answer },
+                        ) => {
+                            answers.push(answer.clone());
+                        }
+                        (ParsedQuestion::Subjective { answers }, Answer::Subjective { answer }) => {
+                            answers.push(answer.clone());
+                        }
+                        _ => {}
+                    })
+                    .or_insert_with(|| (title, response_count, parsed_question.clone()));
             }
         }
 
         survey_maps
     }
 
-    pub fn parsing_panels(
-        &mut self,
-        panels: Vec<PanelV2Summary>,
-        responses: Vec<SurveyResponseSummary>,
-    ) -> HashMap<i64, Panel> {
-        let mut panel_maps: HashMap<i64, Panel> = HashMap::new();
+    // pub fn parsing_panels(
+    //     &mut self,
+    //     panels: Vec<PanelV2Summary>,
+    //     responses: Vec<SurveyResponseSummary>,
+    // ) -> HashMap<i64, Panel> {
+    //     let mut panel_maps: HashMap<i64, Panel> = HashMap::new();
 
-        let panel_lookup: HashMap<i64, &PanelV2Summary> =
-            panels.iter().map(|p| (p.id, p)).collect();
+    //     let panel_lookup: HashMap<i64, &PanelV2Summary> =
+    //         panels.iter().map(|p| (p.id, p)).collect();
 
-        for response in responses {
-            let id = response.panel_id;
+    //     for response in responses {
+    //         let id = response.panel_id;
 
-            if let Some(matching_panel) = panel_lookup.get(&id) {
-                panel_maps
-                    .entry(id)
-                    .and_modify(|panel| panel.count += 1)
-                    .or_insert_with(|| Panel {
-                        id,
-                        name: matching_panel.name.clone(),
-                        count: 1,
-                    });
-            }
-        }
-        self.total_panels
-            .set(panel_maps.values().cloned().collect());
+    //         if let Some(matching_panel) = panel_lookup.get(&id) {
+    //             panel_maps
+    //                 .entry(id)
+    //                 .and_modify(|panel| panel.count += 1)
+    //                 .or_insert_with(|| Panel {
+    //                     id,
+    //                     name: matching_panel.name.clone(),
+    //                     count: 1,
+    //                 });
+    //         }
+    //     }
+    //     self.total_panels
+    //         .set(panel_maps.values().cloned().collect());
 
-        panel_maps
-    }
+    //     panel_maps
+    // }
 
     pub fn get_total_panels(&self) -> Signal<Vec<Panel>> {
         self.total_panels

@@ -83,17 +83,17 @@ impl SurveyControllerV2 {
         let mut workbook = Workbook::new();
         let worksheet = workbook.add_worksheet();
 
-        for i in 0..responses.len() {
-            let panel = survey
-                .panels
-                .iter()
-                .find(|p| p.id == responses[i].panel_id)
-                .ok_or(ApiError::SurveyResponseNoMatchedPanelId)?;
+        // for i in 0..responses.len() {
+        //     let panel = survey
+        //         .panels
+        //         .iter()
+        //         .find(|p| p.id == responses[i].panel_id)
+        //         .ok_or(ApiError::SurveyResponseNoMatchedPanelId)?;
 
-            worksheet
-                .write_string(0, i as u16 + 1, &panel.name)
-                .unwrap();
-        }
+        //     worksheet
+        //         .write_string(0, i as u16 + 1, &panel.name)
+        //         .unwrap();
+        // }
 
         for i in 0..len {
             worksheet

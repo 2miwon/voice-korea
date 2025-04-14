@@ -66,7 +66,7 @@ pub fn SurveyResultPage(lang: Language, survey_id: i64) -> Element {
 
                 div { class: "flex flex-col gap-[20px] items-start justify-center",
                     SurveySummaryReport { lang, survey }
-                    SurveyPanelReport { lang, panel_report: panel_report.clone() }
+                    // SurveyPanelReport { lang, panel_report: panel_report.clone() }
                     SurveyAnswerReport {
                         lang,
                         total_panels,
@@ -115,8 +115,6 @@ pub fn ObjectiveBox(
     answers: Vec<String>,
     answer_count: Vec<i64>,
 
-    total_panels: Vec<Panel>,
-    selected_panel: i64,
     onchange: EventHandler<i64>,
     #[props(default = false)] is_single: bool,
 ) -> Element {
@@ -140,8 +138,6 @@ pub fn ObjectiveBox(
         }
     }));
 
-    let total_panel = total_panel();
-
     rsx! {
         div { class: "flex flex-col w-full  bg-white px-[40px] py-[20px] rounded-[8px] gap-[20px]",
             div { class: "flex flex-col w-full justify-start items-start",
@@ -161,12 +157,6 @@ pub fn ObjectiveBox(
                                 "{title}"
                             }
                         }
-                        PanelSelectionBox {
-                            lang,
-                            total_panels,
-                            selected_panel,
-                            onchange,
-                        }
                     }
                     div { class: "font-medium text-[#2d2d2d] text-[16px] leading-[22.5px]",
                         "{total_panel}{tr.people_participated}"
@@ -184,14 +174,12 @@ pub fn ObjectiveBox(
                             }
 
                             div { class: "flex flex-row w-full justify-start items-center gap-[20px]",
-                                if total_panel != 0 {
-                                    HorizontalBar {
-                                        id: format!("horizontal_bar_{}{}", index, i),
-                                        value: answer_count[i],
-                                        height: "23px",
-                                        max_value: total_panel,
-                                        class: "flex flex-row flex-1 bg-[#EEEEEE] rounded-[6px] overflow-hidden",
-                                    }
+                                HorizontalBar {
+                                    id: format!("horizontal_bar_{}{}", index, i),
+                                    value: answer_count[i],
+                                    height: "23px",
+                                    max_value: total_panel(),
+                                    class: "flex flex-row flex-1 bg-[#EEEEEE] rounded-[6px] overflow-hidden",
                                 }
 
                                 div { class: "w-[200px] font-medium text-[#2d2d2d] text-[15px] leading-[22.5px]",
@@ -200,8 +188,8 @@ pub fn ObjectiveBox(
                                             "{:?}{} ({:.2}%)",
                                             answer_count[i],
                                             tr.people,
-                                            if total_panel != 0 {
-                                                answer_count[i] as f64 * 100.0 / total_panel as f64
+                                            if total_panel() != 0 {
+                                                answer_count[i] as f64 * 100.0 / total_panel() as f64
                                             } else {
                                                 0.0
                                             },
@@ -230,8 +218,7 @@ pub fn SubjectiveBox(
     title: String,
     responses: i64,
     answers: Vec<String>,
-    total_panels: Vec<Panel>,
-    selected_panel: i64,
+
     onchange: EventHandler<i64>,
 ) -> Element {
     let tr: SubjectiveBoxTranslate = translate(&lang);
@@ -242,12 +229,6 @@ pub fn SubjectiveBox(
                     div { class: "flex flex-row justify-start items-center gap-[20px]",
                         div { class: "font-semibold text-[#222222] text-[16px] leading-[22.5px]",
                             "{title}"
-                        }
-                        PanelSelectionBox {
-                            lang,
-                            total_panels,
-                            selected_panel,
-                            onchange,
                         }
                     }
                     div { class: "font-medium text-[#2d2d2d] text-[16px] leading-[22.5px]",
@@ -300,101 +281,88 @@ pub fn SurveyAnswerReport(
             let keys: Vec<i64> = answers.keys().cloned().collect();
             let mut new_divs = vec![];
 
+            tracing::debug!("answer keys: {:?}", keys);
+
             for (i, key) in keys.iter().enumerate() {
-                if selected_panels.len() != 0 {
-                    if let Some(answer) = answers.get(&(*key)) {
-                        let title = answer.0.clone();
-                        let responses = answer.1;
-                        let panel_map: std::collections::HashMap<i64, ParsedQuestion> =
-                            answer.2.clone();
+                if let Some(answer) = answers.get(&(*key)) {
+                    let title = answer.0.clone();
+                    let responses = answer.1;
+                    let parsed_question = answer.2.clone();
 
-                        if let ParsedQuestion::ShortAnswer { answers } =
-                            panel_map.get(&selected_panels()[i]).unwrap()
-                        {
-                            new_divs.push(rsx! {
-                                SubjectiveBox {
-                                    lang,
-                                    title,
-                                    responses,
-                                    answers: answers.clone(),
+                    if let ParsedQuestion::ShortAnswer { answers } = parsed_question {
+                        new_divs.push(rsx! {
+                            SubjectiveBox {
+                                lang,
+                                title,
+                                responses,
+                                answers: answers.clone(),
 
-                                    total_panels: total_panels.clone(),
-                                    selected_panel: selected_panels()[i],
-                                    onchange: move |id: i64| {
-                                        let mut panels = selected_panels();
-                                        panels[i] = id;
-                                        selected_panels.set(panels);
-                                    },
-                                }
-                            });
-                        } else if let ParsedQuestion::Subjective { answers } =
-                            panel_map.get(&selected_panels()[i]).unwrap()
-                        {
-                            new_divs.push(rsx! {
-                                SubjectiveBox {
-                                    lang,
-                                    title,
-                                    responses,
-                                    answers: answers.clone(),
+                                onchange: move |id: i64| {
+                                    let mut panels = selected_panels();
+                                    panels[i] = id;
+                                    selected_panels.set(panels);
+                                },
+                            }
+                        });
+                    } else if let ParsedQuestion::Subjective { answers } = parsed_question {
+                        new_divs.push(rsx! {
+                            SubjectiveBox {
+                                lang,
+                                title,
+                                responses,
+                                answers: answers.clone(),
 
-                                    total_panels: total_panels.clone(),
-                                    selected_panel: selected_panels()[i],
-                                    onchange: move |id: i64| {
-                                        let mut panels = selected_panels();
-                                        panels[i] = id;
-                                        selected_panels.set(panels);
-                                    },
-                                }
-                            });
-                        } else if let ParsedQuestion::SingleChoice {
-                            answers,
-                            response_count,
-                        } = panel_map.get(&selected_panels()[i]).unwrap()
-                        {
-                            new_divs.push(rsx! {
-                                ObjectiveBox {
-                                    index: i,
-                                    lang,
-                                    title,
-                                    responses,
-                                    answers: answers.clone(),
-                                    answer_count: response_count.clone(),
-                                    is_single: true,
+                                onchange: move |id: i64| {
+                                    let mut panels = selected_panels();
+                                    panels[i] = id;
+                                    selected_panels.set(panels);
+                                },
+                            }
+                        });
+                    } else if let ParsedQuestion::SingleChoice {
+                        answers,
+                        response_count,
+                    } = parsed_question
+                    {
+                        new_divs.push(rsx! {
+                            ObjectiveBox {
+                                index: i,
+                                lang,
+                                title,
+                                responses,
+                                answers: answers.clone(),
+                                answer_count: response_count.clone(),
+                                is_single: true,
 
-                                    total_panels: total_panels.clone(),
-                                    selected_panel: selected_panels()[i],
-                                    onchange: move |id: i64| {
-                                        let mut panels = selected_panels();
-                                        panels[i] = id;
-                                        selected_panels.set(panels);
-                                    },
-                                }
-                            });
-                        } else if let ParsedQuestion::MultipleChoice {
-                            answers,
-                            response_count,
-                        } = panel_map.get(&selected_panels()[i]).unwrap()
-                        {
-                            new_divs.push(rsx! {
-                                ObjectiveBox {
-                                    index: i,
-                                    lang,
-                                    title,
-                                    responses,
-                                    answers: answers.clone(),
-                                    answer_count: response_count.clone(),
-                                    is_single: false,
+                                onchange: move |id: i64| {
+                                    let mut panels = selected_panels();
+                                    panels[i] = id;
+                                    selected_panels.set(panels);
+                                },
+                            }
+                        });
+                    } else if let ParsedQuestion::MultipleChoice {
+                        answers,
+                        response_count,
+                    } = parsed_question
+                    {
+                        new_divs.push(rsx! {
+                            ObjectiveBox {
+                                index: i,
+                                lang,
+                                title,
+                                responses,
+                                answers: answers.clone(),
+                                answer_count: response_count.clone(),
+                                is_single: false,
 
-                                    total_panels: total_panels.clone(),
-                                    selected_panel: selected_panels()[i],
-                                    onchange: move |id: i64| {
-                                        let mut panels = selected_panels();
-                                        panels[i] = id;
-                                        selected_panels.set(panels);
-                                    },
-                                }
-                            });
-                        }
+                                onchange: move |id: i64| {
+                                    let mut panels = selected_panels();
+                                    panels[i] = id;
+                                    selected_panels.set(panels);
+                                },
+                            }
+                        });
                     }
                 }
             }

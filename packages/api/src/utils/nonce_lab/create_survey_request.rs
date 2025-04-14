@@ -22,28 +22,16 @@ pub struct NonceLabCreateSurveyRequest {
 
 impl From<SurveyV2> for NonceLabCreateSurveyRequest {
     fn from(survey: SurveyV2) -> Self {
-        let panel_counts = survey.panel_counts;
         let quotas = survey
-            .panels
+            .attribute_quotas
             .into_iter()
             .map(|q| {
-                let mut nq: NonceLabQuota = q.clone().into();
+                let nq: NonceLabQuota = q.clone().into();
 
-                let d: Vec<PanelCountsV2> = panel_counts
-                    .iter()
-                    .filter(|v| v.panel_id == q.id.clone() as i64)
-                    .map(|v| v.clone())
-                    .collect();
-
-                let v = match d.get(0) {
-                    Some(v) => v.user_count,
-                    None => 0,
-                };
-
-                nq.quota = v as u64;
                 nq
             })
             .collect();
+
         let questions = survey.questions.into_iter().map(|q| q.into()).collect();
         NonceLabCreateSurveyRequest {
             custom_id: survey.id.to_string(),
@@ -73,13 +61,12 @@ pub struct NonceLabQuota {
     pub quota: u64,
 }
 
-impl From<PanelV2> for NonceLabQuota {
+impl From<AttributeQuota> for NonceLabQuota {
     fn from(
-        PanelV2 {
+        AttributeQuota {
             user_count,
             attributes,
-            ..
-        }: PanelV2,
+        }: AttributeQuota,
     ) -> Self {
         let mut age = None;
         let mut gender = None;
@@ -156,7 +143,7 @@ impl From<PanelV2> for NonceLabQuota {
                 },
             }),
             panel: None,
-            quota: user_count,
+            quota: user_count as u64,
         }
     }
 }
