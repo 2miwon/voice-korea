@@ -334,6 +334,8 @@ impl DeliberationController {
                     0, //FIXME: fix quota
                     org_id,
                     surveys,
+                    vec![],
+                    vec![],
                     vec![], //FIXME: fix panel count
                     estimate_time,
                     point,
@@ -522,6 +524,8 @@ impl DeliberationController {
                     0, //FIXME: fix quota
                     org_id,
                     surveys,
+                    vec![],
+                    vec![],
                     vec![], //FIXME: fix panel count
                     estimate_time,
                     point,

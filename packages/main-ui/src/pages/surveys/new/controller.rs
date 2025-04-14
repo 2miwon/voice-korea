@@ -11,14 +11,13 @@ use by_macros::DioxusController;
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_translate::{translate, Language};
-use models::attribute_combinations::attribute_combination::AttributeCombinationCreateRequest;
-use models::attribute_groups::attribute_group::AttributeGroupCreateRequest;
 use models::attribute_v2::AgeV2;
 use models::response::AgeV3;
 use models::{
     attribute_v2::{GenderV2, RegionV2, SalaryV2},
-    PanelCountsV2, PanelV2, PanelV2Summary, SurveyV2,
+    PanelV2, PanelV2Summary, SurveyV2,
 };
+use models::{AttributeDistribute, AttributeQuota};
 
 use crate::{
     pages::surveys::models::current_step::CurrentStep,
@@ -152,7 +151,7 @@ impl Controller {
             estimate_time: use_signal(|| 0),
             point: use_signal(|| 0),
 
-            attribute_options: use_signal(|| attribute_options),
+            attribute_options: use_signal(|| attribute_options.clone()),
             selected_attributes: use_signal(|| vec![]),
             selected_tab: use_signal(|| true),
 
@@ -183,22 +182,129 @@ impl Controller {
             }
         });
 
-        use_effect(move || {
-            if let Some(Some(survey)) = survey_resource.value()() {
-                ctrl.survey_request.set(Some(CreateSurveyResponse {
-                    title: survey.name.clone(),
-                    description: survey.description.clone(),
-                    start_date: survey.started_at,
-                    end_date: survey.ended_at,
-                    area: survey.project_area,
-                    questions: survey.clone().questions,
+        use_effect({
+            let mut attribute_options = attribute_options.clone();
 
-                    point: survey.point,
-                    estimate_time: survey.estimate_time,
-                }));
+            move || {
+                if let Some(Some(survey)) = survey_resource.value()() {
+                    let combinations = survey.attribute_quotas.clone();
+                    let attributes = survey.attribute_distributes.clone();
+                    let quotas = survey.quotes.clone();
+                    let mut selected_groups = vec![];
+                    let mut attribute_combination = vec![];
 
-                ctrl.estimate_time.set(survey.estimate_time);
-                ctrl.point.set(survey.point);
+                    let mut push_group = |name: String, attr_label: String| {
+                        if !selected_groups.contains(&name) {
+                            selected_groups.push(name.clone());
+                        }
+
+                        AttributeGroupInfo {
+                            name,
+                            attribute: attr_label,
+                            rate: 0,
+                        }
+                    };
+
+                    for combination in combinations {
+                        let group_items = combination
+                            .attributes
+                            .iter()
+                            .filter_map(|attr| match attr {
+                                models::response::Attribute::Age(age) => Some(push_group(
+                                    tr.age.to_string(),
+                                    age.translate(&lang).to_string(),
+                                )),
+                                models::response::Attribute::Gender(g) => Some(push_group(
+                                    tr.gender.to_string(),
+                                    g.translate(&lang).to_string(),
+                                )),
+                                models::response::Attribute::Region(r) => Some(push_group(
+                                    tr.region.to_string(),
+                                    r.translate(&lang).to_string(),
+                                )),
+                                models::response::Attribute::Salary(s) => Some(push_group(
+                                    tr.salary.to_string(),
+                                    s.translate(&lang).to_string(),
+                                )),
+                                models::response::Attribute::None => None,
+                            })
+                            .collect::<Vec<_>>();
+
+                        attribute_combination.push(AttributeCombination {
+                            group: group_items,
+                            total_rate: ((combination.user_count as f64) * 100.0 / (quotas as f64))
+                                .floor() as i64,
+                            total_count: combination.user_count as usize,
+                        });
+                    }
+
+                    let mut update_rate = |key: String, attr_label: String, rate: i64| {
+                        if let Some(list) = attribute_options.get_mut(&key) {
+                            if let Some(item) = list.iter_mut().find(|g| g.attribute == attr_label)
+                            {
+                                item.rate = rate;
+                            }
+                        }
+                    };
+
+                    for attr in attributes {
+                        match attr.attribute {
+                            models::response::Attribute::Age(age) => {
+                                update_rate(
+                                    tr.age.to_string(),
+                                    age.translate(&lang).to_string(),
+                                    attr.rate,
+                                );
+                            }
+                            models::response::Attribute::Gender(gender) => {
+                                update_rate(
+                                    tr.gender.to_string(),
+                                    gender.translate(&lang).to_string(),
+                                    attr.rate,
+                                );
+                            }
+                            models::response::Attribute::Region(region) => {
+                                update_rate(
+                                    tr.region.to_string(),
+                                    region.translate(&lang).to_string(),
+                                    attr.rate,
+                                );
+                            }
+                            models::response::Attribute::Salary(salary) => {
+                                update_rate(
+                                    tr.salary.to_string(),
+                                    salary.translate(&lang).to_string(),
+                                    attr.rate,
+                                );
+                            }
+                            models::response::Attribute::None => {}
+                        }
+                    }
+
+                    for (key, list) in attribute_options.iter_mut() {
+                        if selected_groups.contains(key) {
+                            list.retain(|item| item.rate != 0);
+                        }
+                    }
+
+                    ctrl.survey_request.set(Some(CreateSurveyResponse {
+                        title: survey.name.clone(),
+                        description: survey.description.clone(),
+                        start_date: survey.started_at,
+                        end_date: survey.ended_at,
+                        area: survey.project_area,
+                        questions: survey.questions.clone(),
+                        point: survey.point,
+                        estimate_time: survey.estimate_time,
+                    }));
+
+                    ctrl.estimate_time.set(survey.estimate_time);
+                    ctrl.point.set(survey.point);
+                    ctrl.total_counts.set(survey.quotes);
+                    ctrl.selected_attributes.set(selected_groups);
+                    ctrl.attribute_combinations.set(attribute_combination);
+                    ctrl.attribute_options.set(attribute_options.clone());
+                }
             }
         });
 
@@ -521,7 +627,15 @@ impl Controller {
                             async move {
                                 if survey_id.is_none() {
                                     ctrl.create_survey(org_id, survey_request, total_panels).await;
-                                } else {}
+                                } else {
+                                    ctrl.update_survey(
+                                            survey_id.unwrap_or_default(),
+                                            org_id,
+                                            survey_request,
+                                            total_panels,
+                                        )
+                                        .await;
+                                }
                                 popup_service.close();
                             }
                         }
@@ -541,71 +655,11 @@ impl Controller {
         org_id: i64,
         survey_request: Option<CreateSurveyResponse>,
         total_panels: i64,
-        selected_panels: Vec<PanelV2>,
-    ) {
-        let cli = SurveyV2::get_client(crate::config::get().api_url);
-
-        let CreateSurveyResponse {
-            title,
-            description,
-            start_date,
-            end_date,
-            area,
-            questions,
-
-            point,
-            estimate_time,
-        } = survey_request.unwrap();
-
-        match cli
-            .update(
-                org_id,
-                survey_id,
-                title,
-                models::ProjectType::Survey,
-                area,
-                models::ProjectStatus::Ready,
-                start_date,
-                end_date,
-                description,
-                total_panels,
-                questions,
-                selected_panels
-                    .iter()
-                    .map(|v| PanelCountsV2 {
-                        created_at: v.created_at,
-                        updated_at: v.updated_at,
-                        panel_id: v.id,
-                        panel_survey_id: survey_id.clone(),
-                        user_count: v.user_count as i64,
-                    })
-                    .collect(),
-                estimate_time,
-                point,
-                selected_panels.iter().map(|v| v.id).collect(),
-            )
-            .await
-        {
-            Ok(_) => {
-                btracing::debug!("success to update survey");
-                self.nav.go_back();
-            }
-            Err(e) => {
-                btracing::error!("Failed to update survey with error: {:?}", e);
-            }
-        }
-    }
-
-    pub async fn create_survey(
-        &self,
-        org_id: i64,
-        survey_request: Option<CreateSurveyResponse>,
-        total_panels: i64,
     ) {
         let cli = SurveyV2::get_client(crate::config::get().api_url);
         let mut attribute_options = self.attribute_options();
 
-        let mut attribute_groups = vec![];
+        let mut attribute_distributes = vec![];
 
         for key in self.selected_attributes() {
             if let Some(groups) = attribute_options.get_mut(&key) {
@@ -630,7 +684,7 @@ impl Controller {
                         )
                     };
 
-                    attribute_groups.push(AttributeGroupCreateRequest {
+                    attribute_distributes.push(AttributeDistribute {
                         attribute,
                         rate: group.rate,
                     });
@@ -638,7 +692,7 @@ impl Controller {
             }
         }
 
-        let mut attribute_combinations = vec![];
+        let mut attribute_quotas = vec![];
 
         let combinations = self.attribute_combinations();
         for attr in combinations {
@@ -669,9 +723,131 @@ impl Controller {
                     attr
                 })
                 .collect();
-            attribute_combinations.push(AttributeCombinationCreateRequest {
+            attribute_quotas.push(AttributeQuota {
                 user_count: attr.total_count as i64,
-                rate: attr.total_rate,
+                attributes,
+            });
+        }
+
+        let CreateSurveyResponse {
+            title,
+            description,
+            start_date,
+            end_date,
+            area,
+            questions,
+
+            point,
+            estimate_time,
+        } = survey_request.unwrap();
+
+        match cli
+            .update(
+                org_id,
+                survey_id,
+                title,
+                models::ProjectType::Survey,
+                area,
+                models::ProjectStatus::Ready,
+                start_date,
+                end_date,
+                description,
+                total_panels,
+                questions,
+                attribute_quotas,
+                attribute_distributes,
+                vec![],
+                estimate_time,
+                point,
+                vec![],
+            )
+            .await
+        {
+            Ok(_) => {
+                btracing::debug!("success to update survey");
+                self.nav.go_back();
+            }
+            Err(e) => {
+                btracing::error!("Failed to update survey with error: {:?}", e);
+            }
+        }
+    }
+
+    pub async fn create_survey(
+        &self,
+        org_id: i64,
+        survey_request: Option<CreateSurveyResponse>,
+        total_panels: i64,
+    ) {
+        let cli = SurveyV2::get_client(crate::config::get().api_url);
+        let mut attribute_options = self.attribute_options();
+
+        let mut attribute_distributes = vec![];
+
+        for key in self.selected_attributes() {
+            if let Some(groups) = attribute_options.get_mut(&key) {
+                for group in groups {
+                    let name = group.attribute.clone();
+
+                    let attribute = if AgeV3::from_str(&name).is_ok() {
+                        models::prelude::response::Attribute::Age(
+                            AgeV3::from_str(&name).unwrap_or_default(),
+                        )
+                    } else if GenderV2::from_str(&name).is_some() {
+                        models::prelude::response::Attribute::Gender(
+                            GenderV2::from_str(&name).unwrap_or_default(),
+                        )
+                    } else if RegionV2::from_str(&name).is_ok() {
+                        models::prelude::response::Attribute::Region(
+                            RegionV2::from_str(&name).unwrap_or_default(),
+                        )
+                    } else {
+                        models::prelude::response::Attribute::Salary(
+                            SalaryV2::from_str(&name).unwrap_or_default(),
+                        )
+                    };
+
+                    attribute_distributes.push(AttributeDistribute {
+                        attribute,
+                        rate: group.rate,
+                    });
+                }
+            }
+        }
+
+        let mut attribute_quotas = vec![];
+
+        let combinations = self.attribute_combinations();
+        for attr in combinations {
+            let attributes = attr
+                .group
+                .iter()
+                .map(|v| {
+                    let name = v.attribute.clone();
+
+                    let attr = if AgeV3::from_str(&name).is_ok() {
+                        models::prelude::response::Attribute::Age(
+                            AgeV3::from_str(&name).unwrap_or_default(),
+                        )
+                    } else if GenderV2::from_str(&name).is_some() {
+                        models::prelude::response::Attribute::Gender(
+                            GenderV2::from_str(&name).unwrap_or_default(),
+                        )
+                    } else if RegionV2::from_str(&name).is_ok() {
+                        models::prelude::response::Attribute::Region(
+                            RegionV2::from_str(&name).unwrap_or_default(),
+                        )
+                    } else {
+                        models::prelude::response::Attribute::Salary(
+                            SalaryV2::from_str(&name).unwrap_or_default(),
+                        )
+                    };
+
+                    attr
+                })
+                .collect();
+            attribute_quotas.push(AttributeQuota {
+                user_count: attr.total_count as i64,
                 attributes,
             });
         }
@@ -698,12 +874,12 @@ impl Controller {
                 description,
                 total_panels,
                 questions,
+                attribute_quotas,
+                attribute_distributes,
                 vec![],
                 vec![],
                 estimate_time,
                 point,
-                attribute_combinations,
-                attribute_groups,
             )
             .await
         {

@@ -112,12 +112,12 @@ async fn test_survey_reponse() {
             "description".to_string(),
             100,
             questions,
+            vec![],
+            vec![],
             panels,
             panel_counts,
             0,
             0,
-            vec![],
-            vec![],
         )
         .await
         .unwrap();
@@ -519,12 +519,12 @@ async fn test_multiple_attributes_suvey_response() {
             "description".to_string(),
             100,
             questions,
+            vec![],
+            vec![],
             panels,
             panel_counts,
             0,
             0,
-            vec![],
-            vec![],
         )
         .await
         .unwrap();

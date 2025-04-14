@@ -8,11 +8,7 @@ use deliberation_comment::DeliberationComment;
 use deliberation_resources::deliberation_resource::DeliberationResource;
 use discussions::Discussion;
 use models::{
-    areas::area::Area,
-    attribute_combination_surveys::attribute_combination_survey::AttributeCombinationSurvey,
-    attribute_combinations::attribute_combination::AttributeCombination,
-    attribute_group_surveys::attribute_group_survey::AttributeGroupSurvey,
-    attribute_groups::attribute_group::AttributeGroup, deliberation::Deliberation,
+    areas::area::Area, deliberation::Deliberation,
     deliberation_areas::deliberation_area::DeliberationArea,
     deliberation_basic_infos::deliberation_basic_info::DeliberationBasicInfo,
     deliberation_report::DeliberationReport, deliberation_response::DeliberationResponse,
@@ -98,11 +94,7 @@ async fn migration(pool: &sqlx::Pool<sqlx::Postgres>) -> Result<()> {
         Deliberation,
         ResourceFile,
         PanelV2,
-        AttributeCombination,
-        AttributeGroup,
         SurveyV2,
-        AttributeCombinationSurvey,
-        AttributeGroupSurvey,
         Area,
         DeliberationArea,
         DeliberationBasicInfo,
