@@ -22,8 +22,8 @@ pub fn BlockHeader(
                 div { class: "text-sm font-medium text-text-gray", "{description}" }
             }
             if let Some(onclick) = onopen {
-                div {
-                    class: "flex flex-row justify-center items-center",
+                button {
+                    class: "flex flex-row justify-center items-center cursor-pointer",
                     onclick: move |_| {
                         open.set(!open());
                         onclick.call(open());

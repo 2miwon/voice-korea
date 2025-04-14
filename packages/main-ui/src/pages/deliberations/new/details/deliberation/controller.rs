@@ -2,7 +2,7 @@ use bdk::prelude::*;
 use models::{
     deliberation_user::DeliberationUserCreateRequest, elearning::ElearningCreateRequest,
     DeliberationContentCreateRequest, File, OrganizationMember, OrganizationMemberQuery,
-    OrganizationMemberSummary,
+    OrganizationMemberSummary, ResourceFile,
 };
 
 use crate::{
@@ -87,6 +87,7 @@ impl Controller {
             }
             ctrl.deliberation.set(deliberation);
             ctrl.committee_members.set(committees.clone());
+            ctrl.add_elearning();
         });
 
         Ok(ctrl)
@@ -171,7 +172,9 @@ impl Controller {
 
     pub fn add_elearning(&mut self) {
         self.deliberation.with_mut(|req| {
-            req.elearnings.push(ElearningCreateRequest::default());
+            let mut elearning = ElearningCreateRequest::default();
+            elearning.resources.push(ResourceFile::default());
+            req.elearnings.push(elearning);
         });
     }
 

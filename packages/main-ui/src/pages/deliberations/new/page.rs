@@ -7,7 +7,7 @@ use crate::components::drop_zone::handle_file_upload;
 use crate::{
     components::{
         dropdown::Dropdown,
-        form_field::{InputField, TextAreaField, UploadField},
+        form_field::{InputField, TextField, UploadField},
         section::{MainSection, SubSection},
         upload_button::UploadButton,
     },
@@ -32,22 +32,21 @@ pub fn DeliberationNewPage(lang: Language, deliberation_id: Option<i64>) -> Elem
             div { class: "flex flex-col w-full gap-10",
                 div { class: "font-medium text-base text-text-black", {tr.overview} }
                 MainSection {
+                    lang,
                     required: true,
-                    header: tr.title.to_string(),
-                    description: tr.description.to_string(),
+                    header: Some(tr.title.to_string()),
+                    description: Some(tr.description.to_string()),
                     SubSection { required: true, title: tr.proj_title.to_string(),
                         InputField {
-                            height: Some(54),
-                            name: Some("deliberation-title".to_string()),
+                            name: "deliberation-title".to_string(),
                             placeholder: tr.proj_title_placeholder,
                             value: ctrl.title(),
                             oninput: move |event: Event<FormData>| ctrl.parent.save_title(event.value()),
                         }
                     }
                     SubSection { required: true, title: tr.proj_desc.to_string(),
-                        TextAreaField {
-                            height: Some(248),
-                            name: Some("deliberation-description".to_string()),
+                        TextField {
+                            name: "deliberation-description".to_string(),
                             placeholder: tr.proj_desc_placeholder,
                             value: ctrl.description(),
                             oninput: move |event: Event<FormData>| ctrl.parent.save_description(event.value()),
@@ -72,7 +71,7 @@ pub fn DeliberationNewPage(lang: Language, deliberation_id: Option<i64>) -> Elem
                     SubSection { required: true, title: tr.thumbnail.to_string(),
                         div { class: "flex flex-col w-full focus:outline-none justify-center items-center gap-10",
                             UploadField {
-                                placeholder: tr.no_file,
+                                lang,
                                 description: tr.upload_desc,
                                 value: ctrl.get_file_name(),
                                 UploadButton {
