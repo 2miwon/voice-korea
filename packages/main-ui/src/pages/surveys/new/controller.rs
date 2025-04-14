@@ -681,6 +681,7 @@ impl Controller {
                 panel_counts,
                 estimate_time,
                 point,
+                vec![],
             )
             .await
         {

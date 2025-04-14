@@ -11,8 +11,14 @@ use by_axum::{
     },
 };
 use excel::SurveyResponseExcel;
-use models::response::*;
-use models::*;
+use models::{
+    attribute_combination_surveys::attribute_combination_survey::AttributeCombinationSurvey,
+    attribute_combinations::attribute_combination::AttributeCombination, response::*,
+};
+use models::{
+    attribute_combination_surveys::attribute_combination_survey::AttributeCombinationSurveyRepository,
+    attribute_combinations::attribute_combination::AttributeCombinationRepository, *,
+};
 use rust_xlsxwriter::Workbook;
 
 use crate::utils::nonce_lab::NonceLabClient;
@@ -21,6 +27,9 @@ use crate::utils::nonce_lab::NonceLabClient;
 pub struct SurveyControllerV2 {
     panel_survey_repo: PanelSurveysRepository,
     repo: SurveyV2Repository,
+
+    attribute_combination_repo: AttributeCombinationRepository,
+    attribute_combination_survey_repo: AttributeCombinationSurveyRepository,
     pool: sqlx::Pool<sqlx::Postgres>,
     nonce_lab: NonceLabClient,
 }
@@ -30,10 +39,16 @@ impl SurveyControllerV2 {
         let repo = SurveyV2::get_repository(pool.clone());
         let panel_survey_repo = PanelSurveys::get_repository(pool.clone());
 
+        let attribute_combination_repo = AttributeCombination::get_repository(pool.clone());
+        let attribute_combination_survey_repo =
+            AttributeCombinationSurvey::get_repository(pool.clone());
+
         Self {
             repo,
             panel_survey_repo,
             pool,
+            attribute_combination_repo,
+            attribute_combination_survey_repo,
             nonce_lab: NonceLabClient::new(),
         }
     }
@@ -414,6 +429,7 @@ impl SurveyControllerV2 {
             panel_counts,
             estimate_time,
             point,
+            attributes,
         }: SurveyV2CreateRequest,
     ) -> Result<Json<SurveyV2>> {
         tracing::debug!("create {:?}", org_id,);
@@ -443,6 +459,22 @@ impl SurveyControllerV2 {
             Some(v) => v,
             None => return Err(ApiError::SurveyAlreadyExists),
         };
+
+        for req in attributes.clone() {
+            let combination = match self
+                .attribute_combination_repo
+                .insert_with_tx(&mut *tx, req.user_count, req.attributes)
+                .await?
+            {
+                Some(v) => v,
+                None => return Err(ApiError::AttributeCreationFailed),
+            };
+
+            let _ = self
+                .attribute_combination_survey_repo
+                .insert_with_tx(&mut *tx, survey.id, combination.id)
+                .await?;
+        }
 
         for panel in panels.clone() {
             let _ = self
@@ -491,6 +523,7 @@ pub mod tests {
                 vec![],
                 0,
                 0,
+                vec![],
             )
             .await;
 

@@ -110,6 +110,9 @@ pub enum ApiError {
     SurveyNotFound(String),
     SurveyNotDraft,
 
+    // Attribute Errors
+    AttributeCreationFailed,
+
     // Survey Response Errors
     SurveyResponseMissingAnswer,
     SurveyResponseInconsistentAnswerType,

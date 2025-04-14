@@ -15,6 +15,9 @@ mod public_opinion;
 mod resource;
 pub mod tab;
 // mod public_survey;
+pub mod attribute_combination_surveys;
+pub mod attribute_combinations;
+
 pub mod areas;
 pub mod deliberation_basic_info_members;
 pub mod deliberation_basic_info_resources;

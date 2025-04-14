@@ -116,6 +116,7 @@ async fn test_survey_reponse() {
             panel_counts,
             0,
             0,
+            vec![],
         )
         .await
         .unwrap();
@@ -521,6 +522,7 @@ async fn test_multiple_attributes_suvey_response() {
             panel_counts,
             0,
             0,
+            vec![],
         )
         .await
         .unwrap();
