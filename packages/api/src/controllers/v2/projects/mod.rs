@@ -278,6 +278,7 @@ mod tests {
         let id = deliberation.id;
 
         let cli = DeliberationBasicInfo::get_client(&endpoint);
+        // FIXME: Uncomment the following lines after implementing the API
         // let res = cli.read(id).await;
         // assert!(res.is_ok());
 

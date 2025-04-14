@@ -248,7 +248,6 @@ impl DeliberationController {
     }
 
     #[allow(unused_variables)]
-    #[allow(dead_code)]
     pub async fn update(
         &self,
         id: i64,
