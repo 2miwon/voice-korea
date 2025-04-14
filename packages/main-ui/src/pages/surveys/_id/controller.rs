@@ -28,7 +28,7 @@ pub struct Panel {
 
 #[derive(Clone, Default, PartialEq)]
 pub struct SurveyResponses {
-    pub answers: IndexMap<i64, (String, i64, ParsedQuestion)>, // question_id, (title, response_count, <panel_id, answer>)
+    pub answers: IndexMap<i64, (String, i64, ParsedQuestion)>, // question_id, (title, response_count, answer)
 }
 
 #[derive(Clone, PartialEq, Debug)]
