@@ -36,17 +36,17 @@ translate! {
     StartProjectModalTranslate;
 
     title: {
-        ko: "프로젝트 시작",
-        en: "Start Project"
+        ko: "설문 시작 안내",
+        en: "Instructions for starting the survey"
     }
     description: {
-        ko: "프로젝트를 시작 후에는 일부 정보가 참여자에게 즉시 노출될 수 있으니, 설정을 다시 한 번 확인해주세요. 공개 여부를 변경하고 싶으실 경우, 공론 관리 페이지 또는 해당 프로젝트 상세 페이지에서 수정하실 수 있습니다.",
-        en: "After you start the project, some information may be immediately exposed to participants, so please check the settings again. If you want to change whether it is public or not, you can edit it on the public management page or the project details page."
+        ko: "‘설문 시작하기’를 선택하시면 설문이 시작되며, 참여자가 응답할 수 있게 됩니다. 진행하시겠습니까?",
+        en: "When you select ‘Start Survey’, the survey will begin and participants will be able to respond. Would you like to proceed?"
     }
 
     start: {
-        ko: "시작하기",
-        en: "Start"
+        ko: "설문 시작하기",
+        en: "Start Survey"
     }
     cancel: {
         ko: "취소",

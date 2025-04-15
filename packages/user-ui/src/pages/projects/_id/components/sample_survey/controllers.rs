@@ -1,4 +1,5 @@
-use bdk::prelude::{dioxus_popup::PopupService, *};
+use bdk::prelude::*;
+use dioxus_popup::PopupService;
 use indexmap::IndexMap;
 use models::{
     deliberation_response::{DeliberationResponse, DeliberationType},
@@ -48,7 +49,7 @@ impl Controller {
             let deliberation_id = deliberation_id();
             async move {
                 let v = DeliberationSampleSurvey::get_client(&crate::config::get().api_url)
-                    .query(deliberation_id, DeliberationSampleSurveyQuery::default())
+                    .query(deliberation_id, DeliberationSampleSurveyQuery::new(1))
                     .await
                     .unwrap_or_default();
                 if v.total_count == 1 {

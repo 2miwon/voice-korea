@@ -7,6 +7,10 @@ translate! {
         ko: "최종 권고안",
         en: "Final Recommendation",
     },
+    result: {
+        ko: "결과 발표",
+        en: "Result Announcement",
+    }
     necessary: {
         ko: "[필수]",
         en: "[Necessary]"
