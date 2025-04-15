@@ -105,7 +105,7 @@ async fn test_survey_reponse() {
 
     let attribute_quotas = vec![
         AttributeQuota {
-            user_count: 100,
+            user_count: 2,
             attributes: vec![
                 Attribute::Age(AgeV3::Range {
                     inclusive_min: 50,
@@ -117,7 +117,7 @@ async fn test_survey_reponse() {
             ],
         },
         AttributeQuota {
-            user_count: 100,
+            user_count: 2,
             attributes: vec![
                 Attribute::Age(AgeV3::Range {
                     inclusive_min: 60,
