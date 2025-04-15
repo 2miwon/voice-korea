@@ -20,7 +20,11 @@ pub fn DiscussionMember(
 ) -> Element {
     let tr: DiscussionMemberTranslate = translate(&lang);
 
-    let select_ids: Vec<i64> = selected_committees.clone().iter().map(|v| v.id).collect();
+    let select_ids: Vec<i64> = selected_committees
+        .clone()
+        .iter()
+        .map(|v| v.user_id)
+        .collect();
 
     rsx! {
         ExpandableCard { required: false, header: tr.title, description: tr.description,
@@ -34,7 +38,7 @@ pub fn DiscussionMember(
                     let mut select_ids = select_ids.clone();
                     let mut discussion = discussion.clone();
                     move |member: OrganizationMemberSummary| {
-                        select_ids.push(member.id);
+                        select_ids.push(member.user_id);
                         discussion.users = select_ids.clone();
                         set_discussion.call(discussion.clone());
                     }

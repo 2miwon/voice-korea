@@ -6,6 +6,7 @@ use crate::deliberation_user::DeliberationUser;
 use crate::discussions::Discussion;
 use crate::discussions::DiscussionCreateRequest;
 use crate::ResourceFile;
+use crate::User;
 
 //FIXME: fix to wording when discussion function is implemented
 #[derive(Validate)]
@@ -35,7 +36,7 @@ pub struct DeliberationDiscussion {
 
     #[api_model(summary, many_to_many = deliberation_discussion_members, foreign_table_name = users, foreign_primary_key = user_id, foreign_reference_key = discussion_id)]
     #[serde(default)]
-    pub members: Vec<DeliberationUser>,
+    pub members: Vec<User>,
 
     #[api_model(summary, many_to_many = deliberation_discussion_resources, foreign_table_name = resources, foreign_primary_key = resource_id, foreign_reference_key = discussion_id)]
     #[serde(default)]
@@ -49,7 +50,7 @@ pub struct DeliberationDiscussion {
 impl Into<DeliberationDiscussionCreateRequest> for DeliberationDiscussion {
     fn into(self) -> DeliberationDiscussionCreateRequest {
         DeliberationDiscussionCreateRequest {
-            users: self.members.into_iter().map(|u| u.user_id).collect(),
+            users: self.members.into_iter().map(|u| u.id).collect(),
             resources: self.resources.into_iter().map(|r| r.id).collect(),
             discussions: self.discussions.into_iter().map(|d| d.into()).collect(),
             started_at: self.started_at,

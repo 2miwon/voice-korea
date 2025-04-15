@@ -328,6 +328,9 @@ impl DeliberationController {
         self.upsert_content(&mut *tx, deliberation.id, contents)
             .await?;
 
+        self.upsert_discussion(&mut *tx, deliberation.id, deliberation_discussions)
+            .await?;
+
         tx.commit().await?;
 
         Ok(deliberation)
@@ -932,7 +935,8 @@ impl DeliberationController {
         tx: &mut sqlx::PgConnection,
         deliberation_id: i64,
         discussions: Vec<DeliberationDiscussionCreateRequest>,
-    ) -> Result<()> {
+    ) -> Result<Vec<DeliberationDiscussion>> {
+        let mut v = vec![];
         for DeliberationDiscussionCreateRequest {
             started_at,
             ended_at,
@@ -968,6 +972,164 @@ impl DeliberationController {
                 let _ = self
                     .discussion_resource
                     .insert_with_tx(&mut *tx, resource_id, discussion.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationDiscussionException)?;
+            }
+
+            for disc in discussions {
+                let d = self
+                    .disc_repo
+                    .insert_with_tx(
+                        &mut *tx,
+                        deliberation_id,
+                        disc.started_at,
+                        disc.ended_at,
+                        disc.name,
+                        disc.description,
+                        disc.maximum_count,
+                        None,
+                    )
+                    .await?
+                    .ok_or(ApiError::DeliberationDiscussionException)?;
+
+                for user_id in disc.users {
+                    let _ = self
+                        .disc_group
+                        .insert_with_tx(&mut *tx, d.id, user_id)
+                        .await?
+                        .ok_or(ApiError::DeliberationDiscussionException)?;
+                }
+
+                for res_id in disc.resources {
+                    let _ = self
+                        .disc_res
+                        .insert_with_tx(&mut *tx, d.id, res_id)
+                        .await?
+                        .ok_or(ApiError::DeliberationDiscussionException)?;
+                }
+            }
+
+            v.push(discussion);
+        }
+        Ok(v)
+    }
+
+    async fn upsert_discussion(
+        &self,
+        tx: &mut sqlx::PgConnection,
+        deliberation_id: i64,
+        deliberation_discussions: Vec<DeliberationDiscussionCreateRequest>,
+    ) -> Result<()> {
+        for DeliberationDiscussionCreateRequest {
+            users,
+            resources,
+            discussions,
+            ..
+        } in deliberation_discussions.clone()
+        {
+            let results = DeliberationDiscussion::query_builder()
+                .deliberation_id_equals(deliberation_id)
+                .query()
+                .map(DeliberationDiscussion::from)
+                .fetch_all(&self.pool)
+                .await?;
+
+            let discussion = if results.is_empty() {
+                let v = self
+                    .create_disscussion(&mut *tx, deliberation_id, deliberation_discussions.clone())
+                    .await?;
+
+                v.into_iter()
+                    .next()
+                    .unwrap_or_else(DeliberationDiscussion::default)
+            } else {
+                results
+                    .into_iter()
+                    .next()
+                    .unwrap_or_else(DeliberationDiscussion::default)
+            };
+
+            // update user
+            let remain_users = DeliberationDiscussionMember::query_builder()
+                .discussion_id_equals(discussion.id)
+                .query()
+                .map(DeliberationDiscussionMember::from)
+                .fetch_all(&self.pool)
+                .await?;
+
+            tracing::debug!("remain_users: {:?}", remain_users);
+
+            for remain in remain_users {
+                self.discussion_member
+                    .delete_with_tx(&mut *tx, remain.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationDiscussionException)?;
+            }
+
+            for user_id in users {
+                let _ = self
+                    .discussion_member
+                    .insert_with_tx(&mut *tx, user_id, discussion.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationDiscussionException)?;
+            }
+
+            // update resource
+            let remain_resources = DeliberationDiscussionResource::query_builder()
+                .discussion_id_equals(discussion.id)
+                .query()
+                .map(DeliberationDiscussionResource::from)
+                .fetch_all(&self.pool)
+                .await?;
+
+            tracing::debug!("remain_resources: {:?}", remain_resources);
+
+            for remain in remain_resources {
+                self.discussion_resource
+                    .delete_with_tx(&mut *tx, remain.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationDiscussionException)?;
+            }
+
+            for resource_id in resources {
+                let _ = self
+                    .discussion_resource
+                    .insert_with_tx(&mut *tx, resource_id, discussion.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationDiscussionException)?;
+            }
+
+            let remain_discussions = Discussion::query_builder()
+                .deliberation_id_equals(deliberation_id)
+                .query()
+                .map(Discussion::from)
+                .fetch_all(&self.pool)
+                .await?;
+
+            tracing::debug!("remain_discussions: {:?}", remain_discussions);
+
+            for discussion in remain_discussions {
+                self.disc_repo
+                    .delete_with_tx(&mut *tx, discussion.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationDiscussionException)?;
+            }
+
+            let remain_discussion_resources = DiscussionResource::query_builder()
+                .discussion_id_equals(discussion.id)
+                .query()
+                .map(Discussion::from)
+                .fetch_all(&self.pool)
+                .await?;
+
+            tracing::debug!(
+                "remain_discussion_resources: {:?}",
+                remain_discussion_resources
+            );
+
+            for resource in remain_discussion_resources {
+                self.disc_res
+                    .delete_with_tx(&mut *tx, resource.id)
                     .await?
                     .ok_or(ApiError::DeliberationDiscussionException)?;
             }
@@ -1481,6 +1643,7 @@ impl DeliberationController {
             .basic_infos_builder(DeliberationBasicInfo::query_builder())
             .sample_surveys_builder(DeliberationSampleSurvey::query_builder())
             .contents_builder(DeliberationContent::query_builder())
+            .deliberation_discussions_builder(DeliberationDiscussion::query_builder())
             .org_id_equals(org_id)
             .id_equals(id)
             .status_equals(DeliberationStatus::Draft)

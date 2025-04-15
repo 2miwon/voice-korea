@@ -31,7 +31,7 @@ use crate::{PanelV2, ProjectArea, ResourceFile, SurveyV2};
 #[cfg(feature = "server")]
 use crate::{
     DeliberationBasicInfoRepositoryQueryBuilder, DeliberationContentRepositoryQueryBuilder,
-    DeliberationSampleSurveyRepositoryQueryBuilder,
+    DeliberationDiscussionRepositoryQueryBuilder, DeliberationSampleSurveyRepositoryQueryBuilder,
 };
 
 #[derive(Validate)]
@@ -103,7 +103,7 @@ pub struct Deliberation {
     #[api_model(one_to_many = deliberation_contents, foreign_key = deliberation_id, nested)]
     #[serde(default)]
     pub contents: Vec<DeliberationContent>,
-    #[api_model(one_to_many = deliberation_discussions, foreign_key = deliberation_id)]
+    #[api_model(one_to_many = deliberation_discussions, foreign_key = deliberation_id, nested)]
     #[serde(default)]
     pub deliberation_discussions: Vec<DeliberationDiscussion>,
     #[api_model(one_to_many = deliberation_final_surveys, foreign_key = deliberation_id)]
