@@ -251,15 +251,18 @@ impl Controller {
             .push(Route::DeliberationDiscussionSettingPage { lang: self.lang });
     }
 
-    pub fn set_selected_field(&mut self, field: String) {
+    pub fn set_selected_field(&mut self, index: usize, field: String) {
+        tracing::debug!("set_selected_field: {} {:?}", index, field);
         self.selected_field.set(Some(field));
     }
 
-    pub fn set_evaluation_title(&mut self, title: String) {
+    pub fn set_evaluation_title(&mut self, index: usize, title: String) {
+        tracing::debug!("set_evaluation_title: {} {:?}", index, title);
         self.evaluation_title.set(title);
     }
 
-    pub fn set_evaluation_content(&mut self, content: String) {
+    pub fn set_evaluation_content(&mut self, index: usize, content: String) {
+        tracing::debug!("set_evaluation_content: {} {:?}", index, content);
         self.evaluation_content.set(content);
     }
 
@@ -267,5 +270,15 @@ impl Controller {
     pub async fn open_load_from_data_modal(&mut self) {
         self.popup_service.open(rsx! {}).with_id("load_from_data");
         // .with_title(translates.create_group);
+    }
+
+    pub fn add_evaluation(&mut self) {
+        tracing::debug!("add_evaluation");
+        // TODO: Implement this function
+    }
+
+    pub fn remove_evaluation(&mut self, index: usize) {
+        tracing::debug!("remove_evaluation: {:?}", index);
+        // TODO: Implement this function
     }
 }

@@ -6,7 +6,7 @@ use models::{elearning::ElearningCreateRequest, File};
 use crate::{
     components::{
         form_field::{InputField, UploadField},
-        section::{AddSection, MainSection, SubSection},
+        section::{MainSection, SubSection},
         upload_button::UploadButton,
     },
     pages::deliberations::new::details::deliberation::i18n::DeliberationTranslate,
@@ -89,13 +89,6 @@ pub fn DeliberationElearning(
                     }
                 }
             }
-        }
-
-        AddSection {
-            lang,
-            onclick: move |e| {
-                add_elearning.call(e);
-            },
         }
     }
 }

@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 use super::*;
 use crate::{
-    components::icons::ArrowLeft,
+    components::{icons::ArrowLeft, section::AddSection},
     pages::deliberations::new::details::deliberation::components::{
         elearning::DeliberationElearning, evaluation::Evaluation, introduction::Introduction,
         member::DeliberationMember,
@@ -105,18 +105,32 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                     } else {
                         Evaluation {
                             lang,
-                            deliberation: ctrl.deliberation(),
-                            selected_field: ctrl.selected_field(),
-                            set_form: move |field: String| {
-                                ctrl.set_selected_field(field);
+                            evaluations: vec![], // FIXME: this is dummy data
+                            // selected_field: ctrl.selected_field(),
+                            set_form: move |(index, field): (usize, String)| {
+                                ctrl.set_selected_field(index, field);
                             },
-                            set_title: move |title: String| {
-                                ctrl.set_evaluation_title(title);
+                            set_title: move |(index, title): (usize, String)| {
+                                ctrl.set_evaluation_title(index, title);
                             },
-                            set_content: move |content: String| {
-                                ctrl.set_evaluation_content(content);
+                            set_content: move |(index, content): (usize, String)| {
+                                ctrl.set_evaluation_content(index, content);
+                            },
+                            removing_evaluation: move |index: usize| {
+                                ctrl.remove_evaluation(index);
                             },
                         }
+                    }
+
+                    AddSection {
+                        lang,
+                        onclick: move |e| {
+                            if ctrl.e_learning_tab() {
+                                ctrl.add_elearning();
+                            } else {
+                                ctrl.add_evaluation();
+                            }
+                        },
                     }
                 }
 
