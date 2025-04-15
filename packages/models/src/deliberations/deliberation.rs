@@ -13,7 +13,11 @@ use crate::deliberation_final_surveys::deliberation_final_survey::DeliberationFi
 use crate::deliberation_response::DeliberationResponse;
 use crate::deliberation_sample_surveys::deliberation_sample_survey::DeliberationSampleSurvey;
 use crate::deliberation_sample_surveys::deliberation_sample_survey::DeliberationSampleSurveyCreateRequest;
+
 use crate::deliberation_user::{DeliberationUser, DeliberationUserCreateRequest};
+
+// #[cfg(feature = "server")]
+// use crate::deliberation_user::DeliberationUserRepositoryQueryBuilder;
 
 use bdk::prelude::*;
 use validator::Validate;
@@ -24,10 +28,13 @@ use crate::discussions::*;
 use crate::step::*;
 use crate::{PanelV2, ProjectArea, ResourceFile, SurveyV2};
 
+#[cfg(feature = "server")]
+use crate::DeliberationBasicInfoRepositoryQueryBuilder;
+
 #[derive(Validate)]
 #[api_model(base = "/v2/organizations/:org-id/deliberations", action = [create(project_areas = Vec<ProjectArea>, resource_ids = Vec<i64>, survey_ids = Vec<i64>, roles = Vec<DeliberationUserCreateRequest>, panel_ids = Vec<i64>, steps = Vec<StepCreateRequest>, elearning = Vec<i64>, basic_infos = Vec<DeliberationBasicInfoCreateRequest>, sample_surveys = Vec<DeliberationSampleSurveyCreateRequest>, contents = Vec<DeliberationContentCreateRequest>, deliberation_discussions = Vec<DeliberationDiscussionCreateRequest>, final_surveys = Vec<DeliberationFinalSurveyCreateRequest>, drafts = Vec<DeliberationDraftCreateRequest>)], action_by_id = [update(req = DeliberationCreateRequest)], table = deliberations)]
 pub struct Deliberation {
-    #[api_model(summary, primary_key)]
+    #[api_model(summary, primary_key, read_action = get_draft)]
     pub id: i64,
     #[api_model(summary, auto = [insert])]
     pub created_at: i64,
@@ -61,7 +68,7 @@ pub struct Deliberation {
     pub description: String,
 
     // Third page of creating a deliberation
-    #[api_model(many_to_many = deliberation_users, table_name = users, foreign_primary_key = user_id, foreign_reference_key = deliberation_id)]
+    #[api_model(one_to_many = deliberation_users, foreign_key = deliberation_id)]
     #[serde(default)]
     pub members: Vec<DeliberationUser>,
     #[api_model(one_to_many = deliberation_reports, foreign_key = deliberation_id)]
@@ -83,7 +90,7 @@ pub struct Deliberation {
     #[serde(default)]
     pub response_count: i64,
 
-    #[api_model(one_to_many = deliberation_basic_infos, foreign_key = deliberation_id)]
+    #[api_model(one_to_many = deliberation_basic_infos, foreign_key = deliberation_id, nested)]
     #[serde(default)]
     //Note: expected to contain only one field.
     pub basic_infos: Vec<DeliberationBasicInfo>,
@@ -126,7 +133,7 @@ pub struct Deliberation {
     #[serde(default)]
     pub status: DeliberationStatus,
 
-    #[api_model(summary, many_to_one = users, action = create, read_action = get_draft)]
+    #[api_model(summary, many_to_one = users, action = create)]
     pub creator_id: i64,
 }
 
