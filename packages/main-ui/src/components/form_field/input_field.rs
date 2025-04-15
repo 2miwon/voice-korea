@@ -8,20 +8,22 @@ pub fn InputField(
     value: String,
     oninput: EventHandler<FormEvent>,
 ) -> Element {
+    let mut is_focusing_title: Signal<bool> = use_signal(|| false);
     rsx! {
-        div {
-            class: "flex flex-row w-full focus:outline-none justify-start items-center bg-background-gray rounded-[4px]",
+        input {
+            class: "flex flex-row w-full justify-start items-center bg-background-gray aria-active:!bg-white aria-active:!border aria-active:!border-active focus:outline-none px-15 py-10 font-medium text-[15px]/22 rounded-[4px]",
             style: "height: {height}px",
-            div { class: "flex px-15 w-full",
-                input {
-                    class: "flex flex-row w-full justify-start items-center bg-transparent focus:outline-none",
-                    r#type: "text",
-                    name,
-                    placeholder,
-                    value,
-                    oninput,
-                }
-            }
+            "aria-active": is_focusing_title(),
+            r#type: "text",
+            placeholder,
+            value,
+            onfocus: move |_| {
+                is_focusing_title.set(true);
+            },
+            onblur: move |_| {
+                is_focusing_title.set(false);
+            },
+            oninput,
         }
     }
 }

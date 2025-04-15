@@ -13,6 +13,7 @@ use crate::{
     service::metadata_api::MetadataApi,
 };
 
+use super::super::controller::*;
 #[cfg(feature = "web")]
 use crate::components::drop_zone::handle_file_upload;
 #[cfg(feature = "web")]
@@ -28,6 +29,7 @@ pub fn DeliberationElearning(
     add_elearning: EventHandler<MouseEvent>,
     remove_elearning: EventHandler<usize>,
 ) -> Element {
+    let mut ctrl = Controller::new(lang)?;
     let api: MetadataApi = use_context();
     let tr: DeliberationTranslate = translate(&lang);
 
@@ -75,11 +77,13 @@ pub fn DeliberationElearning(
                                         });
                                     },
                                 }
-
-                            // TODO: add a file loading from "자료관리"
-                            // div { class: "flex min-w-[165px] h-[40px] border border-[#2a60d3] bg-white rounded-sm text-[#2a60d3] text-center font-semibold text-sm justify-center items-center",
-                            //     {tr.load_from}
-                            // }
+                                button {
+                                    class: "flex min-w-[165px] h-[40px] border bg-white border-primary rounded-sm justify-center items-center",
+                                    onclick: move |_| async move {},
+                                    div { class: "text-primary text-center font-semibold text-sm",
+                                        {tr.load_from}
+                                    }
+                                }
                             }
                         }
                     }
