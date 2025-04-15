@@ -13,13 +13,13 @@ test.describe("Corresponding Individual Hamburger Tests", () => {
       "hamburger",
     );
 
-    await page.goto(`/`);
+    await page.goto(`/en/`);
     await page.screenshot({
       path: `${screenshotBase}/01-page-entered.png`,
       fullPage: true,
     });
 
-    const hamburger = page.getByRole("button").filter({ hasText: /^$/ });
+    const hamburger = page.getByRole('button').filter({ hasText: /^$/ }).first();
     await expect(hamburger).toBeVisible();
     await hamburger.click();
     await page.screenshot({
@@ -27,8 +27,8 @@ test.describe("Corresponding Individual Hamburger Tests", () => {
       fullPage: true,
     });
 
-    const mainPage = page.getByRole("button", { name: "Main Page" });
-    await expect(mainPage).toBeVisible();
+    const login = page.getByRole('button', { name: 'Login' })
+    await expect(login).toBeVisible();
     await page.screenshot({
       path: `${screenshotBase}/03-main-page-clicked.png`,
       fullPage: true,
