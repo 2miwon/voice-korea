@@ -29,7 +29,9 @@ use crate::step::*;
 use crate::{PanelV2, ProjectArea, ResourceFile, SurveyV2};
 
 #[cfg(feature = "server")]
-use crate::DeliberationBasicInfoRepositoryQueryBuilder;
+use crate::{
+    DeliberationBasicInfoRepositoryQueryBuilder, DeliberationSampleSurveyRepositoryQueryBuilder,
+};
 
 #[derive(Validate)]
 #[api_model(base = "/v2/organizations/:org-id/deliberations", action = [create(project_areas = Vec<ProjectArea>, resource_ids = Vec<i64>, survey_ids = Vec<i64>, roles = Vec<DeliberationUserCreateRequest>, panel_ids = Vec<i64>, steps = Vec<StepCreateRequest>, elearning = Vec<i64>, basic_infos = Vec<DeliberationBasicInfoCreateRequest>, sample_surveys = Vec<DeliberationSampleSurveyCreateRequest>, contents = Vec<DeliberationContentCreateRequest>, deliberation_discussions = Vec<DeliberationDiscussionCreateRequest>, final_surveys = Vec<DeliberationFinalSurveyCreateRequest>, drafts = Vec<DeliberationDraftCreateRequest>)], action_by_id = [update(req = DeliberationCreateRequest)], table = deliberations)]
@@ -94,7 +96,7 @@ pub struct Deliberation {
     #[serde(default)]
     //Note: expected to contain only one field.
     pub basic_infos: Vec<DeliberationBasicInfo>,
-    #[api_model(one_to_many = deliberation_sample_surveys, foreign_key = deliberation_id)]
+    #[api_model(one_to_many = deliberation_sample_surveys, foreign_key = deliberation_id, nested)]
     #[serde(default)]
     pub sample_surveys: Vec<DeliberationSampleSurvey>,
     #[api_model(one_to_many = deliberation_contents, foreign_key = deliberation_id)]

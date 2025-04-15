@@ -694,6 +694,86 @@ impl DeliberationController {
                     .next()
                     .unwrap_or_else(DeliberationSampleSurvey::default)
             };
+
+            // update user
+            let remain_users = DeliberationSampleSurveyMember::query_builder()
+                .sample_survey_id_equals(sample.id)
+                .query()
+                .map(DeliberationSampleSurveyMember::from)
+                .fetch_all(&self.pool)
+                .await?;
+
+            tracing::debug!("remain_users: {:?}", remain_users);
+
+            for remain in remain_users {
+                self.sample_survey_member
+                    .delete_with_tx(&mut *tx, remain.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationSampleSurveyException)?;
+            }
+
+            for user_id in users {
+                let _ = self
+                    .sample_survey_member
+                    .insert_with_tx(&mut *tx, user_id, sample.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationSampleSurveyException)?;
+            }
+
+            //update survey
+            let remain_surveys = DeliberationSampleSurveySurvey::query_builder()
+                .sample_survey_id_equals(sample.id)
+                .query()
+                .map(DeliberationSampleSurveySurvey::from)
+                .fetch_all(&self.pool)
+                .await?;
+
+            tracing::debug!("remain_surveys: {:?}", remain_surveys);
+
+            for survey in remain_surveys {
+                self.sample_survey_survey
+                    .delete_with_tx(&mut *tx, survey.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationSampleSurveyException)?;
+            }
+
+            tracing::debug!("tttt");
+
+            let survey = self
+                .survey
+                .insert_with_tx(
+                    &mut *tx,
+                    title,
+                    ProjectType::Deliberation,
+                    project_areas
+                        .clone()
+                        .get(0)
+                        .unwrap_or(&ProjectArea::Economy)
+                        .clone(),
+                    ProjectStatus::InProgress,
+                    started_at,
+                    ended_at,
+                    description,
+                    0, //FIXME: fix quota
+                    org_id,
+                    surveys,
+                    vec![],
+                    vec![],
+                    vec![], //FIXME: fix panel count
+                    estimate_time,
+                    point,
+                    None,
+                )
+                .await?
+                .ok_or(ApiError::DeliberationSampleSurveyException)?;
+            tracing::debug!("rrrr");
+
+            let _ = self
+                .sample_survey_survey
+                .insert_with_tx(&mut *tx, survey.id, sample.id)
+                .await?
+                .ok_or(ApiError::DeliberationSampleSurveyException)?;
+            tracing::debug!("uuuu");
         }
 
         Ok(())
@@ -1246,6 +1326,7 @@ impl DeliberationController {
                 .id_equals(id)
                 .org_id_equals(org_id)
                 .basic_infos_builder(DeliberationBasicInfo::query_builder())
+                .sample_surveys_builder(DeliberationSampleSurvey::query_builder())
                 .query()
                 .map(Deliberation::from)
                 .fetch_one(&ctrl.pool)
@@ -1304,6 +1385,7 @@ impl DeliberationController {
 
         let deliberation = Deliberation::query_builder()
             .basic_infos_builder(DeliberationBasicInfo::query_builder())
+            .sample_surveys_builder(DeliberationSampleSurvey::query_builder())
             .org_id_equals(org_id)
             .id_equals(id)
             .status_equals(DeliberationStatus::Draft)
