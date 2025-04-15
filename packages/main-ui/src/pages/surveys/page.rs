@@ -192,7 +192,7 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
                                                         onclick: {
                                                             let id = survey.id.clone();
                                                             move |_| async move {
-                                                                ctrl.start_survey(id).await;
+                                                                ctrl.open_start_survey_popup(props.lang, id).await;
                                                             }
                                                         },
                                                         div { class: "text-hover font-semibold text-sm", "{translate.start_survey_create}" }
