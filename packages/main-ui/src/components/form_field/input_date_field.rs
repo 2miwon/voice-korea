@@ -21,7 +21,8 @@ pub fn InputDateField(
         div { class: "flex flex-row w-full justify-start items-center gap-20",
             //input_title
             input {
-                class: "flex flex-row w-full h-{height} justify-start items-center bg-[#f7f7f7] aria-active:!bg-white aria-active:!border aria-active:!border-active focus:outline-none px-[15px] py-[10px] font-medium text-[#b4b4b4] text-[15px] leading-[22px] rounded-[4px]",
+                class: "flex flex-row w-full justify-start items-center bg-background-gray aria-active:!bg-white aria-active:!border aria-active:!border-active focus:outline-none px-15 py-10 font-medium text-disabled text-[15px]/22 rounded-[4px]",
+                style: "height: {height}px",
                 "aria-active": is_focusing_title(),
                 r#type: "text",
                 placeholder,

@@ -9,7 +9,9 @@ pub fn TextField(
     oninput: EventHandler<FormEvent>,
 ) -> Element {
     rsx! {
-        div { class: "flex flex-row w-full focus:outline-none justify-start items-start bg-background-gray rounded-[4px] h-{height}",
+        div {
+            class: "flex flex-row w-full focus:outline-none justify-start items-start bg-background-gray rounded-[4px]",
+            style: "height: {height}px",
             div { class: "flex px-15 py-10 w-full h-full justify-start items-start",
                 textarea {
                     class: "flex w-full h-full justify-start items-start bg-transparent focus:outline-none my-10 break-words whitespace-normal",

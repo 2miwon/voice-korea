@@ -32,7 +32,7 @@ pub fn DeliberationElearning(
     let tr: DeliberationTranslate = translate(&lang);
 
     rsx! {
-        div { class: "flex flex-col gap-20",
+        div { class: "flex flex-col gap-20 w-full",
             for (index , elearning) in elearnings.iter().enumerate() {
                 MainSection {
                     lang,

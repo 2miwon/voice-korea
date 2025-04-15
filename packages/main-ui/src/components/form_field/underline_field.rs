@@ -9,7 +9,8 @@ pub fn UnderlineField(
 ) -> Element {
     rsx! {
         input {
-            class: "flex flex-row w-full h-{height} justify-start items-center bg-white focus:outline-none border-b-[1px] border-[#bfc8d9] px-[15px] py-[15px] font-medium text-[#b4b4b4] text-[15px] leading-[22px]",
+            class: "flex flex-row w-full justify-start items-center bg-white focus:outline-none border-b-[1px] border-label-border-gray px-15 py-15 font-medium text-disabled text-[15px]/22",
+            style: "height: {height}px",
             r#type: "text",
             placeholder,
             value,
