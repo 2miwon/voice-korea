@@ -150,8 +150,6 @@ impl Controller {
         if survey.name.trim().is_empty()
             || survey.description.trim().is_empty()
             || survey.questions.is_empty()
-            || survey.panels.is_empty()
-            || survey.panel_counts.is_empty()
         {
             popup_service
                 .open(rsx! {

@@ -5,12 +5,12 @@ use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_translate::*;
 use models::{
-    discussions::{Discussion, DiscussionQuery, DiscussionSummary},
-    Tab,
+    discussions::Discussion, DeliberationDiscussion, DeliberationDiscussionQuery,
+    DeliberationDiscussionSummary, Tab,
 };
 
 use crate::{
-    components::icons::triangle::{TriangleDown, TriangleUp},
+    pages::projects::_id::components::accordion::Accordion,
     utils::time::{current_timestamp, format_time_range, formatted_timestamp},
 };
 
@@ -26,7 +26,7 @@ pub enum DiscussionStatus {
 }
 
 #[component]
-pub fn DiscussionPage(
+pub fn DiscussionComponent(
     lang: Language,
     project_id: ReadOnlySignal<i64>,
     #[props(extends = GlobalAttributes)] attributes: Vec<Attribute>,
@@ -35,20 +35,8 @@ pub fn DiscussionPage(
     let ctrl = Controller::new(lang, project_id)?;
     let tr: DiscussionTranslate = translate(&lang);
 
-    let discussions = ctrl.discussions()?;
+    let deliberation_discussion: DeliberationDiscussionSummary = ctrl.discussion()?;
 
-    let (title, description, files, start_date, end_date) = discussions
-        .get(0)
-        .map(|d| {
-            (
-                d.name.clone(),
-                d.description.clone(),
-                d.resources.clone(),
-                d.started_at,
-                d.ended_at,
-            )
-        })
-        .unwrap_or(("".to_string(), "".to_string(), vec![], 0, 0));
     let tab_title: &str = Tab::Discussion.translate(&lang);
 
     rsx! {
@@ -63,8 +51,8 @@ pub fn DiscussionPage(
                     {
                         format!(
                             "{} ~ {}",
-                            formatted_timestamp(lang, start_date),
-                            formatted_timestamp(lang, end_date),
+                            formatted_timestamp(lang, deliberation_discussion.started_at),
+                            formatted_timestamp(lang, deliberation_discussion.ended_at),
                         )
                     }
                 }
@@ -76,14 +64,14 @@ pub fn DiscussionPage(
                 // introduction section
                 DiscussionIntroduction {
                     lang,
-                    discussions: discussions.clone(),
-                    description,
+                    description: deliberation_discussion.description,
+                    discussions: deliberation_discussion.discussions.clone(),
                 }
 
                 // video section
                 VideoDiscussion {
                     lang,
-                    discussions,
+                    discussions: deliberation_discussion.discussions.clone(),
                     start_meeting: move |id: i64| async move {
                         let _ = ctrl.start_meeting(id).await;
                     },
@@ -98,7 +86,7 @@ pub fn DiscussionPage(
                         }
                         //file
                         div { class: "flex flex-wrap flex-1 justify-start items-center gap-8",
-                            for resource in files {
+                            for resource in deliberation_discussion.resources {
                                 div {
                                     class: "cursor-pointer flex flex-row justify-start items-center rounded-[100px] bg-light-gray gap-4 px-12 py-4",
                                     onclick: {
@@ -133,41 +121,19 @@ pub fn DiscussionPage(
 #[component]
 pub fn VideoDiscussion(
     lang: Language,
-    discussions: Vec<DiscussionSummary>,
+    discussions: Vec<Discussion>,
     start_meeting: EventHandler<i64>,
 ) -> Element {
-    let mut clicked_video = use_signal(|| true);
     let tr: DiscussionTranslate = translate(&lang);
 
     rsx! {
-        div { class: "w-full flex flex-col rounded-lg bg-white justify-start items-start py-14 px-20",
-            div {
-                class: "w-full flex justify-start items-center text-base font-bold cursor-pointer",
-                onclick: move |_| {
-                    clicked_video.set(!clicked_video());
-                },
-                div { class: "w-full flex flex-row justify-between items-center",
-                    span { "{tr.video_discussion}" }
-                    if clicked_video() {
-                        TriangleUp {}
-                    } else {
-                        TriangleDown {}
-                    }
-                }
-            }
-
-            if clicked_video() {
-                //line
-                hr { class: "w-full h-1 mt-12 mb-12 border-line-gray" }
-
-                for (index , discussion) in discussions.iter().enumerate() {
-                    div { class: "flex flex-col w-full gap-20",
-                        Video {
-                            lang,
-                            discussion: discussion.clone(),
-                            enable_bottom_line: index != discussions.len() - 1,
-                            start_meeting,
-                        }
+        Accordion { title: tr.video_discussion,
+            for discussion in discussions.iter() {
+                div { class: "flex flex-col w-full gap-20",
+                    Video {
+                        lang,
+                        discussion: discussion.clone(),
+                        start_meeting,
                     }
                 }
             }
@@ -176,12 +142,7 @@ pub fn VideoDiscussion(
 }
 
 #[component]
-pub fn Video(
-    lang: Language,
-    discussion: DiscussionSummary,
-    enable_bottom_line: bool,
-    start_meeting: EventHandler<i64>,
-) -> Element {
+pub fn Video(lang: Language, discussion: Discussion, start_meeting: EventHandler<i64>) -> Element {
     let tr: DiscussionTranslate = translate(&lang);
 
     rsx! {
@@ -230,10 +191,6 @@ pub fn Video(
                 }
             }
         }
-
-        if enable_bottom_line {
-            div { class: "flex flex-row w-full h-1 justify-start items-start bg-line-gray" }
-        }
     }
 }
 
@@ -241,48 +198,24 @@ pub fn Video(
 pub fn DiscussionIntroduction(
     lang: Language,
     description: String,
-    discussions: Vec<DiscussionSummary>,
+    discussions: Vec<Discussion>,
 ) -> Element {
-    let mut clicked_contents = use_signal(|| true);
     let tr: DiscussionTranslate = translate(&lang);
-
     rsx! {
-        div { class: "w-full flex flex-col rounded-lg bg-white justify-start items-start py-14 px-20",
+        Accordion { title: tr.sub_title, default_open: true,
             div {
-                class: "w-full flex justify-start items-center text-base font-bold cursor-pointer",
-                onclick: move |_| {
-                    clicked_contents.set(!clicked_contents());
-                },
-                div { class: "w-full flex flex-row justify-between items-center",
-                    span { "{tr.sub_title}" }
-                    if clicked_contents() {
-                        TriangleUp {}
-                    } else {
-                        TriangleDown {}
-                    }
-                }
+                class: "font-bold text-lg text-black",
+                dangerous_inner_html: description,
             }
-
-            if clicked_contents() {
-                //line
-                hr { class: "w-full h-1 mt-12 mb-12 border-line-gray" }
-
-                div { class: "flex flex-col w-full justify-start items-start gap-20",
-                    div { class: "font-bold text-lg text-black", "{description}" }
-
-                    //table
-
-                    for discussion in discussions {
-                        DiscussionTable { lang, discussion }
-                    }
-                }
+            for discussion in discussions {
+                DiscussionTable { lang, discussion }
             }
         }
     }
 }
 
 #[component]
-pub fn DiscussionTable(lang: Language, discussion: DiscussionSummary) -> Element {
+pub fn DiscussionTable(lang: Language, discussion: Discussion) -> Element {
     let tr: DiscussionTranslate = translate(&lang);
 
     rsx! {
@@ -320,7 +253,7 @@ pub struct Controller {
     lang: Language,
     project_id: ReadOnlySignal<i64>,
 
-    discussions: Resource<Vec<DiscussionSummary>>,
+    discussion: Resource<DeliberationDiscussionSummary>,
 }
 
 impl Controller {
@@ -328,24 +261,22 @@ impl Controller {
         lang: Language,
         project_id: ReadOnlySignal<i64>,
     ) -> std::result::Result<Self, RenderError> {
-        let discussions = use_server_future(move || async move {
-            Discussion::get_client(&crate::config::get().api_url)
-                .query(
-                    project_id(),
-                    DiscussionQuery {
-                        size: 30,
-                        bookmark: None,
-                    },
-                )
+        let discussion = use_server_future(move || async move {
+            let res = DeliberationDiscussion::get_client(&crate::config::get().api_url)
+                .query(project_id(), DeliberationDiscussionQuery::new(1))
                 .await
-                .unwrap_or_default()
-                .items
+                .unwrap_or_default();
+            if res.items.is_empty() {
+                DeliberationDiscussionSummary::default()
+            } else {
+                res.items[0].clone()
+            }
         })?;
 
         let ctrl = Self {
             lang,
             project_id,
-            discussions,
+            discussion,
         };
 
         Ok(ctrl)
@@ -387,7 +318,7 @@ translate! {
     DiscussionTranslate;
 
     title: {
-        ko: "Discussion",
+        ko: "토론",
         en: "Discussion",
     },
 

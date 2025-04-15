@@ -37,7 +37,10 @@ pub fn ProjectCard(lang: Language, deliberation: DeliberationProjectSummary) -> 
                     "{deliberation.description}"
                 }
                 div { class: "group-hover:hidden group-focus-within:hidden",
-                    Label { name: deliberation.project_area.translate(&lang) }
+                    for area in deliberation.project_areas.iter() {
+                        Label { name: area.project_area.translate(&lang) }
+                    }
+                                // Label { name: deliberation.project_areas.translate(&lang) }
                 }
                 Button {
                     class: "hidden group-hover:block group-focus-within:block w-full py-8 border border-bt-grey bg-white rounded-full font-semibold text-black text-[15px]/25",
@@ -110,7 +113,9 @@ pub fn ProjectBox(lang: Language, deliberation: DeliberationProjectSummary) -> E
                                 //     }
                                 // }
 
-                                Label { name: deliberation.project_area.translate(&lang) }
+                                for area in deliberation.project_areas.iter() {
+                                    Label { name: area.project_area.translate(&lang) }
+                                }
                             }
                         }
                     }

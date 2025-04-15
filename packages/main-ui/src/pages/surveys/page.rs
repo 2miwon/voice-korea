@@ -40,28 +40,20 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
-            div { class: "text-[#9b9b9b] font-medium text-[14px] mb-[10px]", "{translate.survey_title}" }
-            div { class: "text-[#3a3a3a] font-semibold text-[28px] mb-[25px]",
+            div { class: "text-header-gray font-medium text-sm mb-10", "{translate.survey_title}" }
+            div { class: "text-header-black font-semibold text-[28px] mb-25",
                 "{translate.survey_title}"
             }
-            div { class: "text-[#35343f] font-normal text-[14px] mb-[40px]",
-                "{translate.survey_description}"
-            }
+            div { class: "text-label-black font-normal text-sm mb-40", "{translate.survey_description}" }
 
             div { class: "flex flex-col w-full justify-start items-start mb-[50px]",
                 div {
-                    class: "flex flex-col w-full justify-start items-start px-[20px] pt-[20px] pb-[30px] bg-white rounded-[8px]",
+                    class: "flex flex-col w-full justify-start items-start px-20 pt-20 pb-30 bg-white rounded-lg",
                     style: "box-shadow: 0 4px 6px rgba(53, 70, 177, 0.05);",
-                    div { class: "flex flex-row w-full justify-between items-center pb-[20px]",
+                    div { class: "flex flex-row w-full justify-between items-center pb-20",
                         div {
-                            class: format!(
-                                "flex flex-row w-[590px] h-[45px] justify-between items-center rounded-lg  {} px-[11px] py-[13px]",
-                                if (is_focused)() {
-                                    "bg-[#ffffff] border border-[#2a60d3]"
-                                } else {
-                                    "bg-[#f7f7f7] border border-[#7c8292]"
-                                },
-                            ),
+                            class: "flex flex-row w-590 h-45 justify-between items-center rounded-lg px-11 py-13 border bg-background-gray border-third aria-active:!bg-white aria-active:!border-primary",
+                            "aria-active": (is_focused)(),
                             input {
                                 class: "flex flex-row w-full h-full bg-transparent focus:outline-none",
                                 r#type: "text",
@@ -83,8 +75,8 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
                             to: Route::SurveyCreatePage {
                                 lang: props.lang,
                             },
-                            div { class: "flex flex-row justify-center items-center px-[14px] py-[8px] bg-[#2a60d3] rounded-[4px]",
-                                div { class: "text-white font-semibold text-[16px]",
+                            div { class: "flex flex-row justify-center items-center px-14 py-8 bg-primary rounded-sm",
+                                div { class: "text-white font-semibold text-base",
                                     "{translate.start_survey}"
                                 }
                             }
@@ -92,101 +84,101 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
                     }
 
                     //project table
-                    div { class: "flex flex-col w-full jsutify-start items-start border rounded-lg border-[#bfc8d9]",
-                        div { class: "flex flex-row w-full h-[55px] justify-start items-center",
-                            div { class: "flex flex-row w-[150px] min-w-[150px] h-full justify-center items-center gap-[10px]",
-                                div { class: "text-[#7c8292] font-semibold text-[14px]",
+                    div { class: "flex flex-col w-full justify-start items-start border rounded-lg border-label-border-gray",
+                        div { class: "flex flex-row w-full h-55 justify-start items-center",
+                            div { class: "flex flex-row w-150 min-w-[150px] h-full justify-center items-center gap-10",
+                                div { class: "text-third font-semibold text-sm",
                                     "{translate.survey_type}"
                                 }
                                 Switch { width: "19", height: "19" }
                             }
-                            div { class: "flex flex-row w-[120px] min-w-[150px] h-full justify-center items-center gap-[10px]",
-                                div { class: "text-[#7c8292] font-semibold text-[14px]",
+                            div { class: "flex flex-row w-120 min-w-[150px] h-full justify-center items-center gap-10",
+                                div { class: "text-third font-semibold text-sm",
                                     "{translate.survey_field}"
                                 }
                                 Switch { width: "19", height: "19" }
                             }
-                            div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                                div { class: "text-[#7c8292] font-semibold text-[14px]",
+                            div { class: "flex flex-row flex-1 h-full justify-center items-center gap-10",
+                                div { class: "text-third font-semibold text-sm",
                                     "{translate.survey_project}"
                                 }
                                 Switch { width: "19", height: "19" }
                             }
-                            div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                                div { class: "text-[#7c8292] font-semibold text-[14px]",
+                            div { class: "flex flex-row flex-1 h-full justify-center items-center gap-10",
+                                div { class: "text-third font-semibold text-sm",
                                     "{translate.survey_response_rate}"
                                 }
                                 Switch { width: "19", height: "19" }
                             }
-                            div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                                div { class: "text-[#7c8292] font-semibold text-[14px]",
-                                    "{translate.survey_panel}"
-                                }
-                                Switch { width: "19", height: "19" }
-                            }
-                            div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                                div { class: "text-[#7c8292] font-semibold text-[14px]",
+                            // div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
+                            //     div { class: "text-[#7c8292] font-semibold text-[14px]",
+                            //         "{translate.survey_panel}"
+                            //     }
+                            //     Switch { width: "19", height: "19" }
+                            // }
+                            div { class: "flex flex-row flex-1 h-full justify-center items-center gap-10",
+                                div { class: "text-third font-semibold text-sm",
                                     "{translate.survey_period}"
                                 }
                                 Switch { width: "19", height: "19" }
                             }
-                            div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
-                                div { class: "text-[#7c8292] font-semibold text-[14px]",
+                            div { class: "flex flex-row w-120 min-w-[120px] h-full justify-center items-center gap-10",
+                                div { class: "text-third font-semibold text-sm",
                                     "{translate.survey_status}"
                                 }
                                 Switch { width: "19", height: "19" }
                             }
-                            div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
-                                div { class: "text-[#7c8292] font-semibold text-[14px]",
+                            div { class: "flex flex-row w-120 min-w-[120px] h-full justify-center items-center gap-10",
+                                div { class: "text-third font-semibold text-sm",
                                     "{translate.survey_view}"
                                 }
                             }
-                            div { class: "flex flex-row w-[90px] min-w-[90px] h-full justify-center items-center gap-[10px]" }
+                            div { class: "flex flex-row w-90 min-w-[90px] h-full justify-center items-center gap-10" }
                         }
 
                         if let Some(surveys) = ctrl.get_surveys() {
                             for survey in surveys.items {
                                 div { class: "flex flex-col w-full justify-start items-start",
-                                    div { class: "flex flex-row w-full h-[1px] bg-[#bfc8d9]" }
+                                    div { class: "flex flex-row w-full h-[1px] bg-label-border-gray" }
                                     div { class: "flex flex-row w-full min-h-[55px]",
-                                        div { class: "flex flex-row w-[150px] min-w-[150px] h-full justify-center items-center",
-                                            div { class: "text-[#35343f] font-semibold text-[14px]",
+                                        div { class: "flex flex-row w-150 min-w-[150px] h-full justify-center items-center",
+                                            div { class: "text-label-black font-semibold text-sm",
                                                 {survey.project_type.translate(&props.lang)}
                                             }
                                         }
-                                        div { class: "flex flex-row w-[150px] min-w-[150px] h-full justify-center items-center",
-                                            div { class: "text-[#35343f] font-semibold text-[14px]",
+                                        div { class: "flex flex-row w-150 min-w-[150px] h-full justify-center items-center",
+                                            div { class: "text-label-black font-semibold text-sm",
                                                 {survey.project_area.translate(&props.lang)}
                                             }
                                         }
                                         div { class: "flex flex-row flex-1 h-full justify-center items-center",
-                                            div { class: "text-[#35343f] font-semibold text-[14px]",
+                                            div { class: "text-label-black font-semibold text-sm",
                                                 "{survey.name}"
                                             }
                                         }
                                         div { class: "flex flex-row flex-1 h-full justify-center items-center",
-                                            div { class: "text-[#35343f] font-semibold text-[14px]",
+                                            div { class: "text-label-black font-semibold text-sm",
                                                 {survey.response_rate()}
                                             }
                                         }
 
                                         // TODO: implement panel in survey list view
-                                        div { class: "flex flex-wrap flex-1 min-h-[55px] justify-center items-center gap-[5px] py-[5px]",
-                                            for panel in survey.panels.clone() {
-                                                PanelLabel {
-                                                    label: panel.name.clone(),
-                                                    background_color: if survey.status == ProjectStatus::Ready { "#35343f".to_string() } else { "#b4b4b4".to_string() },
-                                                }
-                                            }
-                                        }
+                                        // div { class: "flex flex-wrap flex-1 min-h-[55px] justify-center items-center gap-[5px] py-[5px]",
+                                        //     for panel in survey.panels.clone() {
+                                        //         PanelLabel {
+                                        //             label: panel.name.clone(),
+                                        //             background_color: if survey.status == ProjectStatus::Ready { "#35343f".to_string() } else { "#b4b4b4".to_string() },
+                                        //         }
+                                        //     }
+                                        // }
 
                                         div { class: "flex flex-row flex-1 h-full justify-center items-center",
-                                            div { class: "text-[#35343f] font-semibold text-[14px]",
+                                            div { class: "text-label-black font-semibold text-sm",
                                                 "{survey.period()}"
                                             }
                                         }
-                                        div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center",
-                                            div { class: "text-[#35343f] font-semibold text-[14px]",
+                                        div { class: "flex flex-row w-120 min-w-[120px] h-full justify-center items-center",
+                                            div { class: "text-label-black font-semibold text-sm",
                                                 {survey.survey_status().translate(&props.lang)}
                                             }
                                         }
@@ -195,7 +187,7 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
                                             ProjectStatus::Ready => {
                                                 rsx! {
                                                     div {
-                                                        class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center cursor-pointer",
+                                                        class: "flex flex-row w-120 min-w-[120px] h-full justify-center items-center cursor-pointer",
                                                         visibility: if survey.finished() || survey.project_type == ProjectType::Deliberation { "hidden" } else { "" },
                                                         onclick: {
                                                             let id = survey.id.clone();
@@ -203,19 +195,19 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
                                                                 ctrl.start_survey(id).await;
                                                             }
                                                         },
-                                                        div { class: "text-[#2a60d3] font-semibold text-[14px]", "{translate.start_survey_create}" }
+                                                        div { class: "text-hover font-semibold text-sm", "{translate.start_survey_create}" }
                                                     }
                                                 }
                                             }
                                             _ => {
                                                 rsx! {
                                                     Link {
-                                                        class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center cursor-pointer",
+                                                        class: "flex flex-row w-120 min-w-[120px] h-full justify-center items-center cursor-pointer",
                                                         to: Route::SurveyResultPage {
                                                             lang: props.lang,
                                                             survey_id: survey.id,
                                                         },
-                                                        div { class: "text-[#2a60d3] font-semibold text-[14px]", "{translate.view_results}" }
+                                                        div { class: "text-hover font-semibold text-sm", "{translate.view_results}" }
                                                     }
                                                 }
                                             }
@@ -224,7 +216,7 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
                                         div {
                                             class: "group relative",
                                             visibility: if survey.finished() { "hidden" } else { "" },
-                                            div { class: "flex flex-row w-[90px] min-w-[90px] h-full justify-center items-center",
+                                            div { class: "flex flex-row w-90 min-w-[90px] h-full justify-center items-center",
                                                 if survey.status == ProjectStatus::Ready {
                                                     button {
                                                         RowOption {
@@ -232,10 +224,10 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
                                                             height: "24",
                                                         }
                                                     }
-                                                    nav { class: "border-2 bg-white invisible border-none shadow-lg rounded w-60 absolute right-0 top-full transition-all opacity-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-1 group-focus-within:z-20",
+                                                    nav { class: "border-2 bg-white invisible border-none shadow-lg rounded w-fit absolute right-0 top-full transition-all opacity-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-1 group-focus-within:z-20",
                                                         ul { class: "py-1",
                                                             li {
-                                                                class: "p-3 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
+                                                                class: "px-20 py-15 min-w-[200px] w-full text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
                                                                 onclick: move |_| {
                                                                     navigator
                                                                         .push(Route::SurveyUpdatePage {
@@ -246,7 +238,7 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
                                                                 "{translate.update_survey}"
                                                             }
                                                             li {
-                                                                class: "p-3 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
+                                                                class: "px-20 py-15 min-w-[200px] w-full  text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
                                                                 onclick: move |_| {
                                                                     let id = survey.id.clone();
                                                                     async move {
@@ -256,7 +248,7 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
                                                                 "{translate.remove_survey}"
                                                             }
                                                             li {
-                                                                class: "p-3 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
+                                                                class: "px-20 py-15 min-w-[200px] w-full  text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
                                                                 onclick: {
                                                                     let survey = survey.clone();
                                                                     move |_| {
@@ -333,20 +325,20 @@ pub fn RemoveSurveyModal(
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
-            div { class: "flex flex-col text-[#222222] font-normal text-[14px] gap-[5px]",
+            div { class: "flex flex-col text-text-black font-normal text-sm gap-5",
                 div { "{i18n.remove_info}" }
                 div { "{i18n.remove_warning}" }
             }
-            div { class: "flex flex-row w-full justify-start items-start mt-[40px] gap-[20px]",
+            div { class: "flex flex-row w-full justify-start items-start mt-[40px] gap-20",
                 div {
-                    class: "flex flex-row w-[85px] h-[40px] justify-center items-center bg-[#2a60d3] rounded-md cursor-pointer",
+                    class: "flex flex-row w-85 h-40 justify-center items-center bg-primary rounded-md cursor-pointer",
                     onclick: move |e: MouseEvent| {
                         onremove.call(e);
                     },
-                    div { class: "text-white font-bold text-[16px]", "{i18n.remove}" }
+                    div { class: "text-white font-bold text-base", "{i18n.remove}" }
                 }
                 div {
-                    class: "flex flex-row w-[85px] h-[40px] font-semibold text-[16px] text-[#222222] justify-center items-center cursor-pointer",
+                    class: "flex flex-row w-85 h-40 font-semibold text-base text-text-black justify-center items-center cursor-pointer",
                     onclick: move |e: MouseEvent| {
                         onclose.call(e);
                     },
@@ -361,7 +353,7 @@ pub fn RemoveSurveyModal(
 pub fn PanelLabel(label: String, background_color: String) -> Element {
     rsx! {
         div {
-            class: "flex flex-row justify-center items-center px-[8px] py-[3px] rounded-[100px] font-semibold text-[14px] text-white",
+            class: "flex flex-row justify-center items-center px-8 py-3 rounded-[100px] font-semibold text-sm text-white",
             style: format!("background-color: {}", background_color),
             {label}
         }
