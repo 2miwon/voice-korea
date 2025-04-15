@@ -36,7 +36,7 @@ impl Controller {
 
         let draft = use_server_future(move || async move {
             let res = DeliberationDraft::get_client(&crate::config::get().api_url)
-                .query(project_id(), DeliberationDraftQuery::default())
+                .query(project_id(), DeliberationDraftQuery::new(1).with_page(1))
                 .await
                 .unwrap_or_default();
             if res.items.is_empty() {

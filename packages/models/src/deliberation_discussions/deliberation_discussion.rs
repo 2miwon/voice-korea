@@ -41,7 +41,7 @@ pub struct DeliberationDiscussion {
     #[serde(default)]
     pub resources: Vec<ResourceFile>,
 
-    #[api_model(one_to_many = discussions, foreign_key = deliberation_id, reference_key = deliberation_id)]
+    #[api_model(summary, one_to_many = discussions, foreign_key = deliberation_id, reference_key = deliberation_id)]
     #[serde(default)]
     pub discussions: Vec<Discussion>,
 }

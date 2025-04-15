@@ -23,7 +23,7 @@ pub fn QuestionListView(
     rsx! {
         for index in 0..questions.len() {
             div {
-                class: "flex flex-col w-full justify-start items-start pt-[5px] px-[40px] pb-[25px] bg-white rounded-[8px] mt-[20px]",
+                class: "flex flex-col w-full justify-start items-start pt-[5px] px-[40px] pb-[25px] bg-white rounded-[8px]",
                 style: "box-shadow: 0 4px 6px rgba(53, 70, 177, 0.05);",
 
                 div { class: "flex flex-row w-full justify-center items-center mb-[10px]",

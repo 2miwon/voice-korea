@@ -22,10 +22,6 @@ translate! {
 translate! {
     DeliberationTranslate;
 
-    remove: {
-        ko: "삭제",
-        en: "Remove"
-    }
 
     backward: {
         ko: "뒤로",
@@ -88,11 +84,6 @@ translate! {
     sub_placeholder1: {
         ko: "제목 입력",
         en: "Enter Title"
-    }
-
-    sub_placeholder2: {
-        ko: "파일 없음",
-        en: "No File",
     }
 
     upload_directly: {

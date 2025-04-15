@@ -21,6 +21,7 @@ pub mod deliberations {
         pub mod discussions;
         pub mod responses;
 
+        pub mod areas;
         pub mod contents;
         pub mod drafts;
         pub mod final_surveys;
@@ -101,6 +102,10 @@ impl Version2Controller {
                 "/deliberations/:deliberation-id/comments",
                 deliberations::_id::comments::DeliberationCommentController::new(pool.clone())
                     .route(),
+            )
+            .nest(
+                "/deliberations/:deliberation-id/areas",
+                deliberations::_id::areas::DeliberationAreaController::new(pool.clone()).route(),
             )
             .nest(
                 "/inquiries",

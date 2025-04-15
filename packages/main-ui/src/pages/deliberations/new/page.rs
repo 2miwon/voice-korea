@@ -7,6 +7,7 @@ use crate::components::drop_zone::handle_file_upload;
 use crate::{
     components::{
         dropdown::Dropdown,
+        form_field::{InputField, TextField, UploadField},
         section::{MainSection, SubSection},
         upload_button::UploadButton,
     },
@@ -27,57 +28,52 @@ pub fn DeliberationNewPage(lang: Language, deliberation_id: Option<i64>) -> Elem
     let mut ctrl = OverviewController::new(lang, deliberation_id)?;
 
     rsx! {
-        div { class: format!("flex flex-col w-full justify-start items-start gap-10"),
-            div { class: "font-medium text-base text-text-black", {tr.overview} }
-            MainSection {
-                required: true,
-                header: tr.title.to_string(),
-                description: tr.description.to_string(),
-                SubSection { required: true, title: tr.proj_title.to_string(),
-                    div { class: "flex flex-row w-full focus:outline-none justify-start items-center bg-background-gray rounded-[4px] h-54",
-                        div { class: "flex px-15 w-full",
-                            input {
-                                class: "flex flex-row w-full justify-start items-center bg-transparent focus:outline-none",
-                                r#type: "text",
-                                name: "deliberation-name",
-                                placeholder: tr.proj_title_placeholder,
-                                value: ctrl.title(),
-                                oninput: move |event| ctrl.parent.save_title(event.value()),
+        div { class: "flex flex-col w-full justify-start items-start gap-20",
+            div { class: "flex flex-col w-full gap-10",
+                div { class: "font-medium text-base text-text-black", {tr.overview} }
+                MainSection {
+                    lang,
+                    required: true,
+                    header: Some(tr.title.to_string()),
+                    description: Some(tr.description.to_string()),
+                    SubSection { required: true, title: tr.proj_title.to_string(),
+                        InputField {
+                            name: "deliberation-title".to_string(),
+                            placeholder: tr.proj_title_placeholder,
+                            value: ctrl.title(),
+                            oninput: move |event: Event<FormData>| ctrl.parent.save_title(event.value()),
+                        }
+                    }
+                    SubSection { required: true, title: tr.proj_desc.to_string(),
+                        TextField {
+                            name: "deliberation-description".to_string(),
+                            placeholder: tr.proj_desc_placeholder,
+                            value: ctrl.description(),
+                            oninput: move |event: Event<FormData>| ctrl.parent.save_description(event.value()),
+                        }
+                    }
+                    SubSection {
+                        required: true,
+                        title: tr.deliberation_field.to_string(),
+                        div { class: "flex w-full",
+                            Dropdown {
+                                id: "deliberation fields",
+                                items: ProjectArea::variants(&lang),
+                                hint: tr.deliberation_field_hint,
+                                onselect: move |selected_items| ctrl.save_project_area(selected_items),
+                                value: ctrl.project_areas()
+                                    .iter()
+                                    .map(|area| area.translate(&lang).to_string())
+                                    .collect::<Vec<String>>(),
                             }
                         }
                     }
-                }
-                SubSection { required: true, title: tr.proj_desc.to_string(),
-                    div { class: "flex flex-row w-full focus:outline-none justify-start items-start bg-background-gray rounded-[4px] h-248",
-                        div { class: "flex px-15 py-10 w-full h-full justify-start items-start",
-                            textarea {
-                                class: "flex w-full h-full justify-start items-start bg-transparent focus:outline-none my-10 break-words whitespace-normal",
-                                placeholder: tr.proj_desc_placeholder,
-                                name: "deliberation-description",
-                                value: ctrl.description(),
-                                oninput: move |event| ctrl.parent.save_description(event.value()),
-                            }
-                        }
-                    }
-                }
-                SubSection { required: true, title: tr.deliberation_field.to_string(),
-                    div { class: "flex w-full",
-                        Dropdown {
-                            id: "deliberation fields",
-                            items: ProjectArea::variants(&lang),
-                            hint: tr.deliberation_field_hint,
-                            onselect: move |selected_items| ctrl.save_project_area(selected_items),
-                            value: ctrl.project_areas()
-                                .iter()
-                                .map(|area| area.translate(&lang).to_string())
-                                .collect::<Vec<String>>(),
-                        }
-                    }
-                }
-                SubSection { required: true, title: tr.thumbnail.to_string(),
-                    div { class: "flex flex-col w-full focus:outline-none justify-center items-center gap-10",
-                        div { class: "flex flex-col w-full",
-                            div { class: "flex flex-row gap-20 px-15 w-full h-54 bg-background-gray rounded-sm justify-center items-center",
+                    SubSection { required: true, title: tr.thumbnail.to_string(),
+                        div { class: "flex flex-col w-full focus:outline-none justify-center items-center gap-10",
+                            UploadField {
+                                lang,
+                                description: tr.upload_desc,
+                                value: ctrl.get_file_name(),
                                 UploadButton {
                                     class: "flex min-w-[130px] h-[40px] border bg-white border-[#2a60d3] rounded-sm text-[#2a60d3] text-center font-semibold text-sm justify-center items-center",
                                     text: tr.upload_directly,
@@ -95,32 +91,21 @@ pub fn DeliberationNewPage(lang: Language, deliberation_id: Option<i64>) -> Elem
                                         }
                                     },
                                 }
-                                input {
-                                    class: "flex flex-row w-full justify-start items-center bg-transparent text-disabled focus:outline-none",
-                                    r#type: "text",
-                                    placeholder: tr.no_file,
-                                    readonly: true,
-                                    value: ctrl.get_file_name(),
-                                }
                             }
-                            p { class: "text-text-gray text-start w-full text-sm font-normal",
-                                {tr.upload_desc}
-                            }
-                        }
-                        div { class: "flex flex-col w-full",
-
-                            if !ctrl.thumbnail_image().is_empty() {
-                                img {
-                                    class: "w-250 h-250 bg-background-gray",
-                                    src: ctrl.thumbnail_image(),
-                                    alt: "thumbnail preview",
+                            div { class: "flex flex-col w-full",
+                                if !ctrl.thumbnail_image().is_empty() {
+                                    img {
+                                        class: "w-250 h-250 bg-background-gray",
+                                        src: ctrl.thumbnail_image(),
+                                        alt: "thumbnail preview",
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-            div { class: "flex flex-row w-full justify-end items-end mt-30 mb-50",
+            div { class: "flex flex-row w-full justify-end items-end mb-50",
                 Link {
                     class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                     to: Route::DeliberationPage { lang },

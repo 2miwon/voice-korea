@@ -72,8 +72,7 @@ impl Controller {
             Ok(user) => {
                 btracing::debug!("{:?}", user);
                 let token = rest_api::get_authz_token().unwrap_or_default();
-                login_service.setup(self.get_email(), token).await;
-                login_service.set_orgs(user.orgs);
+                login_service.setup(user, token).await;
                 navigator.push(Route::SurveyPage { lang });
             }
             Err(e) => match e {

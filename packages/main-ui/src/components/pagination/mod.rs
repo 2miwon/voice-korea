@@ -16,7 +16,7 @@ pub fn Pagination(
             div { class: "w-full h-[40px] flex justify-center items-center", "" }
         };
     }
-    let total_slot = use_signal(move || (total_page - 1) / size);
+    let mut total_slot = use_signal(move || (total_page - 1) / size);
     let mut selected_page = use_signal(move || current_page);
     let mut current_slot = use_signal(move || (current_page - 1) / size);
 
@@ -28,6 +28,14 @@ pub fn Pagination(
             size
         }
     });
+
+    use_effect(use_reactive(&(total_page, current_page, size), {
+        move |(total_page, current_page, size)| {
+            total_slot.set((total_page - 1) / size);
+            current_slot.set((current_page - 1) / size);
+            selected_page.set(current_page);
+        }
+    }));
 
     rsx! {
         div { class: "flex flex-row w-full justify-center items-center mt-[30px]",

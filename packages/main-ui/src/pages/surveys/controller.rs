@@ -10,10 +10,12 @@ use models::{
 use crate::pages::surveys::components::setting_reward_modal::{
     SettingRewardModal, SettingRewardModalTranslate,
 };
+use crate::pages::surveys::components::start_project_modal::StartProjectModal;
 use crate::pages::surveys::page::{ErrorModal, RemoveSurveyModal};
 use crate::service::login_service::LoginService;
 use crate::service::popup_service::PopupService;
 
+use super::components::start_project_modal::StartProjectModalTranslate;
 use super::i18n::{ErrorModalTranslate, SurveyTranslate};
 
 #[derive(Debug, Clone, Copy)]
@@ -126,6 +128,28 @@ impl Controller {
         self.surveys.with(|v| v.clone())
     }
 
+    pub async fn open_start_survey_popup(&mut self, lang: Language, survey_id: i64) {
+        let tr: StartProjectModalTranslate = translate(&lang);
+        let mut popup_service = self.popup_service;
+        let mut ctrl = self.clone();
+
+        popup_service
+            .open(rsx! {
+                StartProjectModal {
+                    lang,
+                    onsend: move |_| async move {
+                        ctrl.start_survey(survey_id).await;
+                        popup_service.close();
+                    },
+                    oncancel: move |_| {
+                        popup_service.close();
+                    },
+                }
+            })
+            .with_id("start project")
+            .with_title(tr.title);
+    }
+
     pub async fn start_survey(&mut self, survey_id: i64) {
         let mut popup_service = self.popup_service;
         let client = (self.client)().clone();
@@ -150,8 +174,6 @@ impl Controller {
         if survey.name.trim().is_empty()
             || survey.description.trim().is_empty()
             || survey.questions.is_empty()
-            || survey.panels.is_empty()
-            || survey.panel_counts.is_empty()
         {
             popup_service
                 .open(rsx! {

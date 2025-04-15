@@ -1,6 +1,7 @@
 #![allow(unused_variables, unused)]
 use crate::{
-    PanelCountSurveys, PanelCountsV2, PanelV2, ProjectArea, ProjectStatus, ProjectType, Result,
+    response::AgeV3, PanelCountSurveys, PanelCountsV2, PanelV2, ProjectArea, ProjectStatus,
+    ProjectType, Result,
 };
 use bdk::prelude::*;
 use by_types::QueryResponse;
@@ -40,18 +41,27 @@ pub struct SurveyV2 {
     #[api_model(summary, action = create, action_by_id = update)]
     pub description: String,
     #[api_model(summary, action = create, action_by_id = update)]
-    pub quotes: i64,
+    pub quotas: i64,
 
     #[api_model(summary, many_to_one = organizations)]
     pub org_id: i64,
     #[api_model(summary, action = create, type = JSONB, version = v0.1, action_by_id = update)]
     pub questions: Vec<Question>,
 
+    #[api_model(summary, action = create, type = JSONB, version = v0.2, action_by_id = update)]
+    #[serde(default)]
+    pub attribute_quotas: Vec<AttributeQuota>,
+
+    #[api_model(summary, action = create, type = JSONB, version = v0.2, action_by_id = update)]
+    #[serde(default)]
+    pub attribute_distributes: Vec<AttributeDistribute>,
+
+    // FIXME: remove this field when dependency is removed
     #[api_model(summary, action = create, many_to_many = panel_surveys, foreign_table_name = panels, foreign_primary_key = panel_id, foreign_reference_key = survey_id,)]
     #[serde(default)]
     pub panels: Vec<PanelV2>,
 
-    // FIXME: This data may be one_to_many of panel_surveys table
+    // FIXME: remove this field when dependency is removed
     #[api_model(summary, action = create, type = JSONB, version = v0.1, action_by_id = update)]
     pub panel_counts: Vec<PanelCountsV2>,
 
@@ -101,6 +111,114 @@ pub enum SurveyV2Status {
     InProgress,
     #[translate(ko = "마감", en = "Finish")]
     Finish,
+}
+
+#[api_model(base = "/v2/attribute_distribute", database = skip)]
+pub struct AttributeDistribute {
+    pub attribute: crate::response::Attribute,
+    pub rate: i64,
+}
+
+#[api_model(base = "/v2/attribute_quotas", database = skip)]
+pub struct AttributeQuota {
+    pub user_count: i64,
+    pub attributes: Vec<crate::response::Attribute>,
+}
+
+impl PartialEq<Vec<crate::survey::response::Attribute>> for AttributeQuota {
+    fn eq(&self, other: &Vec<crate::survey::response::Attribute>) -> bool {
+        use crate::survey::response::Attribute;
+
+        let attributes = self.attributes.clone();
+
+        let mut cover_age = false;
+        let mut cover_gender = false;
+        let mut cover_region = false;
+        let mut cover_salary = false;
+
+        let mut age_values = vec![];
+        let mut gender_values = vec![];
+        let mut region_values = vec![];
+        let mut salary_values = vec![];
+
+        for attribute in attributes {
+            match attribute {
+                Attribute::Age(age_v3) => {
+                    age_values.push(age_v3);
+                }
+                Attribute::Gender(gender_v2) => {
+                    gender_values.push(gender_v2);
+                }
+                Attribute::Region(region_v2) => {
+                    region_values.push(region_v2);
+                }
+                Attribute::Salary(salary_v2) => {
+                    salary_values.push(salary_v2);
+                }
+                Attribute::None => {}
+            }
+        }
+
+        //NOTE: if value is none, it covers all attributes.
+        if age_values.is_empty() {
+            cover_age = true;
+        }
+        if gender_values.is_empty() {
+            cover_gender = true;
+        }
+        if region_values.is_empty() {
+            cover_region = true;
+        }
+        if salary_values.is_empty() {
+            cover_salary = true;
+        }
+
+        for attr in other {
+            match attr {
+                Attribute::Age(age_attr) => {
+                    if cover_age {
+                        continue;
+                    }
+
+                    cover_age = age_values.iter().any(|panel_age| match age_attr {
+                        AgeV3::Specific(target) => {
+                            let (min, max) = panel_age.to_range();
+                            *target >= min && *target <= max
+                        }
+                        AgeV3::Range {
+                            inclusive_min,
+                            inclusive_max,
+                        } => {
+                            let (min, max) = panel_age.to_range();
+                            inclusive_min >= &min && inclusive_max <= &max
+                        }
+                        AgeV3::None => false,
+                    });
+                }
+
+                Attribute::Gender(target) => {
+                    if !cover_gender {
+                        cover_gender = gender_values.contains(target);
+                    }
+                }
+
+                Attribute::Region(target) => {
+                    if !cover_region {
+                        cover_region = region_values.contains(target);
+                    }
+                }
+
+                Attribute::Salary(target) => {
+                    if !cover_salary {
+                        cover_salary = salary_values.contains(target);
+                    }
+                }
+                Attribute::None => {}
+            }
+        }
+
+        cover_age && cover_gender && cover_region && cover_salary
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -346,13 +464,13 @@ impl SurveyV2Summary {
 
         format!(
             "{}% ({}/{})",
-            if self.quotes == 0 {
+            if self.quotas == 0 {
                 0
             } else {
-                responses / self.quotes * 100
+                responses / self.quotas * 100
             },
             responses,
-            self.quotes
+            self.quotas
         )
     }
 }

@@ -21,6 +21,7 @@ use crate::utils::nonce_lab::NonceLabClient;
 pub struct SurveyControllerV2 {
     panel_survey_repo: PanelSurveysRepository,
     repo: SurveyV2Repository,
+
     pool: sqlx::Pool<sqlx::Postgres>,
     nonce_lab: NonceLabClient,
 }
@@ -82,17 +83,17 @@ impl SurveyControllerV2 {
         let mut workbook = Workbook::new();
         let worksheet = workbook.add_worksheet();
 
-        for i in 0..responses.len() {
-            let panel = survey
-                .panels
-                .iter()
-                .find(|p| p.id == responses[i].panel_id)
-                .ok_or(ApiError::SurveyResponseNoMatchedPanelId)?;
+        // for i in 0..responses.len() {
+        //     let panel = survey
+        //         .panels
+        //         .iter()
+        //         .find(|p| p.id == responses[i].panel_id)
+        //         .ok_or(ApiError::SurveyResponseNoMatchedPanelId)?;
 
-            worksheet
-                .write_string(0, i as u16 + 1, &panel.name)
-                .unwrap();
-        }
+        //     worksheet
+        //         .write_string(0, i as u16 + 1, &panel.name)
+        //         .unwrap();
+        // }
 
         for i in 0..len {
             worksheet
@@ -238,6 +239,7 @@ impl SurveyControllerV2 {
         let size = q.size;
         let items: Vec<SurveyV2Summary> = SurveyV2Summary::query_builder()
             .org_id_equals(org_id)
+            .order_by_created_at_desc()
             .with_count()
             .limit(size as i32)
             .page(q.page())
@@ -291,7 +293,7 @@ impl SurveyControllerV2 {
                     started_at: None,
                     ended_at: None,
                     description: None,
-                    quotes: None,
+                    quotas: None,
                     org_id: None,
                     questions: None,
                     panel_counts: None,
@@ -299,6 +301,8 @@ impl SurveyControllerV2 {
 
                     estimate_time: None,
                     point: None,
+                    attribute_quotas: None,
+                    attribute_distributes: None,
                 },
             )
             .await?;
@@ -323,7 +327,7 @@ impl SurveyControllerV2 {
                     started_at: None,
                     ended_at: None,
                     description: None,
-                    quotes: None,
+                    quotas: None,
                     org_id: None,
                     questions: None,
                     panel_counts: None,
@@ -331,6 +335,8 @@ impl SurveyControllerV2 {
 
                     estimate_time: Some(body.estimate_time),
                     point: Some(body.point),
+                    attribute_quotas: None,
+                    attribute_distributes: None,
                 },
             )
             .await?;
@@ -360,7 +366,7 @@ impl SurveyControllerV2 {
                     started_at: Some(body.started_at),
                     ended_at: Some(body.ended_at),
                     description: Some(body.description),
-                    quotes: Some(body.quotes),
+                    quotas: Some(body.quotas),
                     org_id: Some(org_id),
                     questions: Some(body.questions),
                     panel_counts: Some(body.panel_counts),
@@ -368,6 +374,8 @@ impl SurveyControllerV2 {
 
                     estimate_time: Some(body.estimate_time),
                     point: Some(body.point),
+                    attribute_quotas: Some(body.attribute_quotas),
+                    attribute_distributes: Some(body.attribute_distributes),
                 },
             )
             .await?;
@@ -408,12 +416,15 @@ impl SurveyControllerV2 {
             started_at,
             ended_at,
             description,
-            quotes,
+            quotas,
             questions,
             panels,
             panel_counts,
             estimate_time,
             point,
+
+            attribute_distributes,
+            attribute_quotas,
         }: SurveyV2CreateRequest,
     ) -> Result<Json<SurveyV2>> {
         tracing::debug!("create {:?}", org_id,);
@@ -430,9 +441,11 @@ impl SurveyControllerV2 {
                 started_at,
                 ended_at,
                 description,
-                quotes,
+                quotas,
                 org_id.clone(),
                 questions,
+                attribute_quotas,
+                attribute_distributes,
                 panel_counts,
                 estimate_time,
                 point,
@@ -486,6 +499,8 @@ pub mod tests {
                 now + 3600,
                 "test description".to_string(),
                 100,
+                vec![],
+                vec![],
                 vec![],
                 vec![],
                 vec![],

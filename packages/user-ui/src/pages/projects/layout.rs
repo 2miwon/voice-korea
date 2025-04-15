@@ -5,9 +5,9 @@ use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_translate::Language;
 
+use crate::components::PopupZone;
 use crate::pages::ProjectHeader;
 use crate::routes::Route;
-use crate::service::popup_service::PopupZone;
 
 #[component]
 pub fn ProjectLayout(lang: Language) -> Element {

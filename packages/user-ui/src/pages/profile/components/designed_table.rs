@@ -33,6 +33,9 @@ pub fn TableRow(lang: Language, project: Deliberation, user_id: i64) -> Element 
     let status = project.status;
 
     let icon = match status {
+        DeliberationStatus::Draft => rsx! {
+            Waiting {} // FIXME: Add an icon for Draft status
+        },
         DeliberationStatus::Ready => rsx! {
             Waiting {}
         },

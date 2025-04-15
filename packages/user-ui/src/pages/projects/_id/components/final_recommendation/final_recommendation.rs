@@ -5,18 +5,18 @@ use by_components::charts::{
 };
 use models::{ParsedQuestion, Tab};
 
-use crate::by_components::rich_texts::RichText;
-
-use crate::components::{
-    icons::triangle::{TriangleDown, TriangleUp},
-    input::InputBox,
+use crate::{
+    by_components::rich_texts::RichText,
+    pages::projects::_id::components::{accordion::Accordion, rich_text_viewer::RichTextViewer},
 };
+
+use crate::components::input::InputBox;
 
 use super::controllers::Controller;
 use super::i18n::FinalDraftTranslate;
 
 #[component]
-pub fn FinalDraft(
+pub fn FinalRecommendation(
     lang: Language,
     project_id: ReadOnlySignal<i64>,
     #[props(extends = GlobalAttributes)] attributes: Vec<Attribute>,
@@ -31,7 +31,6 @@ pub fn FinalDraft(
     let user_id = ctrl.user_id();
 
     let tr: FinalDraftTranslate = translate(&lang);
-    let mut clicked_draft = use_signal(|| true);
     let mut clicked_update = use_signal(|| false);
     let tab_title: &str = Tab::FinalDraft.translate(&lang);
 
@@ -87,41 +86,19 @@ pub fn FinalDraft(
             } else {
                 // information section
                 div { class: "flex flex-col gap-10",
-
-                    // introduction section
-                    if !clicked_update() {
-                        div { class: "w-full flex flex-col rounded-lg bg-white justify-start items-center py-14 px-20",
-                            div {
-                                class: "w-full flex justify-start items-center text-base font-bold cursor-pointer",
-                                onclick: move |_| {
-                                    clicked_draft.set(!clicked_draft());
-                                },
-                                div { class: "w-full flex flex-row justify-between items-center",
-                                    span { "{title()}" }
-                                    if clicked_draft() {
-                                        TriangleUp {}
-                                    } else {
-                                        TriangleDown {}
-                                    }
-                                }
-                            }
-                            if clicked_draft() {
-                                //line
-                                hr { class: "w-full h-1 mt-12 mb-12 border-line-gray" }
-                                div {
-                                    class: "ql-snow rich-text-editor w-full report-description ",
-                                    dangerous_inner_html: content(),
-                                    style: "user-select: none; pointer-events: none;",
-                                }
-                                div { class: "w-full mt-20 flex max-[700px]:flex-col max-[700px]:gap-10 flex-row justify-start gap-40",
-                                    for member in members.clone() {
-                                        div { class: "flex flex-row justify-start gap-8",
-                                            img { class: "w-40 h-40 bg-profile-gray rounded-full" }
-                                            div { class: "flex flex-col justify-center",
-                                                p { class: "font-semibold text-[15px] justify-start",
-                                                    {member.role.translate(&lang)}
-                                                }
-                                            }
+                    Accordion { title: tr.result, default_open: true,
+                        RichTextViewer {
+                            class: "w-full flex justify-start text-[15px]",
+                            contenteditable: false,
+                            html: content(),
+                        }
+                        div { class: "w-full mt-20 flex max-[700px]:flex-col max-[700px]:gap-10 flex-row justify-start gap-40",
+                            for member in members.clone() {
+                                div { class: "flex flex-row justify-start gap-8",
+                                    img { class: "w-40 h-40 bg-profile-gray rounded-full" }
+                                    div { class: "flex flex-col justify-center",
+                                        p { class: "font-semibold text-[15px] justify-start",
+                                            {member.role.translate(&lang)}
                                         }
                                     }
                                 }
