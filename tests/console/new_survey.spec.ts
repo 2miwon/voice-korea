@@ -10,7 +10,18 @@ const timeouts = {
 
 test.describe('New Survey Page', () => {
 
-    test('[Survey-003] Verify Fields, Errors, and Interactions', async ({ page }) => {
+    test('[Survey-003] Verify Fields, Errors, and Interactions', async ({
+        page,
+      }, testInfo) => {
+        const projectName = testInfo.project.name;
+        const screenshotBase = path.join(
+          "screenshots",
+          "console",
+          "surveys",
+          projectName,
+          "begin",
+        );
+        
         await page.goto('https://voice-korea.dev.biyard.co/en/');
         await page.screenshot({ path: 'screenshots/console/NewSurvey-001/01-login-page.png', fullPage: true });
 
