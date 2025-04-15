@@ -4,7 +4,7 @@ use dioxus_translate::{translate, Language};
 use models::{prelude::Question, ProjectArea};
 
 use crate::pages::surveys::{
-    components::{introduction::InputIntroduction, survey::QuestionListView},
+    components::{introduction::InputIntroduction, reward::SurveyReward, survey::QuestionListView},
     new::i18n::CreateSurveyTranslate,
 };
 
@@ -16,6 +16,9 @@ pub struct CreateSurveyResponse {
     pub end_date: i64,
     pub area: ProjectArea,
     pub questions: Vec<Question>,
+
+    pub point: i64,
+    pub estimate_time: i64,
 }
 
 #[component]
@@ -33,10 +36,15 @@ pub fn CreateSurvey(
         end_date,
         area,
         questions,
+
+        point,
+        estimate_time,
     } = value.clone();
 
     let timestamp = chrono::Local::now().timestamp();
     let translates: CreateSurveyTranslate = translate(&lang);
+    let mut point = use_signal(move || point);
+    let mut estimate_time = use_signal(move || estimate_time);
     let mut title = use_signal(move || title);
     let mut description = use_signal(move || description);
     let mut start_date = use_signal(move || {
@@ -55,6 +63,8 @@ pub fn CreateSurvey(
         title.set(value.title.clone());
         description.set(value.description.clone());
         questions.set(value.questions.clone());
+        point.set(value.point);
+        estimate_time.set(value.estimate_time);
 
         if value.start_date > 0 {
             start_date.set(value.start_date);
@@ -83,7 +93,7 @@ pub fn CreateSurvey(
             ),
             width: if !visibility { "0px" },
             height: if !visibility { "0px" },
-            div { class: "flex flex-col w-full",
+            div { class: "flex flex-col w-full gap-20",
                 InputIntroduction {
                     lang,
                     ti: title(),
@@ -152,6 +162,36 @@ pub fn CreateSurvey(
                     },
                 }
 
+                SurveyReward {
+                    lang,
+                    point: point(),
+                    estimate_time: estimate_time(),
+
+                    onchange_point: {
+                        let value = value.clone();
+                        move |v: i64| {
+                            point.set(v);
+                            onchange
+                                .call(CreateSurveyResponse {
+                                    point: v,
+                                    ..value.clone()
+                                })
+                        }
+                    },
+
+                    onchange_estimate_time: {
+                        let value = value.clone();
+                        move |v: i64| {
+                            estimate_time.set(v);
+                            onchange
+                                .call(CreateSurveyResponse {
+                                    estimate_time: v,
+                                    ..value.clone()
+                                })
+                        }
+                    },
+                }
+
                 QuestionListView {
                     lang,
                     questions,
@@ -187,6 +227,8 @@ pub fn CreateSurvey(
                             end_date: end_date(),
                             area: area(),
                             questions: questions(),
+                            point: point(),
+                            estimate_time: estimate_time(),
                         });
                     },
                     "{translates.btn_next}"

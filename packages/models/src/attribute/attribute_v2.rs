@@ -13,8 +13,8 @@ pub enum AgeV2 {
     None = 0,
     #[translate(ko = "17세 이하", en = "Under 17 years old")]
     Teenager = 1, //17세 이하
-    #[translate(ko = "18~29세", en = "18-29 years old")]
-    Twenty = 2, //18~29세
+    #[translate(ko = "18-29세", en = "18-29 years old")]
+    Twenty = 2, //18-29세
     #[translate(ko = "30대", en = "30-39 years old")]
     Thirty = 3, //30대
     #[translate(ko = "40대", en = "40-49 years old")]
