@@ -383,8 +383,8 @@ async fn test_survey_reponse() {
         .query(survey_id, SurveyResponseQuery::new(100))
         .await
         .unwrap();
-    assert_eq!(q.total_count, 3);
-    assert_eq!(q.items.len(), 3);
+    assert_eq!(q.total_count, 4);
+    assert_eq!(q.items.len(), 4);
 
     let _ = cli_res
         .respond_answer(
@@ -410,8 +410,8 @@ async fn test_survey_reponse() {
         .query(survey_id, SurveyResponseQuery::new(100))
         .await
         .unwrap();
-    assert_eq!(q.total_count, 4);
-    assert_eq!(q.items.len(), 4);
+    assert_eq!(q.total_count, 5);
+    assert_eq!(q.items.len(), 5);
 
     #[cfg(feature = "full-test")]
     {
