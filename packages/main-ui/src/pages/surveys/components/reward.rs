@@ -23,6 +23,8 @@ pub fn SurveyReward(
                         move |e: Event<FormData>| {
                             if let Ok(v) = e.value().trim().parse::<i64>() {
                                 onchange_estimate_time.call(v);
+                            } else {
+                                btracing::error!("{}", tr.error);
                             }
                         }
                     },
@@ -36,6 +38,8 @@ pub fn SurveyReward(
                         move |e: Event<FormData>| {
                             if let Ok(v) = e.value().trim().parse::<i64>() {
                                 onchange_point.call(v);
+                            } else {
+                                btracing::error!("{}", tr.error);
                             }
                         }
                     },
@@ -105,5 +109,10 @@ translate! {
     point_hint: {
         ko: "포인트 입력",
         en: "Enter point"
+    }
+
+    error: {
+        ko: "오직 숫자만 입력 가능합니다",
+        en: "Only numbers can be entered."
     }
 }
