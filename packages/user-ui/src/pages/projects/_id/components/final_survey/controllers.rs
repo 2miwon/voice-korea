@@ -10,8 +10,10 @@ use models::{
 
 use crate::{
     pages::projects::_id::components::final_survey::final_vote_modal::FinalVoteModal,
-    service::{popup_service::PopupService, user_service::UserService},
+    service::user_service::UserService,
 };
+
+use dioxus_popup::PopupService;
 
 use super::i18n::FinalVoteModalTranslate;
 
@@ -66,7 +68,7 @@ impl Controller {
 
         let survey = use_server_future(move || async move {
             let res = DeliberationFinalSurvey::get_client(&crate::config::get().api_url)
-                .query(project_id(), DeliberationFinalSurveyQuery::default())
+                .query(project_id(), DeliberationFinalSurveyQuery::new(1))
                 .await
                 .unwrap_or_default();
             if res.items.is_empty() {

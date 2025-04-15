@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+use bdk::prelude::dioxus_popup::PopupZone;
 use by_components::loaders::cube_loader::CubeLoader;
 use dioxus::prelude::*;
 
@@ -7,7 +8,6 @@ use dioxus_translate::Language;
 
 use crate::pages::GovernanceHeader;
 use crate::routes::Route;
-use crate::service::popup_service::PopupZone;
 
 #[component]
 pub fn GovernanceLayout(lang: Language) -> Element {

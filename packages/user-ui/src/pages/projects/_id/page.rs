@@ -1,14 +1,13 @@
+use bdk::prelude::*;
+
 use crate::by_components::loaders::cube_loader::CubeLoader;
-use dioxus::prelude::*;
-use dioxus_logger::tracing;
 use dioxus_translate::Language;
-use models::Tab;
 
 use crate::pages::projects::_id::{
     components::{
         basic_info::BasicInfo, comments::Comment, deliberation::Deliberation,
-        discussion::DiscussionPage, final_draft::FinalDraft, final_survey::FinalSurvey,
-        project_header::ProjectHeader, sample_survey::SampleSurvey,
+        discussion::DiscussionComponent, final_recommendation::FinalRecommendation,
+        final_survey::FinalSurvey, project_header::ProjectHeader, sample_survey::SampleSurvey,
     },
     controller,
 };
@@ -56,6 +55,23 @@ pub fn ProjectPage(lang: Language, project_id: ReadOnlySignal<i64>) -> Element {
     }
 }
 
+#[derive(Debug, Clone, Eq, PartialEq, Default, Translate, Copy)]
+pub enum Tab {
+    #[default]
+    #[translate(ko = "기본 정보", en = "Basic Info")]
+    BasicInfo = 0,
+    #[translate(ko = "표본 조사", en = "Sample Survey")]
+    SampleSurvey = 1,
+    #[translate(ko = "숙의", en = "Consideration")]
+    Consideration = 2,
+    #[translate(ko = "토론", en = "Discussion")]
+    Discussion = 3,
+    #[translate(ko = "투표", en = "Final Survey")]
+    FinalSurvey = 4,
+    #[translate(ko = "최종 권고안", en = "Final Recommendation")]
+    FinalRecommendation = 5,
+}
+
 #[component]
 pub fn ProjectDetails(
     lang: Language,
@@ -72,17 +88,17 @@ pub fn ProjectDetails(
                     Tab::SampleSurvey => rsx! {
                         SampleSurvey { lang, project_id }
                     },
-                    Tab::Deliberation => rsx! {
+                    Tab::Consideration => rsx! {
                         Deliberation { lang, project_id }
                     },
                     Tab::Discussion => rsx! {
-                        DiscussionPage { lang, project_id }
+                        DiscussionComponent { lang, project_id }
                     },
                     Tab::FinalSurvey => rsx! {
                         FinalSurvey { lang, project_id }
                     },
-                    Tab::FinalDraft => rsx! {
-                        FinalDraft { lang, project_id }
+                    Tab::FinalRecommendation => rsx! {
+                        FinalRecommendation { lang, project_id }
                     },
                 }
             }

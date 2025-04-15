@@ -9,9 +9,9 @@ use crate::{
         icons::{self},
     },
     routes::Route,
-    service::{popup_service::PopupService, user_service::UserService},
+    service::user_service::UserService,
 };
-
+use dioxus_popup::PopupService;
 #[component]
 pub fn MainHeader(lang: Language) -> Element {
     let tr: HeaderTranslate = translate(&lang);

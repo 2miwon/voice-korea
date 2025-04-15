@@ -1,15 +1,15 @@
 use bdk::prelude::*;
-
+use dioxus_popup::PopupService;
 pub mod components;
 pub mod config;
 pub mod pages;
 
 pub mod service {
-    pub mod popup_service;
     pub mod user_service;
 }
 
 pub mod utils {
+    pub mod download;
     pub mod time;
 }
 
@@ -17,7 +17,7 @@ pub mod routes;
 
 use dioxus_oauth::prelude::FirebaseProvider;
 use routes::Route;
-use service::{popup_service::PopupService, user_service::UserService};
+use service::user_service::UserService;
 
 const FAVICON: Asset = asset!("/public/favicon.png");
 const MAIN_CSS: Asset = asset!("/public/main.css");
