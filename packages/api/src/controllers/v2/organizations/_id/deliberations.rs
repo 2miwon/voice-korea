@@ -325,6 +325,9 @@ impl DeliberationController {
         )
         .await?;
 
+        self.upsert_content(&mut *tx, deliberation.id, contents)
+            .await?;
+
         tx.commit().await?;
 
         Ok(deliberation)
@@ -737,8 +740,6 @@ impl DeliberationController {
                     .ok_or(ApiError::DeliberationSampleSurveyException)?;
             }
 
-            tracing::debug!("tttt");
-
             let survey = self
                 .survey
                 .insert_with_tx(
@@ -766,14 +767,12 @@ impl DeliberationController {
                 )
                 .await?
                 .ok_or(ApiError::DeliberationSampleSurveyException)?;
-            tracing::debug!("rrrr");
 
             let _ = self
                 .sample_survey_survey
                 .insert_with_tx(&mut *tx, survey.id, sample.id)
                 .await?
                 .ok_or(ApiError::DeliberationSampleSurveyException)?;
-            tracing::debug!("uuuu");
         }
 
         Ok(())
@@ -784,7 +783,8 @@ impl DeliberationController {
         tx: &mut sqlx::PgConnection,
         deliberation_id: i64,
         contents: Vec<DeliberationContentCreateRequest>,
-    ) -> Result<()> {
+    ) -> Result<Vec<DeliberationContent>> {
+        let mut v = vec![];
         for DeliberationContentCreateRequest {
             started_at,
             ended_at,
@@ -813,6 +813,99 @@ impl DeliberationController {
                 let _ = self
                     .deliberation_contents_member
                     .insert_with_tx(&mut *tx, user_id, content.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationLearningException)?;
+            }
+
+            for elearning in elearnings {
+                let _ = self
+                    .elearning_repo
+                    .insert_with_tx(
+                        &mut *tx,
+                        content.id,
+                        elearning.title,
+                        elearning.resources,
+                        elearning.necessary,
+                    )
+                    .await?
+                    .ok_or(ApiError::DeliberationLearningException)?;
+            }
+
+            v.push(content);
+        }
+        Ok(v)
+    }
+
+    async fn upsert_content(
+        &self,
+        tx: &mut sqlx::PgConnection,
+        deliberation_id: i64,
+        contents: Vec<DeliberationContentCreateRequest>,
+    ) -> Result<()> {
+        for DeliberationContentCreateRequest {
+            users, elearnings, ..
+        } in contents.clone()
+        {
+            let results = DeliberationContent::query_builder()
+                .deliberation_id_equals(deliberation_id)
+                .query()
+                .map(DeliberationContent::from)
+                .fetch_all(&self.pool)
+                .await?;
+
+            let content = if results.is_empty() {
+                let v = self
+                    .create_content(&mut *tx, deliberation_id, contents.clone())
+                    .await?;
+
+                v.into_iter()
+                    .next()
+                    .unwrap_or_else(DeliberationContent::default)
+            } else {
+                results
+                    .into_iter()
+                    .next()
+                    .unwrap_or_else(DeliberationContent::default)
+            };
+
+            // update user
+            let remain_users = DeliberationContentMember::query_builder()
+                .content_id_equals(content.id)
+                .query()
+                .map(DeliberationContentMember::from)
+                .fetch_all(&self.pool)
+                .await?;
+
+            tracing::debug!("remain_users: {:?}", remain_users);
+
+            for remain in remain_users {
+                self.deliberation_contents_member
+                    .delete_with_tx(&mut *tx, remain.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationLearningException)?;
+            }
+
+            for user_id in users {
+                let _ = self
+                    .deliberation_contents_member
+                    .insert_with_tx(&mut *tx, user_id, content.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationLearningException)?;
+            }
+
+            // update elearnings
+            let remain_elearnings = Elearning::query_builder()
+                .content_id_equals(content.id)
+                .query()
+                .map(Elearning::from)
+                .fetch_all(&self.pool)
+                .await?;
+
+            tracing::debug!("remain_elearning: {:?}", remain_elearnings);
+
+            for elearning in remain_elearnings {
+                self.elearning_repo
+                    .delete_with_tx(&mut *tx, elearning.id)
                     .await?
                     .ok_or(ApiError::DeliberationLearningException)?;
             }
@@ -1327,6 +1420,7 @@ impl DeliberationController {
                 .org_id_equals(org_id)
                 .basic_infos_builder(DeliberationBasicInfo::query_builder())
                 .sample_surveys_builder(DeliberationSampleSurvey::query_builder())
+                .contents_builder(DeliberationContent::query_builder())
                 .query()
                 .map(Deliberation::from)
                 .fetch_one(&ctrl.pool)
@@ -1386,6 +1480,7 @@ impl DeliberationController {
         let deliberation = Deliberation::query_builder()
             .basic_infos_builder(DeliberationBasicInfo::query_builder())
             .sample_surveys_builder(DeliberationSampleSurvey::query_builder())
+            .contents_builder(DeliberationContent::query_builder())
             .org_id_equals(org_id)
             .id_equals(id)
             .status_equals(DeliberationStatus::Draft)
