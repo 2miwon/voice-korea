@@ -331,6 +331,15 @@ impl DeliberationController {
         self.upsert_discussion(&mut *tx, deliberation.id, deliberation_discussions)
             .await?;
 
+        self.upsert_final_survey(
+            &mut *tx,
+            org_id,
+            deliberation.id,
+            project_areas.clone(),
+            final_surveys,
+        )
+        .await?;
+
         tx.commit().await?;
 
         Ok(deliberation)
@@ -1177,7 +1186,8 @@ impl DeliberationController {
         deliberation_id: i64,
         project_areas: Vec<ProjectArea>,
         final_surveys: Vec<DeliberationFinalSurveyCreateRequest>,
-    ) -> Result<()> {
+    ) -> Result<Vec<DeliberationFinalSurvey>> {
+        let mut v = vec![];
         for DeliberationFinalSurveyCreateRequest {
             started_at,
             ended_at,
@@ -1245,7 +1255,135 @@ impl DeliberationController {
                 .insert_with_tx(&mut *tx, survey.id, d.id)
                 .await?
                 .ok_or(ApiError::DeliberationFinalSurveyException)?;
+            v.push(d);
         }
+        Ok(v)
+    }
+
+    async fn upsert_final_survey(
+        &self,
+        tx: &mut sqlx::PgConnection,
+        org_id: i64,
+        deliberation_id: i64,
+        project_areas: Vec<ProjectArea>,
+        final_surveys: Vec<DeliberationFinalSurveyCreateRequest>,
+    ) -> Result<()> {
+        for DeliberationFinalSurveyCreateRequest {
+            started_at,
+            ended_at,
+            title,
+            description,
+            estimate_time,
+            point,
+            users,
+            surveys,
+        } in final_surveys.clone()
+        {
+            let results = DeliberationFinalSurvey::query_builder()
+                .deliberation_id_equals(deliberation_id)
+                .query()
+                .map(DeliberationFinalSurvey::from)
+                .fetch_all(&self.pool)
+                .await?;
+
+            let d = if results.is_empty() {
+                let v = self
+                    .create_final_survey(
+                        &mut *tx,
+                        org_id,
+                        deliberation_id,
+                        project_areas.clone(),
+                        final_surveys.clone(),
+                    )
+                    .await?;
+
+                v.into_iter()
+                    .next()
+                    .unwrap_or_else(DeliberationFinalSurvey::default)
+            } else {
+                results
+                    .into_iter()
+                    .next()
+                    .unwrap_or_else(DeliberationFinalSurvey::default)
+            };
+
+            // update user
+            let remain_users = DeliberationFinalSurveyMember::query_builder()
+                .final_survey_id_equals(d.id)
+                .query()
+                .map(DeliberationFinalSurveyMember::from)
+                .fetch_all(&self.pool)
+                .await?;
+
+            tracing::debug!("remain_users: {:?}", remain_users);
+
+            for remain in remain_users {
+                self.final_member
+                    .delete_with_tx(&mut *tx, remain.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationFinalSurveyException)?;
+            }
+
+            for user_id in users {
+                let _ = self
+                    .final_member
+                    .insert_with_tx(&mut *tx, user_id, d.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationFinalSurveyException)?;
+            }
+
+            //update survey
+            let remain_surveys = DeliberationFinalSurveySurvey::query_builder()
+                .final_survey_id_equals(d.id)
+                .query()
+                .map(DeliberationFinalSurveySurvey::from)
+                .fetch_all(&self.pool)
+                .await?;
+
+            tracing::debug!("remain_surveys: {:?}", remain_surveys);
+
+            for survey in remain_surveys {
+                self.final_survey
+                    .delete_with_tx(&mut *tx, survey.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationFinalSurveyException)?;
+            }
+
+            let survey = self
+                .survey
+                .insert_with_tx(
+                    &mut *tx,
+                    title,
+                    ProjectType::Deliberation,
+                    project_areas
+                        .clone()
+                        .get(0)
+                        .unwrap_or(&ProjectArea::Economy)
+                        .clone(),
+                    ProjectStatus::InProgress,
+                    started_at,
+                    ended_at,
+                    description,
+                    0, //FIXME: fix quota
+                    org_id,
+                    surveys,
+                    vec![],
+                    vec![],
+                    vec![], //FIXME: fix panel count
+                    estimate_time,
+                    point,
+                    None,
+                )
+                .await?
+                .ok_or(ApiError::DeliberationFinalSurveyException)?;
+
+            let _ = self
+                .final_survey
+                .insert_with_tx(&mut *tx, survey.id, d.id)
+                .await?
+                .ok_or(ApiError::DeliberationFinalSurveyException)?;
+        }
+
         Ok(())
     }
 
@@ -1583,6 +1721,8 @@ impl DeliberationController {
                 .basic_infos_builder(DeliberationBasicInfo::query_builder())
                 .sample_surveys_builder(DeliberationSampleSurvey::query_builder())
                 .contents_builder(DeliberationContent::query_builder())
+                .deliberation_discussions_builder(DeliberationDiscussion::query_builder())
+                .final_surveys_builder(DeliberationFinalSurvey::query_builder())
                 .query()
                 .map(Deliberation::from)
                 .fetch_one(&ctrl.pool)
@@ -1644,6 +1784,7 @@ impl DeliberationController {
             .sample_surveys_builder(DeliberationSampleSurvey::query_builder())
             .contents_builder(DeliberationContent::query_builder())
             .deliberation_discussions_builder(DeliberationDiscussion::query_builder())
+            .final_surveys_builder(DeliberationFinalSurvey::query_builder())
             .org_id_equals(org_id)
             .id_equals(id)
             .status_equals(DeliberationStatus::Draft)
