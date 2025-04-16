@@ -210,10 +210,11 @@ impl Controller {
         let total_committees = self.members().unwrap_or_default();
         let basic_info = self.get_basic_info();
         let roles = basic_info.clone().users;
+
         total_committees
             .clone()
             .into_iter()
-            .filter(|member| roles.iter().any(|id| id.clone() == member.id))
+            .filter(|member| roles.iter().any(|id| id.clone() == member.user_id))
             .collect()
     }
 

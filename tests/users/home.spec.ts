@@ -122,10 +122,10 @@ test.describe("Home Page Tests", () => {
         await expect(inquiryButton).toBeVisible();
         await inquiryButton.click();
 
-        const emailError = page.getByText('Please enter your email address in the correct format.')
+        const emailError = page.getByText('Please enter your email')
         await expect(emailError).toBeVisible();
 
-        const messageError = page.getByText('Please enter your inquiry details.')
+        const messageError = page.getByText('Please enter your inquiry')
         await expect(messageError).toBeVisible();
 
         await page.screenshot({

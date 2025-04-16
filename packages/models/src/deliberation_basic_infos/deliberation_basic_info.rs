@@ -2,6 +2,7 @@
 use crate::deliberation_user::DeliberationUser;
 use crate::ResourceFile;
 use crate::SurveyV2;
+use crate::User;
 use bdk::prelude::*;
 use validator::Validate;
 
@@ -32,7 +33,7 @@ pub struct DeliberationBasicInfo {
 
     #[api_model(summary, many_to_many = deliberation_basic_info_members, foreign_table_name = users, foreign_primary_key = user_id, foreign_reference_key = basic_id)]
     #[serde(default)]
-    pub members: Vec<DeliberationUser>,
+    pub members: Vec<User>,
 
     #[api_model(summary, many_to_many = deliberation_basic_info_resources, foreign_table_name = resources, foreign_primary_key = resource_id, foreign_reference_key = basic_id)]
     #[serde(default)]
@@ -46,7 +47,7 @@ pub struct DeliberationBasicInfo {
 impl Into<DeliberationBasicInfoCreateRequest> for DeliberationBasicInfo {
     fn into(self) -> DeliberationBasicInfoCreateRequest {
         DeliberationBasicInfoCreateRequest {
-            users: self.members.into_iter().map(|u| u.user_id).collect(),
+            users: self.members.into_iter().map(|u| u.id).collect(),
             resources: self.resources.into_iter().map(|r| r.id).collect(),
             surveys: self.surveys.into_iter().map(|s| s.id).collect(),
             started_at: self.started_at,

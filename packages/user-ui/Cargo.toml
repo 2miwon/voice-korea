@@ -34,6 +34,6 @@ google-wallet = { workspace = true }
 
 [features]
 default = []
-server = ["bdk/server"]
+server = ["bdk/server", "models/server"]
 lambda = ["server", "bdk/lambda"]
 web = ["bdk/web", "models/web"]

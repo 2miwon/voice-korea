@@ -146,7 +146,7 @@ impl Controller {
         total_committees
             .clone()
             .into_iter()
-            .filter(|member| roles.iter().any(|id| id.clone() == member.id))
+            .filter(|member| roles.iter().any(|id| id.clone() == member.user_id))
             .collect()
     }
 

@@ -1,16 +1,13 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use crate::pages::surveys::components::start_project_modal::{
-    StartProjectModal, StartProjectModalTranslate,
-};
 use crate::pages::surveys::models::attribute_combination::AttributeCombination;
 use crate::pages::surveys::models::attribute_group_info::AttributeGroupInfo;
 use bdk::prelude::btracing;
 use by_macros::DioxusController;
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
-use dioxus_translate::{translate, Language};
+use dioxus_translate::translate;
 use models::attribute_v2::AgeV2;
 use models::response::AgeV3;
 use models::{
@@ -20,8 +17,7 @@ use models::{
 use models::{AttributeDistribute, AttributeQuota};
 
 use crate::{
-    pages::surveys::models::current_step::CurrentStep,
-    service::{login_service::LoginService, popup_service::PopupService},
+    pages::surveys::models::current_step::CurrentStep, service::login_service::LoginService,
 };
 
 use super::{
@@ -39,7 +35,6 @@ pub struct Controller {
 
     survey_request: Signal<Option<CreateSurveyResponse>>,
 
-    popup_service: PopupService,
     panels: Signal<Vec<PanelV2Summary>>,
     selected_panels: Signal<Vec<PanelV2>>,
     maximum_panel_count: Signal<Vec<u64>>,
@@ -51,6 +46,7 @@ pub struct Controller {
     survey_id: Signal<Option<i64>>,
 
     attribute_options: Signal<HashMap<String, Vec<AttributeGroupInfo>>>,
+    original_options: Signal<HashMap<String, Vec<AttributeGroupInfo>>>,
     selected_attributes: Signal<Vec<String>>,
     selected_tab: Signal<bool>,
     total_counts: Signal<i64>,
@@ -140,8 +136,6 @@ impl Controller {
             current_step: use_signal(|| CurrentStep::CreateSurvey),
             panels: use_signal(|| vec![]),
 
-            popup_service: use_context(),
-
             selected_panels: use_signal(|| vec![]),
             maximum_panel_count: use_signal(|| vec![]),
             total_panel_members: use_signal(|| 0),
@@ -152,6 +146,7 @@ impl Controller {
             point: use_signal(|| 0),
 
             attribute_options: use_signal(|| attribute_options.clone()),
+            original_options: use_signal(|| attribute_options.clone()),
             selected_attributes: use_signal(|| vec![]),
             selected_tab: use_signal(|| true),
 
@@ -311,6 +306,15 @@ impl Controller {
         use_context_provider(|| ctrl);
 
         ctrl
+    }
+
+    pub fn clear_attribute(&mut self) {
+        let original = self.original_options();
+        self.attribute_options.set(original);
+        self.total_counts.set(0);
+        self.selected_attributes.set(vec![]);
+        self.attribute_combinations.set(vec![]);
+        self.generate_combinations_with_meta();
     }
 
     pub fn set_total_counts(&mut self, total_counts: i64) {
@@ -587,10 +591,8 @@ impl Controller {
         self.total_panel_members.set(0);
     }
 
-    pub async fn open_start_project_modal(&mut self, lang: Language) {
-        let tr: StartProjectModalTranslate = translate(&lang);
+    pub async fn clicked_start_project(&mut self) {
         let ctrl = self.clone();
-        let mut popup_service = self.popup_service;
 
         let combi = self.attribute_combinations();
         let totals = self.total_counts();
@@ -617,36 +619,18 @@ impl Controller {
 
         let survey_id = self.survey_id();
 
-        popup_service
-            .open(rsx! {
-                StartProjectModal {
-                    lang,
-                    onsend: {
-                        move |_| {
-                            let survey_request = survey_request.clone();
-                            async move {
-                                if survey_id.is_none() {
-                                    ctrl.create_survey(org_id, survey_request, total_panels).await;
-                                } else {
-                                    ctrl.update_survey(
-                                            survey_id.unwrap_or_default(),
-                                            org_id,
-                                            survey_request,
-                                            total_panels,
-                                        )
-                                        .await;
-                                }
-                                popup_service.close();
-                            }
-                        }
-                    },
-                    oncancel: move |_| {
-                        popup_service.close();
-                    },
-                }
-            })
-            .with_id("start project")
-            .with_title(tr.title);
+        if survey_id.is_none() {
+            ctrl.create_survey(org_id, survey_request, total_panels)
+                .await;
+        } else {
+            ctrl.update_survey(
+                survey_id.unwrap_or_default(),
+                org_id,
+                survey_request,
+                total_panels,
+            )
+            .await;
+        }
     }
 
     pub async fn update_survey(

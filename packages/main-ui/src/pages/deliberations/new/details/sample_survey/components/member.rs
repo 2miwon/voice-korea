@@ -21,7 +21,11 @@ pub fn SampleSurveyMember(
 ) -> Element {
     let tr: SampleSurveyMemberTranslate = translate(&lang);
 
-    let select_ids: Vec<i64> = selected_committees.clone().iter().map(|v| v.id).collect();
+    let select_ids: Vec<i64> = selected_committees
+        .clone()
+        .iter()
+        .map(|v| v.user_id)
+        .collect();
     rsx! {
         ExpandableCard { required: false, header: tr.title, description: tr.description,
             CommitteeDropdown {
@@ -35,7 +39,7 @@ pub fn SampleSurveyMember(
                     let mut select_ids = select_ids.clone();
                     let mut sample = sample_survey.clone();
                     move |member: OrganizationMemberSummary| {
-                        select_ids.push(member.id);
+                        select_ids.push(member.user_id);
                         sample.users = select_ids.clone();
                         set_sample_survey.call(sample.clone());
                     }

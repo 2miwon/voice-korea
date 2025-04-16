@@ -62,7 +62,7 @@ pub fn SurveyCreatePage(lang: Language, survey_id: Option<i64>) -> Element {
                     combination_error: ctrl.combination_error(),
 
                     clicked_complete_button: move |_| async move {
-                        ctrl.open_start_project_modal(lang).await;
+                        ctrl.clicked_start_project().await;
                     },
 
                     change_selected_tab: move |selected: bool| {
@@ -92,6 +92,10 @@ pub fn SurveyCreatePage(lang: Language, survey_id: Option<i64>) -> Element {
                     total_counts,
                     set_total_counts: move |total_counts: i64| {
                         ctrl.set_total_counts(total_counts);
+                    },
+
+                    clear_attribute: move |_| {
+                        ctrl.clear_attribute();
                     },
 
                     visibility: ctrl.get_current_step() == CurrentStep::SettingPanel,
