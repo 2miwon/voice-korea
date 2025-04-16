@@ -10,7 +10,6 @@ use super::*;
 use controller::*;
 use i18n::*;
 
-// TODO: implement discussion
 #[component]
 pub fn DeliberationDiscussionSettingPage(lang: Language) -> Element {
     let mut ctrl = Controller::new(lang)?;
