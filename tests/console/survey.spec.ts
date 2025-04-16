@@ -32,7 +32,7 @@ test.describe('Survey Page Flow', () => {
     await page.waitForLoadState('domcontentloaded');
 
     const emailInput = page.getByRole('textbox').first();
-    await expect(emailInput).toBeVisible({ timeout: timeouts.visible });
+    await expect(emailInput).toBeVisible();
     await emailInput.fill('jesuswrites20043@gmail.com');
     await page.screenshot({
       path: `${screenshotBase}/02-email-filled.png`,
@@ -40,7 +40,7 @@ test.describe('Survey Page Flow', () => {
     });
 
     const passwordInput = page.getByRole('textbox').nth(1);
-    await expect(passwordInput).toBeVisible({ timeout: timeouts.visible });
+    await expect(passwordInput).toBeVisible();
     await passwordInput.fill('12345678A#');
     await page.screenshot({
       path: `${screenshotBase}/03-password-filled.png`,
@@ -49,7 +49,7 @@ test.describe('Survey Page Flow', () => {
 
 
     const loginButton = page.getByRole('button', { name: "Login" });
-    await expect(loginButton).toBeVisible({ timeout: timeouts.visible });
+    await expect(loginButton).toBeVisible();
     await loginButton.click();
     await page.screenshot({
       path: `${screenshotBase}/04-login-clicked.png`,
@@ -59,7 +59,7 @@ test.describe('Survey Page Flow', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(timeouts.wait);
 
-    // await expect(page).toHaveURL(/.*surveys/, { timeout: timeouts.url });
+    // await expect(page).toHaveURL(/.*surveys/, );
     await page.screenshot({
       path: `${screenshotBase}/05-survey-page.png`,
       fullPage: true
@@ -78,7 +78,7 @@ test.describe('Survey Page Flow', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(timeouts.wait);
 
-    await expect(page).toHaveURL('https://console.dev.voice-korea.com/en/surveys/new', { timeout: timeouts.url });
+    await expect(page).toHaveURL('https://console.dev.voice-korea.com/en/surveys/new', );
     await page.screenshot({
       path: `${screenshotBase}/07-survey-questions.png`,
       fullPage: true
@@ -106,7 +106,7 @@ test.describe('Survey Page Flow', () => {
     await page.waitForLoadState('domcontentloaded');
 
     const emailInput = page.getByRole('textbox').first();
-    await expect(emailInput).toBeVisible({ timeout: timeouts.visible });
+    await expect(emailInput).toBeVisible();
     await emailInput.fill('jesuswrites20043@gmail.com');
     await page.screenshot({
       path: `${screenshotBase}/02-email-filled.png`,
@@ -114,7 +114,7 @@ test.describe('Survey Page Flow', () => {
     });
 
     const passwordInput = page.getByRole('textbox').nth(1);
-    await expect(passwordInput).toBeVisible({ timeout: timeouts.visible });
+    await expect(passwordInput).toBeVisible();
     await passwordInput.fill('12345678A#');
     await page.screenshot({
       path: `${screenshotBase}/03-password-filled.png`,
@@ -122,7 +122,7 @@ test.describe('Survey Page Flow', () => {
     });
 
     const loginButton = page.getByRole('button', { name: "Login" });
-    await expect(loginButton).toBeVisible({ timeout: timeouts.visible });
+    await expect(loginButton).toBeVisible();
     await loginButton.click();
     await page.screenshot({
       path: `${screenshotBase}/04-login-clicked.png`,
@@ -132,7 +132,7 @@ test.describe('Survey Page Flow', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(timeouts.wait);
 
-    // await expect(page).toHaveURL(/.*surveys/, { timeout: timeouts.url });
+    // await expect(page).toHaveURL(/.*surveys/, );
     await page.screenshot({
       path: `${screenshotBase}/05-survey-page.png`,
       fullPage: true
@@ -146,7 +146,7 @@ test.describe('Survey Page Flow', () => {
       fullPage: true
     });
 
-    await expect(page).toHaveURL('https://console.dev.voice-korea.com/en/', { timeout: timeouts.url });
+    await expect(page).toHaveURL('https://console.dev.voice-korea.com/en/', );
     await page.screenshot({
       path: `${screenshotBase}/07-logged-out.png`,
       fullPage: true
