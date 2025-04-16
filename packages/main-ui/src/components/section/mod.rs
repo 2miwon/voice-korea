@@ -23,7 +23,8 @@ pub fn MainSection(
     header: Option<String>,
     description: Option<String>,
     children: Element,
-    open: Option<bool>,
+    #[props(default = None)] open: Option<bool>,
+    // onmultiselect: Option<EventHandler<bool>>, TODO: "복수 선택 가능" toggle in figma
     // onrequire: Option<EventHandler<bool>>, TODO: "필수 입력" toggle in figma
     ondelete: Option<EventHandler<MouseEvent>>,
 ) -> Element {

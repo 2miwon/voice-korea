@@ -132,4 +132,9 @@ translate! {
         ko: "숙의",
         en: "Deliberation"
     }
+
+    select_format: {
+        ko: "형식 선택",
+        en: "Select Format"
+    }
 }
