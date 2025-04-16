@@ -86,8 +86,8 @@ pub fn LoadDataModal(
         div { class: "flex flex-col w-full justify-start items-start gap-40",
             BlockHeader {
                 required: false,
-                header: "Load Data".to_string(),
-                description: "Select the data you want to load.".to_string(),
+                header: tr.header.to_string(),
+                description: tr.description.to_string(),
             }
             // TODO: Only one file can be uploaded at a time
             ImportDocument {
