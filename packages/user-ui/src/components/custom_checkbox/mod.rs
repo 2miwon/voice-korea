@@ -1,32 +1,25 @@
 use dioxus::prelude::*;
+use dioxus_logger::tracing;
 
 #[component]
 pub fn CustomCheckbox(
-    #[props(default = false)] blocked: bool,
+    #[props(default = false)] disabled: bool,
     mut checked: bool,
     onchange: EventHandler<bool>,
 ) -> Element {
-    let color_class = if checked && !blocked {
-        "bg-[#8095EA]"
-    } else if checked && blocked {
-        "bg-[#B4B4B4]"
-    } else {
-        "border-1 bg-white border-gray-400"
-    };
-
     rsx! {
-        label { class: "flex items-center cursor-pointer",
+        label { class: "flex items-center cursor-pointer disabled:cursor-not-allowed",
             input {
+                disabled,
                 r#type: "checkbox",
-                class: "hidden",
+                class: "hidden peer",
                 checked: "{checked}",
                 onchange: move |_| {
-                    if !blocked {
-                        onchange.call(!checked);
-                    }
+                    tracing::debug!("Checkbox changed to {}", ! checked);
+                    onchange.call(!checked);
                 },
             }
-            div { class: "w-[24px] h-[24px] flex items-center justify-center rounded-md transition-all {color_class}",
+            div { class: "w-[24px] h-[24px] flex items-center justify-center rounded-md transition-all border bg-white border-gray-400 peer-disabled:bg-color-disabled peer-checked:bg-primary peer-checked:border-none",
                 div { class: "text-white text-lg",
                     if checked {
                         div { "✔" }
