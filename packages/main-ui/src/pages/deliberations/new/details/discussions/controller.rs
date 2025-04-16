@@ -1,8 +1,8 @@
 use bdk::prelude::*;
 use models::{
-    deliberation_user::DeliberationUserCreateRequest, DeliberationDiscussionCreateRequest, File,
-    OrganizationMember, OrganizationMemberQuery, OrganizationMemberSummary, ResourceFile,
-    ResourceFileQuery, ResourceFileSummary,
+    deliberation_user::DeliberationUserCreateRequest, DeliberationDiscussionCreateRequest,
+    DiscussionCreateRequest, File, OrganizationMember, OrganizationMemberQuery,
+    OrganizationMemberSummary, ResourceFile, ResourceFileQuery, ResourceFileSummary,
 };
 
 use crate::{
@@ -148,6 +148,69 @@ impl Controller {
             .into_iter()
             .filter(|member| roles.iter().any(|id| id.clone() == member.user_id))
             .collect()
+    }
+
+    pub fn set_title(&mut self, title: String) {
+        self.discussion.with_mut(|req| {
+            req.title = title;
+        });
+    }
+
+    pub fn set_description(&mut self, description: String) {
+        self.discussion.with_mut(|req| {
+            req.description = description;
+        });
+    }
+
+    pub fn set_start_date(&mut self, started_at: i64) {
+        self.discussion.with_mut(|req| {
+            req.started_at = started_at;
+        });
+    }
+
+    pub fn set_end_date(&mut self, ended_at: i64) {
+        self.discussion.with_mut(|req| {
+            req.ended_at = ended_at;
+        });
+    }
+
+    pub fn add_committee(&mut self, user_id: i64) {
+        self.discussion.with_mut(|req| {
+            req.users.push(user_id);
+        });
+    }
+
+    pub fn remove_committee(&mut self, user_id: i64) {
+        self.discussion.with_mut(|req| {
+            req.users
+                .retain(|committee_id| !(committee_id.clone() == user_id));
+        })
+    }
+
+    pub fn clear_committee(&mut self) {
+        self.discussion.with_mut(|req| req.users = vec![]);
+    }
+
+    pub fn add_discussion(&mut self) {
+        let mut disc = DiscussionCreateRequest::default();
+        disc.started_at = current_timestamp();
+        disc.ended_at = current_timestamp();
+
+        self.discussion.with_mut(|req| {
+            req.discussions.push(disc);
+        })
+    }
+
+    pub fn remove_discussion(&mut self, index: usize) {
+        self.discussion.with_mut(|req| {
+            req.discussions.remove(index);
+        })
+    }
+
+    pub fn update_discussion(&mut self, index: usize, discussion: DiscussionCreateRequest) {
+        self.discussion.with_mut(|req| {
+            req.discussions[index] = discussion;
+        })
     }
 
     pub fn set_discussion(&mut self, info: DeliberationDiscussionCreateRequest) {

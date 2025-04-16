@@ -3,11 +3,11 @@ use by_components::rich_texts::RichText;
 use models::DeliberationDiscussionCreateRequest;
 
 use crate::{
-    components::expandable_card::ExpandableCard,
-    pages::deliberations::new::{
-        components::calendar_dropdown::CalendarDropdown,
-        details::discussions::i18n::IntroductionTranslate,
+    components::{
+        form_field::{Divide, InputDateField},
+        section::MainSection,
     },
+    pages::deliberations::new::details::discussions::i18n::IntroductionTranslate,
 };
 
 #[component]
@@ -15,72 +15,46 @@ pub fn Introduction(
     lang: Language,
 
     discussion: DeliberationDiscussionCreateRequest,
-    set_discussion: EventHandler<DeliberationDiscussionCreateRequest>,
+    start_date_id: String,
+    end_date_id: String,
+    set_title: EventHandler<String>,
+    set_description: EventHandler<String>,
+    set_start_date: EventHandler<i64>,
+    set_end_date: EventHandler<i64>,
 ) -> Element {
     let tr: IntroductionTranslate = translate(&lang);
+
     rsx! {
-        ExpandableCard {
+        MainSection {
+            lang,
             required: true,
-            header: tr.input_introduction_title,
-            description: tr.input_introduction_description,
-            div { class: "flex flex-col w-full justify-start items-start gap-10",
-                div { class: "flex flex-row w-full gap-20",
-                    div { class: "flex flex-row gap-20 px-15 w-full h-54 bg-background-gray rounded-sm justify-center items-center",
-                        input {
-                            class: "flex flex-row w-full justify-start items-center bg-transparent focus:outline-none",
-                            r#type: "text",
-                            placeholder: tr.input_title_hint,
-                            value: discussion.clone().title,
-                            oninput: {
-                                let mut discussion = discussion.clone();
-                                move |e: Event<FormData>| {
-                                    discussion.title = e.value();
-                                    set_discussion.call(discussion.clone());
-                                }
-                            },
-                        }
-                    }
-
-                    div { class: "flex flex-row w-fit justify-start items-center gap-10",
-                        CalendarDropdown {
-                            id: "discussion_start_date",
-                            date: discussion.started_at,
-                            onchange: {
-                                let mut discussion = discussion.clone();
-                                move |e| {
-                                    discussion.started_at = e;
-                                    set_discussion.call(discussion.clone());
-                                }
-                            },
-                        }
-
-                        div { class: "flex flex-row w-16 h-2 bg-label-border-gray" }
-
-                        CalendarDropdown {
-                            id: "discussion_end_date",
-                            date: discussion.ended_at,
-                            onchange: {
-                                let mut discussion = discussion.clone();
-                                move |e| {
-                                    discussion.ended_at = e;
-                                    set_discussion.call(discussion.clone());
-                                }
-                            },
-                        }
-                    }
+            header: Some(tr.input_introduction_title.to_string()),
+            description: Some(tr.input_introduction_description.to_string()),
+            open: Some(true),
+            div { class: "flex flex-col w-full h-fit gap-10",
+                InputDateField {
+                    start_date_id,
+                    end_date_id,
+                    placeholder: tr.input_title_hint.to_string(),
+                    text_value: discussion.title,
+                    started_at: discussion.started_at,
+                    ended_at: discussion.ended_at,
+                    oninput: move |e: Event<FormData>| {
+                        set_title.call(e.value());
+                    },
+                    onupdate_start_date: move |timestamp: i64| {
+                        set_start_date.call(timestamp);
+                    },
+                    onupdate_end_date: move |timestamp: i64| {
+                        set_end_date.call(timestamp);
+                    },
                 }
-
-                div { class: "flex flex-row w-full h-1 bg-period-border-gray" }
-
+                Divide {}
                 RichText {
                     id: "discussion-rich-text",
-                    content: discussion.clone().description,
-                    onchange: {
-                        let mut discussion = discussion.clone();
-                        move |e| {
-                            discussion.description = e;
-                            set_discussion.call(discussion.clone());
-                        }
+                    content: discussion.description,
+                    onchange: move |e| {
+                        set_description.call(e);
                     },
                 }
             }
