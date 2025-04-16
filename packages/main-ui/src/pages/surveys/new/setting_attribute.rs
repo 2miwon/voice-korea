@@ -45,6 +45,7 @@ pub fn SettingAttribute(
     update_attribute_rate: EventHandler<(String, String, i64)>,
     change_attribute_combination_value: EventHandler<(usize, usize)>,
 
+    clear_attribute: EventHandler<MouseEvent>,
     onback: EventHandler<MouseEvent>,
 ) -> Element {
     let tr: SettingAttributeTranslate = translate(&lang);
@@ -128,6 +129,7 @@ pub fn SettingAttribute(
                             change_selected_tab,
                             remove_attribute_option,
                             update_attribute_rate,
+                            clear_attribute,
                         }
                     }
                 }

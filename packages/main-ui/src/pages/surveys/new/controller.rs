@@ -46,6 +46,7 @@ pub struct Controller {
     survey_id: Signal<Option<i64>>,
 
     attribute_options: Signal<HashMap<String, Vec<AttributeGroupInfo>>>,
+    original_options: Signal<HashMap<String, Vec<AttributeGroupInfo>>>,
     selected_attributes: Signal<Vec<String>>,
     selected_tab: Signal<bool>,
     total_counts: Signal<i64>,
@@ -145,6 +146,7 @@ impl Controller {
             point: use_signal(|| 0),
 
             attribute_options: use_signal(|| attribute_options.clone()),
+            original_options: use_signal(|| attribute_options.clone()),
             selected_attributes: use_signal(|| vec![]),
             selected_tab: use_signal(|| true),
 
@@ -304,6 +306,15 @@ impl Controller {
         use_context_provider(|| ctrl);
 
         ctrl
+    }
+
+    pub fn clear_attribute(&mut self) {
+        let original = self.original_options();
+        self.attribute_options.set(original);
+        self.total_counts.set(0);
+        self.selected_attributes.set(vec![]);
+        self.attribute_combinations.set(vec![]);
+        self.generate_combinations_with_meta();
     }
 
     pub fn set_total_counts(&mut self, total_counts: i64) {

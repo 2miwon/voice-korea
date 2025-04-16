@@ -62,6 +62,8 @@ pub fn InputIntroduction(
                 div { class: "flex flex-col w-full gap-[10px]",
                     SelectInputDateField {
                         height: 55,
+                        start_date_id: "survey_start_date",
+                        end_date_id: "survey_end_date",
                         selected_field: select_field().as_ref().map(|s| s.to_string()),
                         select_placeholder: translate.select_field.to_string(),
                         placeholder: translate.input_description_hint.to_string(),
