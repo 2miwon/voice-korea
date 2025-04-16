@@ -306,7 +306,7 @@ impl Controller {
         tracing::debug!("user ids: {:?} {:?}", user_ids, members);
         let members = members
             .into_iter()
-            .filter(|member| user_ids.contains(&member.id))
+            .filter(|member| user_ids.contains(&member.user_id))
             .collect();
         members
     }
