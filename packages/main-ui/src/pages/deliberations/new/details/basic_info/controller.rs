@@ -326,7 +326,7 @@ impl Controller {
 
     pub async fn temp_save(&mut self) {
         self.parent.save_basic_info(self.basic_info());
-        self.parent.temporary_save().await;
+        self.parent.temporary_save(false).await;
     }
 
     pub fn next(&mut self) {

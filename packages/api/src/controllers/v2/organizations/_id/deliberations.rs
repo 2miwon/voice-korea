@@ -247,7 +247,27 @@ impl DeliberationController {
         Ok(deliberation)
     }
 
-    #[allow(unused_variables)]
+    pub async fn remove_deliberation(&self, id: i64) -> Result<Deliberation> {
+        let deliberation = self.repo.delete(id).await?;
+
+        Ok(deliberation)
+    }
+
+    pub async fn start_deliberation(&self, id: i64) -> Result<Deliberation> {
+        let deliberation = self
+            .repo
+            .update(
+                id,
+                DeliberationRepositoryUpdateRequest {
+                    status: Some(DeliberationStatus::Ready),
+                    ..Default::default()
+                },
+            )
+            .await?;
+
+        Ok(deliberation)
+    }
+
     pub async fn update(
         &self,
         id: i64,
@@ -262,20 +282,16 @@ impl DeliberationController {
             title,
             description,
             panel_ids,
-            resource_ids,
-            survey_ids,
             roles,
-            steps,
-            elearning,
             thumbnail_image,
             basic_infos,
             sample_surveys,
             contents,
             deliberation_discussions,
             final_surveys,
-            drafts,
             status,
             creator_id,
+            ..
         } = param.req;
 
         self.validate_inputs(
@@ -353,6 +369,7 @@ impl DeliberationController {
         let mut total_count: i64 = 0;
         let items: Vec<DeliberationSummary> = Deliberation::query_builder()
             .org_id_equals(org_id)
+            .order_by_created_at_desc()
             .limit(size as i32)
             .page(bookmark.unwrap_or("1".to_string()).parse::<i32>().unwrap())
             .with_count()
@@ -1676,6 +1693,7 @@ impl DeliberationController {
 
         let items = DeliberationSummary::query_builder()
             .org_id_equals(org_id)
+            .order_by_created_at_desc()
             .title_contains(q.clone().title.unwrap_or_default())
             .limit(q.size())
             .page(q.page())
@@ -1740,6 +1758,12 @@ impl DeliberationController {
         match body {
             DeliberationByIdAction::Update(param) => {
                 Ok(Json(ctrl.update(id, org_id, param).await?))
+            }
+            DeliberationByIdAction::StartDeliberation(_) => {
+                Ok(Json(ctrl.start_deliberation(id).await?))
+            }
+            DeliberationByIdAction::RemoveDeliberation(_) => {
+                Ok(Json(ctrl.remove_deliberation(id).await?))
             }
         }
     }
