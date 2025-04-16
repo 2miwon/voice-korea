@@ -11,7 +11,7 @@ pub fn SelectCategory(
 ) -> Element {
     rsx! {
         select {
-            class: "focus:outline-none justify-start items-start p-15 bg-color-backgorund-gray rounded-[4px] font-medium text-[15px] text-disabled",
+            class: "focus:outline-none justify-start items-start p-15 bg-background-gray rounded-[4px] font-medium text-[15px] text-disabled",
             style: "width: {width}px; height: {height}px",
             value: match selected_field.as_ref() {
                 Some(field) => field.as_str(),
