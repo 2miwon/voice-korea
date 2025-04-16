@@ -28,7 +28,7 @@ pub fn Introduction(
             required: true,
             header: Some(tr.input_introduction_title.to_string()),
             description: Some(tr.input_introduction_description.to_string()),
-            open: Some(false),
+            open: Some(true),
             div { class: "flex flex-col w-full h-fit gap-10",
                 InputDateField {
                     start_date_id,

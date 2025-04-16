@@ -3,11 +3,11 @@ use by_components::rich_texts::RichText;
 use models::DeliberationSampleSurveyCreateRequest;
 
 use crate::{
-    components::expandable_card::ExpandableCard,
-    pages::deliberations::new::{
-        components::calendar_dropdown::CalendarDropdown,
-        details::sample_survey::i18n::IntroductionTranslate,
+    components::{
+        form_field::{Divide, InputDateField},
+        section::MainSection,
     },
+    pages::deliberations::new::details::sample_survey::i18n::IntroductionTranslate,
 };
 
 #[component]
@@ -15,73 +15,46 @@ pub fn Introduction(
     lang: Language,
 
     sample_survey: DeliberationSampleSurveyCreateRequest,
-    set_sample_survey: EventHandler<DeliberationSampleSurveyCreateRequest>,
+    start_date_id: String,
+    end_date_id: String,
+    set_title: EventHandler<String>,
+    set_description: EventHandler<String>,
+    set_start_date: EventHandler<i64>,
+    set_end_date: EventHandler<i64>,
 ) -> Element {
     let tr: IntroductionTranslate = translate(&lang);
 
     rsx! {
-        ExpandableCard {
+        MainSection {
+            lang,
             required: true,
-            header: tr.input_introduction_title,
-            description: tr.input_introduction_description,
-            div { class: "flex flex-col w-full justify-start items-start gap-10",
-                div { class: "flex flex-row w-full gap-20",
-                    div { class: "flex flex-row gap-20 px-15 w-full h-54 bg-background-gray rounded-sm justify-center items-center",
-                        input {
-                            class: "flex flex-row w-full justify-start items-center bg-transparent focus:outline-none",
-                            r#type: "text",
-                            placeholder: tr.input_title_hint,
-                            value: sample_survey.clone().title,
-                            oninput: {
-                                let mut survey = sample_survey.clone();
-                                move |e: Event<FormData>| {
-                                    survey.title = e.value();
-                                    set_sample_survey.call(survey.clone());
-                                }
-                            },
-                        }
-                    }
-
-                    div { class: "flex flex-row w-fit justify-start items-center gap-10",
-                        CalendarDropdown {
-                            id: "sample_survey_start_date",
-                            date: sample_survey.started_at,
-                            onchange: {
-                                let mut survey = sample_survey.clone();
-                                move |e| {
-                                    survey.started_at = e;
-                                    set_sample_survey.call(survey.clone());
-                                }
-                            },
-                        }
-
-                        div { class: "flex flex-row w-16 h-2 bg-label-border-gray" }
-
-                        CalendarDropdown {
-                            id: "sample_survey_end_date",
-                            date: sample_survey.ended_at,
-                            onchange: {
-                                let mut survey = sample_survey.clone();
-                                move |e| {
-                                    survey.ended_at = e;
-                                    set_sample_survey.call(survey.clone());
-                                }
-                            },
-                        }
-                    }
+            header: Some(tr.input_introduction_title.to_string()),
+            description: Some(tr.input_introduction_description.to_string()),
+            open: Some(true),
+            div { class: "flex flex-col w-full h-fit gap-10",
+                InputDateField {
+                    start_date_id,
+                    end_date_id,
+                    placeholder: tr.input_title_hint.to_string(),
+                    text_value: sample_survey.title,
+                    started_at: sample_survey.started_at,
+                    ended_at: sample_survey.ended_at,
+                    oninput: move |e: Event<FormData>| {
+                        set_title.call(e.value());
+                    },
+                    onupdate_start_date: move |timestamp: i64| {
+                        set_start_date.call(timestamp);
+                    },
+                    onupdate_end_date: move |timestamp: i64| {
+                        set_end_date.call(timestamp);
+                    },
                 }
-
-                div { class: "flex flex-row w-full h-1 bg-period-border-gray" }
-
+                Divide {}
                 RichText {
                     id: "sample-survey-rich-text",
-                    content: sample_survey.clone().description,
-                    onchange: {
-                        let mut survey = sample_survey.clone();
-                        move |e| {
-                            survey.description = e;
-                            set_sample_survey.call(survey.clone());
-                        }
+                    content: sample_survey.description,
+                    onchange: move |e| {
+                        set_description.call(e);
                     },
                 }
             }

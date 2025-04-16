@@ -14,6 +14,10 @@ pub fn QuestionList(
     lang: Language,
     sample_survey: DeliberationSampleSurveyCreateRequest,
     set_sample_survey: EventHandler<DeliberationSampleSurveyCreateRequest>,
+
+    add_question: EventHandler<MouseEvent>,
+    remove_question: EventHandler<usize>,
+    update_question: EventHandler<(usize, Question)>,
 ) -> Element {
     let tr: QuestionListTranslate = translate(&lang);
     let questions = sample_survey.surveys.clone();
@@ -32,15 +36,8 @@ pub fn QuestionList(
                         QuestionTypeSelector {
                             selected: questions[index].to_type(&lang),
                             lang,
-                            onchange: {
-                                let sample_survey = sample_survey.clone();
-                                let mut questions = questions.clone();
-                                move |qtype: String| {
-                                    let mut sample_survey = sample_survey.clone();
-                                    questions[index] = Question::new(&qtype);
-                                    sample_survey.surveys = questions.clone();
-                                    set_sample_survey.call(sample_survey);
-                                }
+                            onchange: move |qtype: String| {
+                                update_question.call((index, Question::new(&qtype)));
                             },
                         }
 
@@ -52,12 +49,11 @@ pub fn QuestionList(
                             placeholder: tr.input_title_hint,
                             value: questions[index].title(),
                             oninput: {
-                                let mut sample_survey = sample_survey.clone();
                                 let mut questions = questions.clone();
                                 move |e: Event<FormData>| {
                                     questions[index].set_title(&e.value());
-                                    sample_survey.surveys = questions.clone();
-                                    set_sample_survey.call(sample_survey.clone());
+                                    let question = questions[index].clone();
+                                    update_question.call((index, question));
                                 }
                             },
                         }
@@ -66,46 +62,22 @@ pub fn QuestionList(
                     if matches!(questions[index], Question::ShortAnswer(_) | Question::Subjective(_)) {
                         Subjective {
                             lang,
-                            onchange: {
-                                let mut sample_survey = sample_survey.clone();
-                                let mut questions = questions.clone();
-                                move |v: Question| {
-                                    questions[index] = v;
-                                    sample_survey.surveys = questions.clone();
-                                    set_sample_survey.call(sample_survey.clone());
-                                }
+                            onchange: move |v: Question| {
+                                update_question.call((index, v));
                             },
-                            onremove: {
-                                let mut sample_survey = sample_survey.clone();
-                                let mut questions = questions.clone();
-                                move |_| {
-                                    questions.remove(index);
-                                    sample_survey.surveys = questions.clone();
-                                    set_sample_survey.call(sample_survey.clone());
-                                }
+                            onremove: move |_| {
+                                remove_question.call(index);
                             },
                             question: questions[index].clone(),
                         }
                     } else {
                         Objective {
                             lang,
-                            onchange: {
-                                let mut sample_survey = sample_survey.clone();
-                                let mut questions = questions.clone();
-                                move |v: Question| {
-                                    questions[index] = v;
-                                    sample_survey.surveys = questions.clone();
-                                    set_sample_survey.call(sample_survey.clone());
-                                }
+                            onchange: move |v: Question| {
+                                update_question.call((index, v));
                             },
-                            onremove: {
-                                let mut sample_survey = sample_survey.clone();
-                                let mut questions = questions.clone();
-                                move |_| {
-                                    questions.remove(index);
-                                    sample_survey.surveys = questions.clone();
-                                    set_sample_survey.call(sample_survey.clone());
-                                }
+                            onremove: move |_| {
+                                remove_question.call(index);
                             },
                             question: questions[index].clone(),
                         }
@@ -117,12 +89,8 @@ pub fn QuestionList(
         button {
             class: "flex flex-row w-full",
             onclick: {
-                let mut sample_survey = sample_survey.clone();
-                let mut questions = questions.clone();
-                move |_| {
-                    questions.push(Question::default());
-                    sample_survey.surveys = questions.clone();
-                    set_sample_survey.call(sample_survey.clone());
+                move |e| {
+                    add_question.call(e);
                 }
             },
             AddQuestion { lang }

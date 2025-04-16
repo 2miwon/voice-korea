@@ -1,5 +1,5 @@
 use bdk::prelude::*;
-use models::{DeliberationSampleSurveyCreateRequest, OrganizationMemberSummary};
+use models::OrganizationMemberSummary;
 
 use crate::{
     components::expandable_card::ExpandableCard,
@@ -10,56 +10,35 @@ use crate::{
 };
 
 #[component]
-pub fn SampleSurveyMember(
+pub fn Member(
     lang: Language,
-
-    sample_survey: DeliberationSampleSurveyCreateRequest,
-    set_sample_survey: EventHandler<DeliberationSampleSurveyCreateRequest>,
 
     total_committees: Vec<OrganizationMemberSummary>,
     selected_committees: Vec<OrganizationMemberSummary>,
+
+    add_committee: EventHandler<i64>,
+    remove_committee: EventHandler<i64>,
+    clear_committee: EventHandler<MouseEvent>,
 ) -> Element {
     let tr: SampleSurveyMemberTranslate = translate(&lang);
 
-    let select_ids: Vec<i64> = selected_committees
-        .clone()
-        .iter()
-        .map(|v| v.user_id)
-        .collect();
     rsx! {
         ExpandableCard { required: false, header: tr.title, description: tr.description,
             CommitteeDropdown {
-                id: "sample-committee",
+                id: "basic-committee",
                 hint: tr.search_committee,
 
                 selected_committees,
                 committees: total_committees,
 
-                add_committee: {
-                    let mut select_ids = select_ids.clone();
-                    let mut sample = sample_survey.clone();
-                    move |member: OrganizationMemberSummary| {
-                        select_ids.push(member.user_id);
-                        sample.users = select_ids.clone();
-                        set_sample_survey.call(sample.clone());
-                    }
+                add_committee: move |member: OrganizationMemberSummary| {
+                    add_committee.call(member.user_id);
                 },
-                remove_committee: {
-                    let mut select_ids = select_ids.clone();
-                    let mut sample = sample_survey.clone();
-                    move |id: i64| {
-                        select_ids.retain(|committee_id| !(committee_id.clone() == id));
-                        sample.users = select_ids.clone();
-                        set_sample_survey.call(sample.clone());
-                    }
+                remove_committee: move |id: i64| {
+                    remove_committee.call(id);
                 },
-                clear_committee: {
-                    let mut sample = sample_survey.clone();
-                    move |_| {
-                        let select_ids = vec![];
-                        sample.users = select_ids.clone();
-                        set_sample_survey.call(sample.clone());
-                    }
+                clear_committee: move |e| {
+                    clear_committee.call(e);
                 },
             }
         }

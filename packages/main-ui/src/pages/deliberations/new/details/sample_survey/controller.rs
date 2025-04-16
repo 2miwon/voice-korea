@@ -87,6 +87,77 @@ impl Controller {
         Ok(ctrl)
     }
 
+    pub fn set_title(&mut self, title: String) {
+        self.sample_survey.with_mut(|req| {
+            req.title = title;
+        });
+    }
+
+    pub fn set_description(&mut self, description: String) {
+        self.sample_survey.with_mut(|req| {
+            req.description = description;
+        });
+    }
+
+    pub fn set_start_date(&mut self, started_at: i64) {
+        self.sample_survey.with_mut(|req| {
+            req.started_at = started_at;
+        });
+    }
+
+    pub fn set_end_date(&mut self, ended_at: i64) {
+        self.sample_survey.with_mut(|req| {
+            req.ended_at = ended_at;
+        });
+    }
+
+    pub fn set_estimate_time(&mut self, estimate_time: i64) {
+        self.sample_survey.with_mut(|req| {
+            req.estimate_time = estimate_time;
+        });
+    }
+
+    pub fn set_point(&mut self, point: i64) {
+        self.sample_survey.with_mut(|req| {
+            req.point = point;
+        });
+    }
+
+    pub fn add_committee(&mut self, user_id: i64) {
+        self.sample_survey.with_mut(|req| {
+            req.users.push(user_id);
+        });
+    }
+
+    pub fn remove_committee(&mut self, user_id: i64) {
+        self.sample_survey.with_mut(|req| {
+            req.users
+                .retain(|committee_id| !(committee_id.clone() == user_id));
+        })
+    }
+
+    pub fn clear_committee(&mut self) {
+        self.sample_survey.with_mut(|req| req.users = vec![]);
+    }
+
+    pub fn add_question(&mut self) {
+        self.sample_survey.with_mut(|req| {
+            req.surveys.push(Question::default());
+        });
+    }
+
+    pub fn remove_question(&mut self, index: usize) {
+        self.sample_survey.with_mut(|req| {
+            req.surveys.remove(index);
+        });
+    }
+
+    pub fn update_question(&mut self, index: usize, question: Question) {
+        self.sample_survey.with_mut(|req| {
+            req.surveys[index] = question;
+        });
+    }
+
     pub fn set_sample_survey(&mut self, info: DeliberationSampleSurveyCreateRequest) {
         self.sample_survey.set(info);
     }
