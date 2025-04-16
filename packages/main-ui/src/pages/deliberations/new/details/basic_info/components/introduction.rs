@@ -1,18 +1,19 @@
 use bdk::prelude::*;
-use models::DeliberationContentCreateRequest;
+use by_components::rich_texts::RichText;
+use models::DeliberationBasicInfoCreateRequest;
 
 use crate::{
     components::{
-        form_field::{Divide, InputDateField, UnderlineField},
+        form_field::{Divide, InputDateField},
         section::MainSection,
     },
-    pages::deliberations::new::details::deliberation::i18n::DeliberationTranslate,
+    pages::deliberations::new::details::basic_info::i18n::BasicInfoIntroductionTranslate,
 };
 
 #[component]
 pub fn Introduction(
     lang: Language,
-    deliberation: DeliberationContentCreateRequest,
+    basic_info: DeliberationBasicInfoCreateRequest,
     start_date_id: String,
     end_date_id: String,
     set_title: EventHandler<String>,
@@ -20,21 +21,21 @@ pub fn Introduction(
     set_start_date: EventHandler<i64>,
     set_end_date: EventHandler<i64>,
 ) -> Element {
-    let tr: DeliberationTranslate = translate(&lang);
+    let tr: BasicInfoIntroductionTranslate = translate(&lang);
     rsx! {
         MainSection {
             lang,
             required: true,
-            header: Some(tr.main_section1_title.to_string()),
-            description: Some(tr.main_section1_description.to_string()),
+            header: Some(tr.input_introduction_title.to_string()),
+            description: Some(tr.input_introduction_description.to_string()),
             open: Some(true),
             InputDateField {
                 start_date_id,
                 end_date_id,
-                placeholder: tr.title_placeholder.to_string(),
-                text_value: deliberation.title,
-                started_at: deliberation.started_at,
-                ended_at: deliberation.ended_at,
+                placeholder: tr.input_title_hint.to_string(),
+                text_value: basic_info.title,
+                started_at: basic_info.started_at,
+                ended_at: basic_info.ended_at,
                 oninput: move |e: Event<FormData>| {
                     set_title.call(e.value());
                 },
@@ -46,11 +47,11 @@ pub fn Introduction(
                 },
             }
             Divide {}
-            UnderlineField {
-                placeholder: tr.content_placeholder.to_string(),
-                value: deliberation.description,
-                oninput: move |e: Event<FormData>| {
-                    set_description.call(e.value());
+            RichText {
+                id: "introduction-rich-text",
+                content: basic_info.description,
+                onchange: move |e| {
+                    set_description.call(e);
                 },
             }
         }

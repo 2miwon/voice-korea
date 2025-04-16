@@ -34,6 +34,8 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                 Introduction {
                     lang,
                     deliberation: ctrl.deliberation(),
+                    start_date_id: "deliberation_start_date",
+                    end_date_id: "deliberation_end_date",
                     set_title: move |title: String| {
                         ctrl.set_title(title);
                     },
