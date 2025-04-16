@@ -67,6 +67,24 @@ impl UserService {
         use_context_provider(move || user);
     }
 
+    pub fn is_login(&self) -> bool {
+        (self.email)() != ""
+    }
+
+    pub fn get_nicename(&self) -> String {
+        let nickname = (self.nickname)();
+        if nickname != "" {
+            return nickname;
+        }
+
+        let email = (self.email)();
+        if email != "" {
+            return email;
+        }
+
+        "UNKNOWN".to_string()
+    }
+
     pub async fn google_login(&mut self) -> UserEvent {
         let (evt, token, email, name, profile_url) = self.request_to_firebase().await.unwrap();
 

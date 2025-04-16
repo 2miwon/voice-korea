@@ -1,3 +1,4 @@
+#![allow(unused)]
 use bdk::prelude::*;
 
 use by_components::icons::alignments::AlignJustify;
@@ -7,52 +8,56 @@ use crate::{
     components::{
         header::GoogleLoginPopup,
         icons::{self},
+        Header,
     },
     routes::Route,
     service::user_service::UserService,
 };
 use dioxus_popup::PopupService;
-#[component]
-pub fn MainHeader(lang: Language) -> Element {
-    let tr: HeaderTranslate = translate(&lang);
 
-    let user_service: UserService = use_context();
-    let mut popup_service: PopupService = use_context();
+pub static SELECTED_MENU: GlobalSignal<i32> = GlobalSignal::new(|| 0);
 
-    let email = (user_service.email)();
+// #[component]
+// pub fn MainHeader(lang: Language) -> Element {
+//     let tr: HeaderTranslate = translate(&lang);
 
-    let onclick = {
-        let email = email.clone();
-        move |_| {
-            tracing::debug!("signup button clicked");
+//     let user_service: UserService = use_context();
+//     let mut popup_service: PopupService = use_context();
 
-            if email != "" {
-                return;
-            }
+//     let email = (user_service.email)();
 
-            popup_service
-                .open(rsx! {
-                    GoogleLoginPopup {
-                        lang: lang.clone(),
-                        onclose: move |_| {
-                            popup_service.close();
-                        },
-                    }
-                })
-                .with_id("google_login")
-                .with_title(tr.login);
-        }
-    };
+//     let onclick = {
+//         let email = email.clone();
+//         move |_| {
+//             tracing::debug!("signup button clicked");
 
-    rsx! {
-        div { class: "block max-[1300px]:!hidden",
-            MainDesktopHeader { lang, email: email.clone(), onclick: onclick.clone() }
-        }
-        div { class: "hidden max-[1300px]:!block",
-            MainMobileHeader { lang, email, onclick }
-        }
-    }
-}
+//             if email != "" {
+//                 return;
+//             }
+
+//             popup_service
+//                 .open(rsx! {
+//                     GoogleLoginPopup {
+//                         lang: lang.clone(),
+//                         onclose: move |_| {
+//                             popup_service.close();
+//                         },
+//                     }
+//                 })
+//                 .with_id("google_login")
+//                 .with_title(tr.login);
+//         }
+//     };
+
+//     rsx! {
+//         div { class: "block max-[1300px]:!hidden",
+//             MainDesktopHeader { lang, email: email.clone(), onclick: onclick.clone() }
+//         }
+//         div { class: "hidden max-[1300px]:!block",
+//             MainMobileHeader { lang, email, onclick }
+//         }
+//     }
+// }
 
 #[component]
 pub fn MainMobileHeader(
@@ -174,73 +179,66 @@ pub fn MainMobileHeader(
 }
 
 #[component]
-pub fn MainDesktopHeader(
-    lang: Language,
-    email: String,
-    onclick: EventHandler<MouseEvent>,
-) -> Element {
+pub fn MainHeader(lang: Language) -> Element {
     let nav = use_navigator();
     let tr: HeaderTranslate = translate(&lang);
-    let console_url = &crate::config::get().console_url;
+    let user = use_context::<UserService>();
 
     rsx! {
-        div { class: "fixed top-0 left-0 w-screen h-(--header-height) overflow-hidden flex items-center justify-center z-100 bg-white",
-            div { class: "flex flex-row w-full max-w-1300 justify-between my-25 h-30 items-center",
-                Link {
-                    class: "flex flex-row items-center justify-around gap-4 h-full",
-                    to: Route::MainPage {
-                        lang: lang.clone(),
-                    },
-                    icons::Logo {}
-                    div { class: "font-extrabold text-base text-logo", "VOICE KOREA" }
+        Header { lang,
+            div { class: "flex font-bold justify-end items-center text-key-gray text-15 leading-19 gap-45",
+                A {
+                    lang,
+                    href: "#service",
+                    selected: SELECTED_MENU == 1,
+                    {tr.service}
                 }
-                //TODO: Add more menus
-                div { class: "flex font-bold justify-center items-center text-key-gray text-15 leading-19 gap-45",
-                    A { lang, href: "#service", {tr.service} }
-                    A { lang, href: "#project", {tr.project} }
-                    A { lang, href: "#institution", {tr.organization} }
-                    A { lang, href: "#price", {tr.plan} }
-                    A { lang, href: "#inquiry", {tr.contact} }
-                    A { lang, href: "#footer", {tr.guide} }
-
-                    div { class: "cursor-pointer", onclick,
-                        if email == "" {
-                            "{tr.login}"
-                        } else {
-                            "{tr.logout}"
-                        }
-                    }
-
-                    if email == "" {
-                        div {
-                            class: "cursor-pointer flex flex-row w-fit h-fit justify-center items-center rounded-lg px-5 py-10 bg-white border border-key-gray",
-                            onclick: move |_| {
-                                nav.push(format!("{}", console_url));
-                            },
-                            "{tr.deliberation_design}"
-                        }
-                    } else {
-                        Link {
-                            class: "cursor-pointer w-28 h-28 rounded-full bg-profile-gray",
-                            to: Route::ProfilePage { lang },
-                        }
-                    }
+                A {
+                    lang,
+                    href: "#project",
+                    selected: SELECTED_MENU == 2,
+                    {tr.project}
                 }
+                A {
+                    lang,
+                    href: "#institution",
+                    selected: SELECTED_MENU == 3,
+                    {tr.organization}
+                }
+                A { lang, href: "#price", selected: SELECTED_MENU == 4, {tr.plan} }
+                A {
+                    lang,
+                    href: "#inquiry",
+                    selected: SELECTED_MENU == 5,
+                    {tr.contact}
+                }
+                A { lang, href: "#footer", selected: SELECTED_MENU == 6, {tr.guide} }
+            
+
             }
         }
     }
 }
 
 #[component]
-pub fn A(children: Element, lang: Language, href: String) -> Element {
+pub fn A(
+    children: Element,
+    lang: Language,
+    href: String,
+    #[props(default = false)] selected: bool,
+) -> Element {
     let current_path: Route = use_route();
     let is_home = matches!(current_path, Route::MainPage { .. });
-
+    tracing::debug!("{href} {selected}");
     rsx! {
-        if is_home {
-            a { class: "cursor-pointer", href, {children} }
-        } else {
-            Link { class: "cursor-pointer", to: Route::MainPage { lang }, {children} }
+        div {
+            class: "cursor-pointer hover:text-secondary",
+            color: if selected { "var(--color-secondary)" },
+            if is_home {
+                a { href, {children} }
+            } else {
+                Link { to: Route::MainPage { lang }, {children} }
+            }
         }
     }
 }
