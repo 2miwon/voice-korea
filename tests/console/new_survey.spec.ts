@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import path from 'path';
 
 const timeouts = {
     wait: parseInt(process.env.WAIT_TIMEOUT || "2000", 10),
@@ -17,35 +18,51 @@ test.describe('New Survey Page', () => {
         const screenshotBase = path.join(
           "screenshots",
           "console",
-          "surveys",
+          "surveys-003",
           projectName,
           "begin",
         );
         
-        await page.goto('https://voice-korea.dev.biyard.co/en/');
-        await page.screenshot({ path: 'screenshots/console/NewSurvey-001/01-login-page.png', fullPage: true });
+        await page.goto('https://console.dev.voice-korea.com/en/');
+        await page.screenshot({ 
+            path: `${screenshotBase}/01-login-page.png`, 
+            fullPage: true 
+        });
 
         await page.waitForLoadState('domcontentloaded');
 
         const emailInput = page.getByRole('textbox').first();
         await expect(emailInput).toBeVisible({ timeout: timeouts.visible });
         await emailInput.fill('jesuswrites20043@gmail.com');
-        await page.screenshot({ path: 'screenshots/console/NewSurvey-001/02-email-filled.png', fullPage: true });
+        await page.screenshot({ 
+            path: `${screenshotBase}/02-email-filled.png`, 
+            fullPage: true 
+        });
 
         const passwordInput = page.getByRole('textbox').nth(1);
         await expect(passwordInput).toBeVisible({ timeout: timeouts.visible });
         await passwordInput.fill('12345678a#');
-        await page.screenshot({ path: 'screenshots/console/NewSurvey-001/03-password-filled.png', fullPage: true });
+        await page.screenshot({ 
+            path: `${screenshotBase}/03-password-filled.png`, 
+            fullPage: true 
+        });
 
         const loginButton = page.getByRole('button', { name: "Login" });
         await expect(loginButton).toBeVisible({ timeout: timeouts.visible });
         await loginButton.click();
-        await page.screenshot({ path: 'screenshots/console/NewSurvey-001/04-login-clicked.png', fullPage: true });
+        await page.screenshot({ 
+            path: `${screenshotBase}/04-login-clicked.png`, 
+            fullPage: true 
+        });
+
         await page.waitForLoadState('networkidle');
         await page.waitForTimeout(timeouts.wait);
 
-        await expect(page).toHaveURL("https://voice-korea.dev.biyard.co/en/surveys", { timeout: timeouts.url });
-        await page.screenshot({ path: 'screenshots/console/NewSurvey-001/05-survey-page.png', fullPage: true });
+        await expect(page).toHaveURL("https://console.dev.voice-korea.com/en/surveys", { timeout: timeouts.url });
+        await page.screenshot({ 
+            path: `${screenshotBase}/05-survey-page.png`, 
+            fullPage: true 
+        });
 
         // const startSurveyButton = page.getByRole('link', { name: "Start Survey" });
         // await expect(startSurveyButton).toBeVisible();
@@ -58,9 +75,12 @@ test.describe('New Survey Page', () => {
         // await expect(page).toHaveURL('https://voice-korea.dev.biyard.co/en/surveys/new', { timeout: timeouts.url });
         // await page.screenshot({ path: 'screenshots/console/NewSurvey-001/07-survey-questions.png', fullPage: true });
 
-        await page.goto('https://voice-korea.dev.biyard.co/en/surveys/new');
+        await page.goto('https://console.dev.voice-korea.com/en/surveys/new');
         console.log('✅ Navigated to:', page.url());
-        await page.screenshot({ path: 'screenshots/console/NewSurvey-003/01-new-survey-page.png', fullPage: true });
+        await page.screenshot({ 
+            path: `${screenshotBase}/06-new-survey-page.png`, 
+            fullPage: true 
+        });
 
         // const back = page.getByRole('link').filter({ hasText: /^$/ })
         // await expect(back).toBeVisible();
@@ -80,7 +100,10 @@ test.describe('New Survey Page', () => {
         const descriptionInput = page.getByRole('textbox', { name: 'Please enter a description' });
         await expect(descriptionInput).toBeVisible();
 
-        await page.screenshot({ path: 'screenshots/console/NewSurvey-003/02-all-fields-visible.png', fullPage: true });
+        await page.screenshot({ 
+            path: `${screenshotBase}/07-all-fields-visible.png`, 
+            fullPage: true 
+        });
 
 
         const errorMessages = [
@@ -99,12 +122,18 @@ test.describe('New Survey Page', () => {
         await startDatePicker.fill('2025/03/25');
         await endDatePicker.fill('2025/03/26');
         await descriptionInput.fill('A survey to analyze economic trends.');
-        await page.screenshot({ path: 'screenshots/console/NewSurvey-003/04-fields-filled.png', fullPage: true });
+        await page.screenshot({ 
+            path: `${screenshotBase}/08-fields-filled.png`, 
+            fullPage: true 
+        });
 
         const addQuestionButton = page.getByRole('button', { name: 'Please add a new question.' });
         await expect(addQuestionButton).toBeVisible();
         await addQuestionButton.click();
-        await page.screenshot({ path: 'screenshots/console/NewSurvey-003/05-question-added.png', fullPage: true });
+        await page.screenshot({ 
+            path: `${screenshotBase}/09-question-added.png`, 
+            fullPage: true 
+        });
 
         const questionTypeInput = page.locator('div').filter({ hasText: /^Single ChoiceMultiple ChoiceShort AnswerSubjective$/ }).getByRole('combobox')
         await expect(questionTypeInput).toBeVisible();
@@ -117,7 +146,10 @@ test.describe('New Survey Page', () => {
         await expect(questionDescriptionInput).toBeVisible();
 
         await page.waitForLoadState('networkidle');
-        await page.screenshot({ path: 'screenshots/console/NewSurvey-003/06-survey-submitted.png', fullPage: true });
+        await page.screenshot({ 
+            path: `${screenshotBase}/10-survey-submitted.png`, 
+            fullPage: true 
+        });
 
         // await expect(page).toHaveURL(/.*surveys$/, { timeout: timeouts.url });
     });
