@@ -274,7 +274,7 @@ impl UserController {
             .await
             .map_err(|e| {
                 tracing::error!("Failed to find user: {}", e);
-                ApiError::AuthKeyNotMatch("check your email".to_string())
+                ApiError::NotFound
             })?;
 
         let jwt = crate::utils::app_claims::AppClaims::generate_token(&user)?;
