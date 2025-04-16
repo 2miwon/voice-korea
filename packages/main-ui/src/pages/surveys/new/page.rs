@@ -94,6 +94,10 @@ pub fn SurveyCreatePage(lang: Language, survey_id: Option<i64>) -> Element {
                         ctrl.set_total_counts(total_counts);
                     },
 
+                    clear_attribute: move |_| {
+                        ctrl.clear_attribute();
+                    },
+
                     visibility: ctrl.get_current_step() == CurrentStep::SettingPanel,
                     onback: move |_| ctrl.change_step(CurrentStep::CreateSurvey),
                 }

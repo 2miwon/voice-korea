@@ -5,6 +5,8 @@ use bdk::prelude::*;
 #[component]
 pub fn SelectInputDateField(
     #[props(default = 54)] height: i64,
+    #[props(default = "".to_string())] start_date_id: String,
+    #[props(default = "".to_string())] end_date_id: String,
     selected_field: Option<String>,
     select_placeholder: String,
     placeholder: String,
@@ -28,6 +30,8 @@ pub fn SelectInputDateField(
             }
             InputDateField {
                 height,
+                start_date_id,
+                end_date_id,
                 placeholder,
                 text_value,
                 started_at,
