@@ -63,6 +63,23 @@ impl DeliberationProjectController {
         } else {
             builder = builder.order_by_created_at_asc();
         }
+        tracing::debug!("query param: {:?}", param);
+        if let Some(cond) = param.status {
+            let status = match cond.status {
+                ProjectStatusValue::Draft => DeliberationStatus::Draft,
+                ProjectStatusValue::Ready => DeliberationStatus::Ready,
+                ProjectStatusValue::InProgress => DeliberationStatus::InProgress,
+                ProjectStatusValue::Finish => DeliberationStatus::Finish,
+            };
+            match cond.op {
+                ProjectStatusOp::Equal => {
+                    builder = builder.status_equals(status);
+                }
+                ProjectStatusOp::NotEqual => {
+                    builder = builder.status_not_equals(status);
+                }
+            }
+        }
 
         let items: Vec<DeliberationProjectSummary> = builder
             .query()

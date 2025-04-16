@@ -141,7 +141,7 @@ pub struct Deliberation {
     pub creator_id: i64,
 }
 
-#[derive(Clone, Copy, Translate, PartialEq, Default, Debug, ApiModel)]
+#[derive(Clone, Copy, Translate, Eq, PartialEq, Default, Debug, ApiModel)]
 #[cfg_attr(feature = "server", derive(JsonSchema, aide::OperationIo))]
 pub enum DeliberationStatus {
     #[default]

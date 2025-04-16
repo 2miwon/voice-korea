@@ -45,6 +45,47 @@ pub struct DeliberationProject {
 #[cfg_attr(feature = "server", derive(schemars::JsonSchema, aide::OperationIo))]
 pub struct ProjectQueryBy {
     pub sorter: ProjectSorter,
+    #[serde(flatten)]
+    pub status: Option<ProjectStatusCondition>,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "server", derive(schemars::JsonSchema, aide::OperationIo))]
+pub struct ProjectStatusCondition {
+    pub status: ProjectStatusValue,
+    pub op: ProjectStatusOp,
+}
+//FIXME:
+// Using an enum structure would improve readability.
+// pub enum ProjectStatusCondition {
+//     Equal(DeliberationStatus),
+//     NotEqual(DeliberationStatus),
+// }
+// However, due to serialization and deserialization issues with enums,
+// we’ve implemented this using a struct for now.
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "server", derive(schemars::JsonSchema, aide::OperationIo))]
+pub enum ProjectStatusOp {
+    Equal,
+    NotEqual,
+}
+// FIXME:
+
+// FIXME: Use DeliberationStatus instead of this enum.
+// For now, `DeliberationStatus` cannot deserialize in axum backend.
+// So, we need to use this enum for now.
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "server", derive(schemars::JsonSchema, aide::OperationIo))]
+pub enum ProjectStatusValue {
+    Draft,
+    Ready,
+    InProgress,
+    Finish,
 }
 
 #[derive(
