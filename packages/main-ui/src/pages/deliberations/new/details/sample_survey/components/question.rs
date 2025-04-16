@@ -13,7 +13,6 @@ use crate::{
 pub fn QuestionList(
     lang: Language,
     sample_survey: DeliberationSampleSurveyCreateRequest,
-    set_sample_survey: EventHandler<DeliberationSampleSurveyCreateRequest>,
 
     add_question: EventHandler<MouseEvent>,
     remove_question: EventHandler<usize>,

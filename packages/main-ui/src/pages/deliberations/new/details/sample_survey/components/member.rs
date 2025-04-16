@@ -25,7 +25,7 @@ pub fn Member(
     rsx! {
         ExpandableCard { required: false, header: tr.title, description: tr.description,
             CommitteeDropdown {
-                id: "basic-committee",
+                id: "sample-committee",
                 hint: tr.search_committee,
 
                 selected_committees,

@@ -73,9 +73,6 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
                         lang,
 
                         sample_survey: ctrl.get_sample_survey(),
-                        set_sample_survey: move |survey| {
-                            ctrl.set_sample_survey(survey);
-                        },
 
                         add_question: move |_| {
                             ctrl.add_question();

@@ -158,10 +158,6 @@ impl Controller {
         });
     }
 
-    pub fn set_sample_survey(&mut self, info: DeliberationSampleSurveyCreateRequest) {
-        self.sample_survey.set(info);
-    }
-
     pub fn get_sample_survey(&self) -> DeliberationSampleSurveyCreateRequest {
         (self.sample_survey)()
     }

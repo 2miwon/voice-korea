@@ -7,12 +7,15 @@ use crate::{
 };
 
 #[component]
-pub fn FinalSurveyReward(
+pub fn Reward(
     lang: Language,
+
     final_survey: DeliberationFinalSurveyCreateRequest,
-    set_final_survey: EventHandler<DeliberationFinalSurveyCreateRequest>,
+    set_estimate_time: EventHandler<i64>,
+    set_point: EventHandler<i64>,
 ) -> Element {
     let tr: FinalSurveyRewardTranslate = translate(&lang);
+
     rsx! {
         ExpandableCard { required: false, header: tr.title, description: tr.description,
             div { class: "flex flex-row w-full justify-start items-center gap-100",
@@ -20,13 +23,9 @@ pub fn FinalSurveyReward(
                     label: tr.expected_time,
                     hint: tr.expected_time_hint,
                     value: final_survey.estimate_time,
-                    oninput: {
-                        let mut final_survey = final_survey.clone();
-                        move |e: Event<FormData>| {
-                            if let Ok(v) = e.value().trim().parse::<i64>() {
-                                final_survey.estimate_time = v;
-                                set_final_survey.call(final_survey.clone());
-                            }
+                    oninput: move |e: Event<FormData>| {
+                        if let Ok(v) = e.value().trim().parse::<i64>() {
+                            set_estimate_time.call(v);
                         }
                     },
                 }
@@ -35,13 +34,9 @@ pub fn FinalSurveyReward(
                     label: tr.expected_point,
                     hint: tr.expected_point_hint,
                     value: final_survey.point,
-                    oninput: {
-                        let mut final_survey = final_survey.clone();
-                        move |e: Event<FormData>| {
-                            if let Ok(v) = e.value().trim().parse::<i64>() {
-                                final_survey.point = v;
-                                set_final_survey.call(final_survey.clone());
-                            }
+                    oninput: move |e: Event<FormData>| {
+                        if let Ok(v) = e.value().trim().parse::<i64>() {
+                            set_point.call(v);
                         }
                     },
                 }
