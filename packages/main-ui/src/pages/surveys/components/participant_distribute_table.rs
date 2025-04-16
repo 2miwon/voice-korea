@@ -20,6 +20,7 @@ pub fn ParticipantDistributeTable(
     change_selected_tab: EventHandler<bool>,
     remove_attribute_option: EventHandler<(String, String)>,
     update_attribute_rate: EventHandler<(String, String, i64)>,
+    clear_attribute: EventHandler<MouseEvent>,
 ) -> Element {
     let tr: ParticipantDistributeTableTranslate = translate(&lang);
     let mut attribute_groups = use_signal(|| vec![]);
@@ -87,6 +88,13 @@ pub fn ParticipantDistributeTable(
                             },
                         }
                     }
+                }
+                div {
+                    class: "flex flex-row cursor-pointer px-20 py-10 bg-hover font-semibold text-sm rounded-sm text-white w-150 h-fit justify-center items-center",
+                    onclick: move |e| {
+                        clear_attribute.call(e);
+                    },
+                    {tr.init_attribute}
                 }
             }
 
@@ -206,6 +214,10 @@ translate! {
     attribute_group: {
         ko: "속성 그룹",
         en: "Attribute Group"
+    }
+    init_attribute: {
+        ko: "속성 초기화",
+        en: "Init Attribute"
     }
     attribute: {
         ko: "속성",
