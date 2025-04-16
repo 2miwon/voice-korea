@@ -28,31 +28,33 @@ pub fn Introduction(
             required: true,
             header: Some(tr.input_introduction_title.to_string()),
             description: Some(tr.input_introduction_description.to_string()),
-            open: Some(true),
-            InputDateField {
-                start_date_id,
-                end_date_id,
-                placeholder: tr.input_title_hint.to_string(),
-                text_value: basic_info.title,
-                started_at: basic_info.started_at,
-                ended_at: basic_info.ended_at,
-                oninput: move |e: Event<FormData>| {
-                    set_title.call(e.value());
-                },
-                onupdate_start_date: move |timestamp: i64| {
-                    set_start_date.call(timestamp);
-                },
-                onupdate_end_date: move |timestamp: i64| {
-                    set_end_date.call(timestamp);
-                },
-            }
-            Divide {}
-            RichText {
-                id: "introduction-rich-text",
-                content: basic_info.description,
-                onchange: move |e| {
-                    set_description.call(e);
-                },
+            open: Some(false),
+            div { class: "flex flex-col w-full h-fit gap-10",
+                InputDateField {
+                    start_date_id,
+                    end_date_id,
+                    placeholder: tr.input_title_hint.to_string(),
+                    text_value: basic_info.title,
+                    started_at: basic_info.started_at,
+                    ended_at: basic_info.ended_at,
+                    oninput: move |e: Event<FormData>| {
+                        set_title.call(e.value());
+                    },
+                    onupdate_start_date: move |timestamp: i64| {
+                        set_start_date.call(timestamp);
+                    },
+                    onupdate_end_date: move |timestamp: i64| {
+                        set_end_date.call(timestamp);
+                    },
+                }
+                Divide {}
+                RichText {
+                    id: "introduction-rich-text",
+                    content: basic_info.description,
+                    onchange: move |e| {
+                        set_description.call(e);
+                    },
+                }
             }
         }
     }
