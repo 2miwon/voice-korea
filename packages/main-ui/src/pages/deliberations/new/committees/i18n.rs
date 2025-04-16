@@ -9,27 +9,27 @@ translate! {
     }
     composition_committee_title: {
         ko: "공론 위원회 구성",
-        en: "Composition of a public opinion committee"
+        en: "Composition of a deliberation committee"
     }
     composition_committee_description: {
         ko: "공론위원회는 다양한 의견을 수렴하고 합의된 결정을 도출하는 역할을 합니다. 각 역할의 담당자를 설정해주세요.",
-        en: "The Public Opinion Committee's role is to collect diverse opinions and arrive at a consensus decision. Please set a person in charge of each role."
+        en: "The Deliberation Committee's role is to collect diverse opinions and arrive at a consensus decision. Please set a person in charge of each role."
     }
     opinion_designer_label: {
         ko: "공론 설계자",
-        en: "Public Opinion Designer"
+        en: "Deliberation Designer"
     }
     opinion_designer_hint: {
         ko: "공론 설계자 선택",
-        en: "Select Public Opinion Designer"
+        en: "Select Deliberation Designer"
     }
     specific_opinion_designer_label: {
         ko: "특정 공론 설계자",
-        en: "Specific Public Opinion Designer"
+        en: "Specific Deliberation Designer"
     }
     specific_opinion_designer_hint: {
         ko: "특정 공론 설계자 선택",
-        en: "Select Specific Public Opinion Designer"
+        en: "Select Specific Deliberation Designer"
     }
     analyst_label: {
         ko: "분석가",

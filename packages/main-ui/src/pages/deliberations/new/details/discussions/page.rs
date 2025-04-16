@@ -90,22 +90,22 @@ pub fn DeliberationDiscussionSettingPage(lang: Language) -> Element {
                 }
 
                 div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
-                    div {
-                        class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                    button {
+                        class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                         onclick: move |_| {
                             ctrl.back();
                         },
                         {tr.backward}
                     }
-                    div {
+                    button {
                         class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                         onclick: move |_| async move {
                             ctrl.temp_save().await;
                         },
                         {tr.temporary_save}
                     }
-                    div {
-                        class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
+                    button {
+                        class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
                         onclick: move |_| {
                             ctrl.next();
                         },
