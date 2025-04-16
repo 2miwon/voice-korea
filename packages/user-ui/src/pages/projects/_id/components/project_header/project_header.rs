@@ -37,6 +37,9 @@ pub fn ProjectHeader(
                     div { class: "w-full flex justify-start items-center font-medium text-lg/24 gap-8 h-fit",
                         div { class: "w-24 h-24",
                             match deliberation.status {
+                                DeliberationStatus::Draft => rsx! {
+                                    Waiting {}
+                                },
                                 DeliberationStatus::Ready => rsx! {
                                     Waiting {}
                                 },
@@ -98,7 +101,6 @@ pub fn ProjectHeader(
                     class: "w-540 h-300 rounded-xl bg-gray-100 object-cover",
                     src: deliberation.thumbnail_image,
                     alt: "Project Thumbnail Image",
-                
                 }
             }
         }

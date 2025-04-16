@@ -72,18 +72,6 @@ pub fn Deliberation(
                         div { class: "w-full flex justify-start text-[15px]",
                             "{deliberation.description}"
                         }
-                        div { class: "w-full mt-20 flex flex-row justify-start gap-40",
-                            for member in deliberation.members {
-                                div { class: "flex flex-row justify-start gap-8",
-                                    img { class: "w-40 h-40 bg-profile-gray rounded-full" }
-                                    div { class: "flex flex-col justify-center",
-                                        p { class: "font-semibold text-[15px] justify-start",
-                                            {member.role.translate(&lang)}
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
 

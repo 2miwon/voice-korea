@@ -44,7 +44,7 @@ pub fn CommitteeDropdown(
                                 onremove: move |event: Event<MouseData>| {
                                     event.stop_propagation();
                                     event.prevent_default();
-                                    remove_committee.call(committee.id);
+                                    remove_committee.call(committee.user_id);
                                 },
                             }
                         }

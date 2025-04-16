@@ -3,8 +3,8 @@ use models::{
     deliberation_user::DeliberationUserCreateRequest, DeliberationBasicInfoCreateRequest,
     DeliberationContentCreateRequest, DeliberationDiscussionCreateRequest,
     DeliberationFinalSurveyCreateRequest, DeliberationSampleSurveyCreateRequest,
-    DeliberationStatus, Info, OrganizationMember, OrganizationMemberQuery,
-    OrganizationMemberSummary, PanelV2, PanelV2Query, PanelV2Summary, Role, *,
+    DeliberationStatus, OrganizationMember, OrganizationMemberQuery, OrganizationMemberSummary,
+    PanelV2, PanelV2Query, PanelV2Summary, Role, *,
 };
 
 use crate::{config, routes::Route, service::login_service::LoginService};

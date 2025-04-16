@@ -21,7 +21,11 @@ pub fn FinalSurveyMember(
 ) -> Element {
     let tr: FinalSurveyMemberTranslate = translate(&lang);
 
-    let select_ids: Vec<i64> = selected_committees.clone().iter().map(|v| v.id).collect();
+    let select_ids: Vec<i64> = selected_committees
+        .clone()
+        .iter()
+        .map(|v| v.user_id)
+        .collect();
 
     rsx! {
         ExpandableCard { required: false, header: tr.title, description: tr.description,
@@ -36,7 +40,7 @@ pub fn FinalSurveyMember(
                     let mut select_ids = select_ids.clone();
                     let mut final_survey = final_survey.clone();
                     move |member: OrganizationMemberSummary| {
-                        select_ids.push(member.id);
+                        select_ids.push(member.user_id);
                         final_survey.users = select_ids.clone();
                         set_final_survey.call(final_survey.clone());
                     }
