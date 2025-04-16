@@ -79,7 +79,9 @@ pub fn DeliberationElearning(
                                 }
                                 button {
                                     class: "flex min-w-[165px] h-[40px] border bg-white border-primary rounded-sm justify-center items-center",
-                                    onclick: move |_| async move {},
+                                    onclick: move |_| async move {
+                                        ctrl.open_load_from_data_modal(index);
+                                    },
                                     div { class: "text-primary text-center font-semibold text-sm",
                                         {tr.load_from}
                                     }

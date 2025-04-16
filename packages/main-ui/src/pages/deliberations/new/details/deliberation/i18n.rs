@@ -41,12 +41,7 @@ translate! {
         en: "Learning Settings"
     }
 
-    main_section1_title: {
-        ko: "소개글 입력",
-        en: "Enter Introduction"
-    }
-
-    main_section1_description: {
+    introduction_description: {
         ko: "질문의 주제와 목적에 대해 설명해주세요. 참여자들이 더 쉽게 이해하고 적극적으로 참여할 수 있을 것입니다.",
         en: "Please describe the topic and purpose of the question. Participants will be able to understand and participate more actively."
     }

@@ -1,24 +1,19 @@
+use super::super::components::introduction_card::IntroductionCard;
+use super::*;
+use crate::{
+    components::expandable_card::ExpandableCard,
+    pages::deliberations::new::{
+        components::{committee_dropdown::CommitteeDropdown, survey_dropdown::SurveyDropdown},
+        step::material_upload::MaterialUpload,
+    },
+};
 use bdk::prelude::*;
-use by_components::rich_texts::RichText;
+use controller::*;
+use i18n::*;
 use models::{
     deliberation_basic_infos::deliberation_basic_info::DeliberationBasicInfoCreateRequest, File,
     OrganizationMemberSummary, ResourceFile, ResourceFileSummary, SurveyV2Summary,
 };
-
-use crate::{
-    components::expandable_card::ExpandableCard,
-    pages::deliberations::new::{
-        components::{
-            calendar_dropdown::CalendarDropdown, committee_dropdown::CommitteeDropdown,
-            survey_dropdown::SurveyDropdown,
-        },
-        step::material_upload::MaterialUpload,
-    },
-};
-
-use super::*;
-use controller::*;
-use i18n::*;
 
 #[component]
 pub fn DeliberationBasicInfoSettingPage(lang: Language) -> Element {
@@ -36,11 +31,24 @@ pub fn DeliberationBasicInfoSettingPage(lang: Language) -> Element {
             div { class: "flex flex-col w-full justify-start items-start",
                 div { class: "font-medium text-base text-text-black mb-10", {tr.post_setting} }
                 div { class: "flex flex-col w-full justify-start items-start gap-20",
-                    BasicInfoIntroduction {
+                    IntroductionCard {
                         lang,
-                        basic_info: basic_info.clone(),
-                        set_basic_info: move |info| {
-                            ctrl.set_basic_info(info);
+                        description: tr.introduction_description.to_string(),
+                        text_value: basic_info.clone().title,
+                        started_at: basic_info.clone().started_at,
+                        ended_at: basic_info.clone().ended_at,
+                        content: basic_info.clone().description,
+                        set_title: move |title: String| {
+                            ctrl.set_title(title);
+                        },
+                        set_description: move |description: String| {
+                            ctrl.set_description(description);
+                        },
+                        set_start_date: move |timestamp: i64| {
+                            ctrl.set_start_date(timestamp);
+                        },
+                        set_end_date: move |timestamp: i64| {
+                            ctrl.set_end_date(timestamp);
                         },
                     }
                     BasicMember {
@@ -261,85 +269,6 @@ pub fn BasicMember(
                         set_basic_info.call(basic.clone());
                     }
                 },
-            }
-        }
-    }
-}
-
-#[component]
-pub fn BasicInfoIntroduction(
-    lang: Language,
-
-    basic_info: DeliberationBasicInfoCreateRequest,
-    set_basic_info: EventHandler<DeliberationBasicInfoCreateRequest>,
-) -> Element {
-    let tr: BasicInfoIntroductionTranslate = translate(&lang);
-
-    rsx! {
-        ExpandableCard {
-            required: true,
-            header: tr.input_introduction_title,
-            description: tr.input_introduction_description,
-            div { class: "flex flex-col w-full justify-start items-start gap-10",
-                div { class: "flex flex-row w-full gap-20",
-                    div { class: "flex flex-row gap-20 px-15 w-full h-54 bg-background-gray rounded-sm justify-center items-center",
-                        input {
-                            class: "flex flex-row w-full justify-start items-center bg-transparent focus:outline-none",
-                            r#type: "text",
-                            placeholder: tr.input_title_hint,
-                            value: basic_info.clone().title,
-                            oninput: {
-                                let mut info = basic_info.clone();
-                                move |e: Event<FormData>| {
-                                    info.title = e.value();
-                                    set_basic_info.call(info.clone());
-                                }
-                            },
-                        }
-                    }
-
-                    div { class: "flex flex-row w-fit justify-start items-center gap-10",
-                        CalendarDropdown {
-                            id: "basic_start_date",
-                            date: basic_info.started_at,
-                            onchange: {
-                                let mut info = basic_info.clone();
-                                move |e| {
-                                    info.started_at = e;
-                                    set_basic_info.call(info.clone());
-                                }
-                            },
-                        }
-
-                        div { class: "flex flex-row w-16 h-2 bg-label-border-gray" }
-
-                        CalendarDropdown {
-                            id: "basic_end_date",
-                            date: basic_info.ended_at,
-                            onchange: {
-                                let mut info = basic_info.clone();
-                                move |e| {
-                                    info.ended_at = e;
-                                    set_basic_info.call(info.clone());
-                                }
-                            },
-                        }
-                    }
-                }
-
-                div { class: "flex flex-row w-full h-1 bg-period-border-gray" }
-
-                RichText {
-                    id: "introduction-rich-text",
-                    content: basic_info.clone().description,
-                    onchange: {
-                        let mut info = basic_info.clone();
-                        move |e| {
-                            info.description = e;
-                            set_basic_info.call(info.clone());
-                        }
-                    },
-                }
             }
         }
     }

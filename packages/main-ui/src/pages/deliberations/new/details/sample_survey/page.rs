@@ -1,11 +1,9 @@
-use bdk::prelude::*;
-
-use crate::pages::deliberations::new::details::sample_survey::components::{
-    introduction::Introduction, member::SampleSurveyMember, question::QuestionList,
-    reward::SampleSurveyReward,
-};
-
+use super::super::components::introduction_card::IntroductionCard;
 use super::*;
+use crate::pages::deliberations::new::details::sample_survey::components::{
+    member::SampleSurveyMember, question::QuestionList, reward::SampleSurveyReward,
+};
+use bdk::prelude::*;
 use controller::*;
 use i18n::*;
 
@@ -21,14 +19,26 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
                 div { class: "flex flex-col w-full justify-start items-start gap-10",
                     div { class: "font-medium text-base text-text-black", {tr.input_introduction} }
                     div { class: "flex flex-col w-full justify-start items-start gap-20",
-                        Introduction {
+                        IntroductionCard {
                             lang,
-                            sample_survey: sample_survey.clone(),
-                            set_sample_survey: move |survey| {
-                                ctrl.set_sample_survey(survey);
+                            description: tr.introduction_description.to_string(),
+                            text_value: sample_survey.clone().title,
+                            started_at: sample_survey.clone().started_at,
+                            ended_at: sample_survey.clone().ended_at,
+                            content: sample_survey.clone().description,
+                            set_title: move |title: String| {
+                                ctrl.set_title(title);
+                            },
+                            set_description: move |description: String| {
+                                ctrl.set_description(description);
+                            },
+                            set_start_date: move |timestamp: i64| {
+                                ctrl.set_start_date(timestamp);
+                            },
+                            set_end_date: move |timestamp: i64| {
+                                ctrl.set_end_date(timestamp);
                             },
                         }
-
                         SampleSurveyReward {
                             lang,
                             sample_survey: sample_survey.clone(),
