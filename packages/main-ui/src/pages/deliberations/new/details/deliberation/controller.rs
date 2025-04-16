@@ -6,7 +6,10 @@ use models::{
 };
 
 use crate::{
-    config, routes::Route, service::login_service::LoginService, utils::time::current_timestamp,
+    config,
+    routes::Route,
+    service::{login_service::LoginService, popup_service::PopupService},
+    utils::time::current_timestamp,
 };
 
 use super::DeliberationNewController;
@@ -25,12 +28,18 @@ pub struct Controller {
     deliberation: Signal<DeliberationContentCreateRequest>,
     pub parent: DeliberationNewController,
     pub nav: Navigator,
+    pub popup_service: PopupService,
+
+    selected_field: Signal<Option<String>>,
+    evaluation_title: Signal<String>,
+    evaluation_content: Signal<String>,
 }
 
 impl Controller {
     pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
         let user: LoginService = use_context();
         let deliberation = use_signal(|| DeliberationContentCreateRequest::default());
+        let popup_service: PopupService = use_context();
 
         let members = use_server_future(move || {
             let page = 1;
@@ -63,6 +72,11 @@ impl Controller {
             parent: use_context(),
             nav: use_navigator(),
             deliberation,
+            popup_service,
+
+            selected_field: use_signal(|| None),
+            evaluation_title: use_signal(|| "".to_string()),
+            evaluation_content: use_signal(|| "".to_string()),
         };
 
         let req = ctrl.parent.deliberation_requests();
@@ -160,7 +174,7 @@ impl Controller {
         total_committees
             .clone()
             .into_iter()
-            .filter(|member| roles.iter().any(|id| id.clone() == member.id))
+            .filter(|member| roles.iter().any(|id| id.clone() == member.user_id))
             .collect()
     }
 
@@ -235,5 +249,36 @@ impl Controller {
         self.parent.save_content(self.deliberation());
         self.nav
             .push(Route::DeliberationDiscussionSettingPage { lang: self.lang });
+    }
+
+    pub fn set_selected_field(&mut self, index: usize, field: String) {
+        tracing::debug!("set_selected_field: {} {:?}", index, field);
+        self.selected_field.set(Some(field));
+    }
+
+    pub fn set_evaluation_title(&mut self, index: usize, title: String) {
+        tracing::debug!("set_evaluation_title: {} {:?}", index, title);
+        self.evaluation_title.set(title);
+    }
+
+    pub fn set_evaluation_content(&mut self, index: usize, content: String) {
+        tracing::debug!("set_evaluation_content: {} {:?}", index, content);
+        self.evaluation_content.set(content);
+    }
+
+    #[allow(dead_code)]
+    pub async fn open_load_from_data_modal(&mut self) {
+        self.popup_service.open(rsx! {}).with_id("load_from_data");
+        // .with_title(translates.create_group);
+    }
+
+    pub fn add_evaluation(&mut self) {
+        tracing::debug!("add_evaluation");
+        // TODO: Implement this function
+    }
+
+    pub fn remove_evaluation(&mut self, index: usize) {
+        tracing::debug!("remove_evaluation: {:?}", index);
+        // TODO: Implement this function
     }
 }

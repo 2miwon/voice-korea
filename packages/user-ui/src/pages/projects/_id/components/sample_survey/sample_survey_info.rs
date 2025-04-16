@@ -73,20 +73,20 @@ pub fn SampleSurveyInfo(
                             contenteditable: false,
                             html: description,
                         }
-                        div { class: "w-full mt-20 flex flex-row justify-start gap-40",
-                            for member in sample_survey.members {
-                                div { class: "flex flex-row justify-start gap-8",
-                                    img { class: "w-40 h-40 bg-profile-gray rounded-full" }
-                                    div { class: "flex flex-col justify-start",
-                                        p { class: "font-semibold text-[15px] justify-start",
-                                            {member.role.translate(&lang)}
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                                        // FIXME: fix to query by members field
+                    // div { class: "w-full mt-20 flex flex-row justify-start gap-40",
+                    //     for member in sample_survey.members {
+                    //         div { class: "flex flex-row justify-start gap-8",
+                    //             img { class: "w-40 h-40 bg-profile-gray rounded-full" }
+                    //             div { class: "flex flex-col justify-start",
+                    //                 p { class: "font-semibold text-[15px] justify-start",
+                    //                     {member.role.translate(&lang)}
+                    //                 }
+                    //             }
+                    //         }
+                    //     }
+                    // }
                     }
-                
                 }
 
                 // information section when survey completed

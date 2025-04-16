@@ -5,7 +5,7 @@ use validator::Validate;
 use crate::deliberation_user::DeliberationUser;
 use crate::elearnings::elearning::ElearningCreateRequest;
 use crate::elearnings::elearning::{self, Elearning};
-use crate::{Question, ResourceFile};
+use crate::{Question, ResourceFile, User};
 
 #[derive(Validate)]
 #[api_model(base = "/v2/deliberations/:deliberation-id/contents", table = deliberation_contents, action = [create(users = Vec<i64>, elearnings = Vec<ElearningCreateRequest>)])]
@@ -34,7 +34,7 @@ pub struct DeliberationContent {
 
     #[api_model(summary, many_to_many = deliberation_content_members, foreign_table_name = users, foreign_primary_key = user_id, foreign_reference_key = content_id)]
     #[serde(default)]
-    pub members: Vec<DeliberationUser>,
+    pub members: Vec<User>,
 
     #[api_model(one_to_many = elearnings, foreign_key = content_id)]
     #[serde(default)]
@@ -52,7 +52,7 @@ pub struct DeliberationContent {
 impl Into<DeliberationContentCreateRequest> for DeliberationContent {
     fn into(self) -> DeliberationContentCreateRequest {
         DeliberationContentCreateRequest {
-            users: self.members.into_iter().map(|u| u.user_id).collect(),
+            users: self.members.into_iter().map(|u| u.id).collect(),
             elearnings: self.elearnings.into_iter().map(|e| e.into()).collect(),
             started_at: self.started_at,
             ended_at: self.ended_at,

@@ -1,9 +1,10 @@
 #![allow(unused_variables)]
 use super::*;
 use crate::{
-    components::icons::ArrowLeft,
+    components::{icons::ArrowLeft, section::AddSection},
     pages::deliberations::new::details::deliberation::components::{
-        elearning::DeliberationElearning, introduction::Introduction, member::DeliberationMember,
+        elearning::DeliberationElearning, evaluation::Evaluation, introduction::Introduction,
+        member::DeliberationMember,
     },
     service::metadata_api::MetadataApi,
 };
@@ -68,13 +69,13 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                 div { class: "flex flex-col w-full justify-start items-start gap-10 mt-20",
                     div { class: "flex flex-row w-full justify-start items-center gap-10",
                         div {
-                            class: "flex items-center justify-center w-197 h-46 bg-primary-deep aria-active:!bg-white rounded-[100px]",
+                            class: "flex items-center justify-center w-197 h-46 bg-primary-deep aria-active:!bg-white rounded-[100px] cursor-pointer",
                             "aria-active": ctrl.e_learning_tab(),
                             onclick: move |_| ctrl.e_learning_tab.set(true),
                             p { class: "text-text-black font-bold text-lg", {tr.e_learning_setting} }
                         }
                         div {
-                            class: "flex items-center justify-center w-139 h-46 bg-primary-deep aria-active:!bg-white rounded-[100px]",
+                            class: "flex items-center justify-center w-139 h-46 bg-primary-deep aria-active:!bg-white rounded-[100px] cursor-pointer",
                             "aria-active": !ctrl.e_learning_tab(),
                             onclick: move |_| ctrl.e_learning_tab.set(false),
                             p { class: "text-text-black font-bold text-lg", {tr.evaluation_setting} }
@@ -101,6 +102,35 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                                 ctrl.remove_elearning(index);
                             },
                         }
+                    } else {
+                        Evaluation {
+                            lang,
+                            evaluations: vec![], // FIXME: this is dummy data
+                            // selected_field: ctrl.selected_field(),
+                            set_form: move |(index, field): (usize, String)| {
+                                ctrl.set_selected_field(index, field);
+                            },
+                            set_title: move |(index, title): (usize, String)| {
+                                ctrl.set_evaluation_title(index, title);
+                            },
+                            set_content: move |(index, content): (usize, String)| {
+                                ctrl.set_evaluation_content(index, content);
+                            },
+                            removing_evaluation: move |index: usize| {
+                                ctrl.remove_evaluation(index);
+                            },
+                        }
+                    }
+
+                    AddSection {
+                        lang,
+                        onclick: move |e| {
+                            if ctrl.e_learning_tab() {
+                                ctrl.add_elearning();
+                            } else {
+                                ctrl.add_evaluation();
+                            }
+                        },
                     }
                 }
 

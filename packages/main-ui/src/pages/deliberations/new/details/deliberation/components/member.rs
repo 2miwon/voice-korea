@@ -34,7 +34,7 @@ pub fn DeliberationMember(
                 committees: total_committees,
 
                 add_committee: move |member: OrganizationMemberSummary| {
-                    add_committee.call(member.id);
+                    add_committee.call(member.user_id);
                 },
                 remove_committee: move |id: i64| {
                     remove_committee.call(id);

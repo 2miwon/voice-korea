@@ -225,7 +225,11 @@ pub fn BasicMember(
 ) -> Element {
     let tr: BasicMemberTranslate = translate(&lang);
 
-    let select_ids: Vec<i64> = selected_committees.clone().iter().map(|v| v.id).collect();
+    let select_ids: Vec<i64> = selected_committees
+        .clone()
+        .iter()
+        .map(|v| v.user_id)
+        .collect();
     rsx! {
         ExpandableCard { required: false, header: tr.title, description: tr.description,
             CommitteeDropdown {
@@ -239,7 +243,7 @@ pub fn BasicMember(
                     let mut select_ids = select_ids.clone();
                     let mut basic = basic_info.clone();
                     move |member: OrganizationMemberSummary| {
-                        select_ids.push(member.id);
+                        select_ids.push(member.user_id);
                         basic.users = select_ids.clone();
                         set_basic_info.call(basic.clone());
                     }

@@ -57,7 +57,7 @@ impl Controller {
         let current_step = route.clone().into();
         let deliberation_requests = use_signal(|| DeliberationCreateRequest::default());
 
-        let mut ctrl = Self {
+        let ctrl = Self {
             lang,
             user,
             current_step,
@@ -65,30 +65,6 @@ impl Controller {
             deliberation_requests,
             deliberation_id: use_signal(|| None),
         };
-
-        use_future(move || async move {
-            if let Some(creator_id) = ctrl.user.get_user_id() {
-                let org_id = if let Some(org) = ctrl.user.get_selected_org() {
-                    org.id
-                } else {
-                    btracing::e!(lang, ApiError::OrganizationNotFound);
-                    return;
-                };
-
-                let client = Deliberation::get_client(config::get().api_url);
-
-                match client.get_draft(org_id, creator_id).await {
-                    Ok(d) => {
-                        tracing::debug!("Draft: {:?}", d);
-                        ctrl.deliberation_id.set(Some(d.clone().id));
-                        ctrl.deliberation_requests.set(d.into());
-                    }
-                    Err(e) => {
-                        tracing::error!("Failed to get draft: {:?}", e);
-                    }
-                }
-            }
-        });
 
         use_context_provider(|| ctrl);
         Ok(ctrl)
@@ -101,6 +77,32 @@ impl Controller {
     pub fn project_areas(&self) -> Vec<ProjectArea> {
         self.deliberation_requests
             .with(|req| req.project_areas.clone())
+    }
+
+    pub async fn set_deliberation_id(&mut self, deliberation_id: Option<i64>) {
+        self.deliberation_id.set(deliberation_id);
+        let lang = self.lang;
+
+        let org_id = if let Some(org) = self.user.get_selected_org() {
+            org.id
+        } else {
+            btracing::e!(lang, ApiError::OrganizationNotFound);
+            return;
+        };
+
+        let client = Deliberation::get_client(config::get().api_url);
+
+        match client
+            .get_draft(org_id, deliberation_id.unwrap_or_default())
+            .await
+        {
+            Ok(d) => {
+                self.deliberation_requests.set(d.into());
+            }
+            Err(e) => {
+                tracing::error!("Failed to get draft: {:?}", e);
+            }
+        }
     }
 
     pub fn save_panels(&mut self, panel_ids: Vec<i64>) {
@@ -202,6 +204,8 @@ impl Controller {
             return;
         };
 
+        let id = self.deliberation_id();
+
         let DeliberationCreateRequest {
             started_at,
             ended_at,
@@ -225,60 +229,55 @@ impl Controller {
             ..
         } = self.deliberation_requests();
 
-        match cli.get_draft(org_id, creator_id).await {
-            Ok(d) => {
-                match cli
-                    .update(
-                        org_id,
-                        d.id,
-                        DeliberationCreateRequest {
-                            started_at,
-                            ended_at,
-                            thumbnail_image,
-                            title,
-                            description,
-                            project_area,
-                            project_areas,
-                            status: DeliberationStatus::Draft,
-                            creator_id,
-                            resource_ids,
-                            survey_ids,
-                            roles,
-                            panel_ids,
-                            steps,
-                            elearning,
-                            basic_infos,
-                            sample_surveys,
-                            contents,
-                            deliberation_discussions,
-                            final_surveys,
-                            drafts,
-                        },
-                    )
-                    .await
-                {
-                    Ok(_) => {
-                        btracing::i!(self.lang, Info::TempSave);
-                        self.deliberation_id.set(Some(d.id));
-                    }
-                    Err(e) => {
-                        btracing::e!(self.lang, e);
-                    }
+        if id.is_none() {
+            match cli
+                .create(
+                    org_id,
+                    started_at,
+                    ended_at,
+                    thumbnail_image,
+                    title,
+                    description,
+                    project_area,
+                    DeliberationStatus::Draft,
+                    creator_id,
+                    project_areas,
+                    resource_ids,
+                    survey_ids,
+                    roles,
+                    panel_ids,
+                    steps,
+                    elearning,
+                    basic_infos,
+                    sample_surveys,
+                    contents,
+                    deliberation_discussions,
+                    final_surveys,
+                    drafts,
+                )
+                .await
+            {
+                Ok(d) => {
+                    btracing::i!(self.lang, Info::TempSave);
+                    self.deliberation_id.set(Some(d.id));
                 }
+                Err(e) => btracing::e!(self.lang, e),
             }
-            Err(_) => {
-                match cli
-                    .create(
-                        org_id,
+        } else {
+            match cli
+                .update(
+                    org_id,
+                    id.unwrap_or_default(),
+                    DeliberationCreateRequest {
                         started_at,
                         ended_at,
                         thumbnail_image,
                         title,
                         description,
                         project_area,
-                        DeliberationStatus::Draft,
-                        creator_id,
                         project_areas,
+                        status: DeliberationStatus::Draft,
+                        creator_id,
                         resource_ids,
                         survey_ids,
                         roles,
@@ -291,14 +290,15 @@ impl Controller {
                         deliberation_discussions,
                         final_surveys,
                         drafts,
-                    )
-                    .await
-                {
-                    Ok(d) => {
-                        btracing::i!(self.lang, Info::TempSave);
-                        self.deliberation_id.set(Some(d.id));
-                    }
-                    Err(e) => btracing::e!(self.lang, e),
+                    },
+                )
+                .await
+            {
+                Ok(_) => {
+                    btracing::i!(self.lang, Info::TempSave);
+                }
+                Err(e) => {
+                    btracing::e!(self.lang, e);
                 }
             }
         }
@@ -322,10 +322,14 @@ pub struct OverviewController {
 impl OverviewController {
     pub fn new(
         lang: Language,
-        #[allow(unused_variables)] deliberation_id: Option<i64>,
+        deliberation_id: Option<i64>,
     ) -> std::result::Result<Self, RenderError> {
         // let mut parent: Controller = use_context();
-        let parent: Controller = use_context();
+        let mut parent: Controller = use_context();
+
+        use_future(move || async move {
+            parent.set_deliberation_id(deliberation_id).await;
+        });
 
         let title = use_memo(move || parent.deliberation_requests().title);
         let description = use_memo(move || parent.deliberation_requests().description);

@@ -1,19 +1,14 @@
-use bdk::prelude::*;
-
-use by_macros::DioxusController;
-
-use dioxus_logger::tracing;
-use dioxus_translate::{translate, Language};
-use models::{Group, GroupMemberV2, GroupQuery, GroupSummary, QueryResponse};
-
-use crate::service::{login_service::LoginService, popup_service::PopupService};
-
-use super::components::*;
-
 use super::{
+    components::*,
     i18n::GroupTranslate,
     page::{RemoveGroupModal, UpdateGroupNameModal},
 };
+use crate::service::{login_service::LoginService, popup_service::PopupService};
+use bdk::prelude::*;
+use by_macros::DioxusController;
+use dioxus_logger::tracing;
+use dioxus_translate::{translate, Language};
+use models::{Group, GroupMemberV2, GroupQuery, GroupSummary, QueryResponse};
 
 #[derive(Debug, Clone, Copy, DioxusController)]
 pub struct Controller {

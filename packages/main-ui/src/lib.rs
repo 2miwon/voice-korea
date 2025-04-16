@@ -59,6 +59,8 @@ pub mod components {
     pub mod radio;
     pub mod section;
     pub mod select;
+    pub mod select_category;
+    pub mod select_date;
     pub mod stepper;
     pub mod table_row;
     pub mod textarea;
