@@ -36,7 +36,7 @@ impl From<Route> for DeliberationNewStep {
     }
 }
 
-#[derive(Debug, Clone, Copy, DioxusController)]
+#[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     #[allow(dead_code)]
     lang: Language,
@@ -44,6 +44,7 @@ pub struct Controller {
     popup_service: Signal<PopupService>,
     current_step: DeliberationNewStep,
     pub user: LoginService,
+    pub nav: Navigator,
 
     deliberation_requests: Signal<DeliberationCreateRequest>,
     deliberation_id: Signal<Option<i64>>,
@@ -61,6 +62,7 @@ impl Controller {
             lang,
             user,
             current_step,
+            nav: use_navigator(),
             popup_service: use_signal(|| popup_service),
             deliberation_requests,
             deliberation_id: use_signal(|| None),
@@ -259,7 +261,10 @@ impl Controller {
             {
                 Ok(d) => {
                     btracing::i!(self.lang, Info::TempSave);
-                    self.deliberation_id.set(Some(d.id));
+                    self.nav.replace(Route::DeliberationEditPage {
+                        lang: self.lang,
+                        deliberation_id: d.id,
+                    });
                 }
                 Err(e) => btracing::e!(self.lang, e),
             }
