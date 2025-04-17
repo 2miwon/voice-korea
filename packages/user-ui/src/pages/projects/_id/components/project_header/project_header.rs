@@ -29,7 +29,7 @@ pub fn ProjectHeader(
     let ended_at = formatted_timestamp(lang, deliberation.ended_at);
 
     rsx! {
-        div { class: " max-w-1300 h-fit mb-40 flex max-[1000px]:flex-col-reverse flex-row w-full justify-center items-center gap-40 px-10",
+        div { class: "max-w-desktop h-fit mb-40 flex max-[1000px]:flex-col-reverse flex-row w-full justify-center items-center gap-40 px-10",
             // TODO: connect to data and UI
             //data section
             div { class: "w-full max-w-720 h-260 flex flex-col justify-center",

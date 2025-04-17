@@ -174,7 +174,7 @@ pub fn ProjectDesktopHeader(
 
     rsx! {
         div { class: "fixed top-0 left-0 w-screen h-80 overflow-hidden flex items-center justify-center z-100 bg-white",
-            div { class: "flex flex-row w-full max-w-1300 justify-between my-25 h-30 items-center",
+            div { class: "flex flex-row w-full max-w-desktop justify-between my-25 h-30 items-center",
                 Link {
                     class: "flex flex-row items-center justify-around gap-4 h-full",
                     to: Route::MainPage {
@@ -185,36 +185,12 @@ pub fn ProjectDesktopHeader(
                 }
                 //TODO: Add more menus
                 div { class: "flex font-bold justify-center items-center text-key-gray text-15 leading-19 gap-45",
-                    Link {
-                        //TODO: Change Target
-                        to: Route::ComingSoonPage { lang },
-                        {tr.space}
-                    }
-                    Link {
-                        //TODO: Change Target
-                        to: Route::ComingSoonPage { lang },
-                        {tr.reward}
-                    }
-                    Link {
-                        //TODO: Change Target
-                        to: Route::ComingSoonPage { lang },
-                        {tr.participant}
-                    }
-                    Link {
-                        //TODO: Change Target
-                        to: Route::ComingSoonPage { lang },
-                        {tr.deliberation_committee}
-                    }
-                    Link {
-                        //TODO: Change Target
-                        to: Route::ComingSoonPage { lang },
-                        {tr.data_room}
-                    }
-                    Link {
-                        //TODO: Change Target
-                        to: Route::ComingSoonPage { lang },
-                        {tr.activity_details}
-                    }
+                    Link { to: Route::ComingSoonPage { lang }, {tr.space} }
+                    Link { to: Route::ComingSoonPage { lang }, {tr.reward} }
+                    Link { to: Route::ComingSoonPage { lang }, {tr.participant} }
+                    Link { to: Route::ComingSoonPage { lang }, {tr.deliberation_committee} }
+                    Link { to: Route::ComingSoonPage { lang }, {tr.data_room} }
+                    Link { to: Route::ComingSoonPage { lang }, {tr.activity_details} }
 
                     div { class: "cursor-pointer", onclick,
                         if email == "" {

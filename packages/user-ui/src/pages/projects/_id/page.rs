@@ -80,7 +80,7 @@ pub fn ProjectDetails(
 ) -> Element {
     rsx! {
         div { class: "flex flex-col w-full justify-center items-center bg-box-gray",
-            div { class: "flex flex-col max-w-1300 w-full",
+            div { class: "flex flex-col max-w-desktop w-full",
                 match active_tab() {
                     Tab::BasicInfo => rsx! {
                         BasicInfo { lang, project_id }
