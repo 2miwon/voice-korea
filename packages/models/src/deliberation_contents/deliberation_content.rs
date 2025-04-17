@@ -40,9 +40,9 @@ pub struct DeliberationContent {
     #[serde(default)]
     pub elearnings: Vec<Elearning>,
 
-    #[api_model(summary, action = create, type = JSONB, version = v0.1, action_by_id = update)]
+    #[api_model(summary, action = create, type = JSONB, version = v0.2, action_by_id = update)]
     #[serde(default)]
-    pub questions: Vec<Question>,
+    pub questions: Vec<Option<Question>>,
 
     #[api_model(summary, many_to_many = deliberation_study_materials, table_name = resources, foreign_primary_key = resource_id, foreign_reference_key = deliberation_id)]
     #[serde(default)]

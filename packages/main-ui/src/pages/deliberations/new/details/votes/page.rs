@@ -1,11 +1,9 @@
-use bdk::prelude::*;
-
-use crate::pages::deliberations::new::details::votes::components::{
-    introduction::Introduction, member::FinalSurveyMember, question::QuestionList,
-    reward::FinalSurveyReward,
-};
-
+use super::super::components::introduction_card::IntroductionCard;
 use super::*;
+use crate::pages::deliberations::new::details::votes::components::{
+    member::FinalSurveyMember, question::QuestionList, reward::FinalSurveyReward,
+};
+use bdk::prelude::*;
 use controller::*;
 use i18n::*;
 
@@ -13,6 +11,7 @@ use i18n::*;
 pub fn DeliberationVoteSettingPage(lang: Language) -> Element {
     let mut ctrl = Controller::new(lang)?;
     let tr: VoteTranslate = translate(&lang);
+    let final_survey = ctrl.get_final_survey();
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
@@ -21,11 +20,24 @@ pub fn DeliberationVoteSettingPage(lang: Language) -> Element {
                     div { class: "flex flex-col w-full justify-start items-start gap-10",
                         div { class: "font-medium text-base text-text-black", {tr.vote_setting} }
                         div { class: "flex flex-col w-full justify-start items-start gap-20",
-                            Introduction {
+                            IntroductionCard {
                                 lang,
-                                final_survey: ctrl.get_final_survey(),
-                                set_final_survey: move |survey| {
-                                    ctrl.set_final_survey(survey);
+                                description: tr.introduction_description.to_string(),
+                                text_value: final_survey.clone().title,
+                                started_at: final_survey.clone().started_at,
+                                ended_at: final_survey.clone().ended_at,
+                                content: final_survey.clone().description,
+                                set_title: move |title: String| {
+                                    ctrl.set_title(title);
+                                },
+                                set_description: move |description: String| {
+                                    ctrl.set_description(description);
+                                },
+                                set_start_date: move |timestamp: i64| {
+                                    ctrl.set_start_date(timestamp);
+                                },
+                                set_end_date: move |timestamp: i64| {
+                                    ctrl.set_end_date(timestamp);
                                 },
                             }
 
