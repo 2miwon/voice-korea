@@ -91,7 +91,7 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                         style: if ctrl.e_learning_tab() { "width: 100%;" } else { "display: none;" },
                         DeliberationElearning {
                             lang,
-                            elearnings: ctrl.elearnings(),
+                            elearnings: ctrl.deliberation().elearnings,
                             set_elearning_necessary: move |(index, necessary): (usize, bool)| {
                                 ctrl.set_elearning_necessary(index, necessary);
                             },
@@ -114,7 +114,7 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                         style: if ctrl.e_learning_tab() { "display: none;" } else { "width: 100%;" },
                         Evaluation {
                             lang,
-                            questions: ctrl.questions(),
+                            questions: ctrl.deliberation().questions,
                             set_form: move |(index, field): (usize, String)| {
                                 ctrl.set_selected_field(index, field);
                             },
