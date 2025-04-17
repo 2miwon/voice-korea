@@ -199,12 +199,20 @@ impl Controller {
     }
 
     pub fn set_elearning_necessary(&mut self, index: usize, necessary: bool) {
+        if index >= self.deliberation().elearnings.len() {
+            tracing::error!("Index out of bounds: {}", index);
+            return;
+        }
         self.deliberation.with_mut(|req| {
             req.elearnings[index].necessary = necessary;
         });
     }
 
     pub fn set_elearning_title(&mut self, index: usize, title: String) {
+        if index >= self.deliberation().elearnings.len() {
+            tracing::error!("Index out of bounds: {}", index);
+            return;
+        }
         self.deliberation.with_mut(|req| {
             req.elearnings[index].title = title;
         });
@@ -229,7 +237,11 @@ impl Controller {
 
         self.deliberation.with_mut(|req| {
             tracing::debug!("elearnings: {:?} index: {:?}", req.elearnings, index);
-            req.elearnings[index].resources[0] = file.clone();
+            if req.elearnings[index].resources.is_empty() {
+                req.elearnings[index].resources.push(file.clone());
+            } else {
+                req.elearnings[index].resources[0] = file.clone();
+            }
         });
     }
 
@@ -251,6 +263,10 @@ impl Controller {
     }
 
     pub fn set_selected_field(&mut self, index: usize, field: String) {
+        if index >= self.deliberation().questions.len() {
+            tracing::error!("Index out of bounds: {}", index);
+            return;
+        }
         self.deliberation.with_mut(|req| {
             let question_field = Question::new(&field);
             req.questions[index] = Some(question_field);
@@ -258,6 +274,10 @@ impl Controller {
     }
 
     pub fn set_question_title(&mut self, index: usize, title: String) {
+        if index >= self.deliberation().questions.len() {
+            tracing::error!("Index out of bounds: {}", index);
+            return;
+        }
         self.deliberation.with_mut(|req| {
             if let Some(ref mut question) = req.questions[index] {
                 question.set_title(&title);
@@ -266,6 +286,10 @@ impl Controller {
     }
 
     pub fn set_question_description(&mut self, index: usize, content: String) {
+        if index >= self.deliberation().questions.len() {
+            tracing::error!("Index out of bounds: {}", index);
+            return;
+        }
         self.deliberation.with_mut(|req| {
             if let Some(ref mut question) = req.questions[index] {
                 question.set_description(&content);
@@ -305,10 +329,17 @@ impl Controller {
     }
 
     pub fn set_resource(&mut self, index: usize, resource: ResourceFile) {
-        tracing::debug!("set_resource: {:?} {:?}", index, resource);
+        if index >= self.deliberation().elearnings.len() {
+            tracing::error!("Index out of bounds: {}", index);
+            return;
+        }
         self.deliberation
             .with_mut(|req: &mut DeliberationContentCreateRequest| {
-                req.elearnings[index].resources[0] = resource.clone();
+                if req.elearnings[index].resources.is_empty() {
+                    req.elearnings[index].resources.push(resource.clone());
+                } else {
+                    req.elearnings[index].resources[0] = resource.clone();
+                }
             });
     }
 }
