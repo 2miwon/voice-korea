@@ -77,10 +77,12 @@ pub fn LoadDataModal(
     let tr: LoadDataModalTranslate = translate(&lang);
     let mut ctrl = Controller::new()?;
 
-    use_effect(use_reactive(&ctrl.resources(), move |resources| {
+    use_effect(move || {
+        let resources = ctrl.resources();
         let all_files: Vec<File> = resources.iter().flat_map(|r| &r.files).cloned().collect();
         files.set(all_files);
-    }));
+        tracing::debug!("Files: {:?}", files());
+    });
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start gap-40",

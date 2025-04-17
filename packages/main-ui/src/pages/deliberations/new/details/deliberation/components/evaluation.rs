@@ -1,7 +1,8 @@
+use super::super::controller::*;
 use crate::{
     components::{
         form_field::{Divide, SelectInputField, UnderlineField},
-        section::MainSection,
+        section::{AddSection, MainSection},
     },
     pages::deliberations::new::details::deliberation::i18n::DeliberationTranslate,
 };
@@ -18,6 +19,8 @@ pub fn Evaluation(
     removing_question: EventHandler<usize>,
 ) -> Element {
     let tr: DeliberationTranslate = translate(&lang);
+    let mut ctrl = Controller::new(lang)?;
+
     rsx! {
         div { class: "flex flex-col gap-20 w-full",
             for (index , question) in questions.iter().enumerate() {
@@ -55,6 +58,12 @@ pub fn Evaluation(
                         },
                     }
                 }
+            }
+            AddSection {
+                lang,
+                onclick: move |_| {
+                    ctrl.add_question();
+                },
             }
         }
     }

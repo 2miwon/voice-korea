@@ -2,7 +2,6 @@
 use super::super::components::introduction_card::IntroductionCard;
 use super::*;
 use crate::{
-    components::section::AddSection,
     pages::deliberations::new::details::deliberation::components::{
         elearning::DeliberationElearning, evaluation::Evaluation, member::DeliberationMember,
     },
@@ -87,10 +86,12 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                         }
                     }
 
-                    if ctrl.e_learning_tab() {
+                    div {
+                        class: "flex",
+                        style: if ctrl.e_learning_tab() { "width: 100%;" } else { "display: none;" },
                         DeliberationElearning {
                             lang,
-                            elearnings: ctrl.deliberation().elearnings,
+                            elearnings: ctrl.elearnings(),
                             set_elearning_necessary: move |(index, necessary): (usize, bool)| {
                                 ctrl.set_elearning_necessary(index, necessary);
                             },
@@ -107,10 +108,13 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                                 ctrl.remove_elearning(index);
                             },
                         }
-                    } else {
+                    }
+                    div {
+                        class: "flex",
+                        style: if ctrl.e_learning_tab() { "display: none;" } else { "width: 100%;" },
                         Evaluation {
                             lang,
-                            questions: ctrl.deliberation().questions,
+                            questions: ctrl.questions(),
                             set_form: move |(index, field): (usize, String)| {
                                 ctrl.set_selected_field(index, field);
                             },
@@ -124,17 +128,6 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                                 ctrl.remove_question(index);
                             },
                         }
-                    }
-
-                    AddSection {
-                        lang,
-                        onclick: move |e| {
-                            if ctrl.e_learning_tab() {
-                                ctrl.add_elearning();
-                            } else {
-                                ctrl.add_question();
-                            }
-                        },
                     }
                 }
 

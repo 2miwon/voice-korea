@@ -1,23 +1,20 @@
 #![allow(unused_variables)]
-#![allow(unused_mut)]
-use bdk::prelude::*;
-use models::{elearning::ElearningCreateRequest, File};
-
+use super::super::controller::*;
+#[cfg(feature = "web")]
+use crate::components::drop_zone::handle_file_upload;
 use crate::{
     components::{
         form_field::{InputField, UploadField},
-        section::{MainSection, SubSection},
+        section::{AddSection, MainSection, SubSection},
         upload_button::UploadButton,
     },
     pages::deliberations::new::details::deliberation::i18n::DeliberationTranslate,
     service::metadata_api::MetadataApi,
 };
-
-use super::super::controller::*;
-#[cfg(feature = "web")]
-use crate::components::drop_zone::handle_file_upload;
+use bdk::prelude::*;
 #[cfg(feature = "web")]
 use models::ApiError;
+use models::{elearning::ElearningCreateRequest, File};
 
 #[component]
 pub fn DeliberationElearning(
@@ -90,6 +87,12 @@ pub fn DeliberationElearning(
                         }
                     }
                 }
+            }
+            AddSection {
+                lang,
+                onclick: move |_| {
+                    ctrl.add_elearning();
+                },
             }
         }
     }

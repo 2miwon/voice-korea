@@ -24,6 +24,9 @@ pub struct Controller {
     pub committee_members: Signal<Vec<DeliberationUserCreateRequest>>,
 
     deliberation: Signal<DeliberationContentCreateRequest>,
+    elearnings: Signal<Vec<ElearningCreateRequest>>,
+    questions: Signal<Vec<Option<Question>>>,
+
     pub parent: DeliberationNewController,
     pub nav: Navigator,
     pub popup_service: PopupService,
@@ -67,6 +70,8 @@ impl Controller {
             parent: use_context(),
             nav: use_navigator(),
             deliberation,
+            elearnings: use_signal(|| vec![]),
+            questions: use_signal(|| vec![]),
             popup_service,
         };
 
@@ -90,10 +95,23 @@ impl Controller {
             if ended_at == 0 {
                 deliberation.ended_at = current_timestamp;
             }
-            ctrl.deliberation.set(deliberation);
+            ctrl.deliberation.set(deliberation.clone());
             ctrl.committee_members.set(committees.clone());
-            ctrl.add_elearning();
-            ctrl.add_question();
+            if deliberation.elearnings.is_empty() {
+                let mut elearning = ElearningCreateRequest::default();
+                elearning.resources.push(ResourceFile::default());
+                deliberation.elearnings.push(elearning);
+            } else {
+                ctrl.elearnings.set(deliberation.elearnings.clone());
+            }
+            if deliberation.questions.is_empty() {
+                deliberation.questions.push(None);
+            } else {
+                ctrl.questions.set(deliberation.questions.clone());
+            }
+            tracing::debug!("deliberation: {:?}", deliberation);
+            tracing::debug!("elearnings: {:?}", deliberation.elearnings);
+            tracing::debug!("questions: {:?}", deliberation.questions);
         });
 
         Ok(ctrl)
