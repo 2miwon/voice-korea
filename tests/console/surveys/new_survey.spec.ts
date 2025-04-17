@@ -67,16 +67,18 @@ test.describe('New Survey Page', () => {
         const startSurveyButton = page.getByRole('link', { name: "Start Survey" });
         await expect(startSurveyButton).toBeVisible();
         await startSurveyButton.click();
-        await page.screenshot({ path: 'screenshots/console/NewSurvey-001/06-survey-started.png', fullPage: true });
+        await page.screenshot({ 
+            path: `${screenshotBase}/06-survey-started.png`, 
+            fullPage: true 
+        });
 
         await page.waitForLoadState('networkidle');
         await page.waitForTimeout(timeouts.wait);
 
         await expect(page).toHaveURL('https://console.dev.voice-korea.com/en/surveys/new', );
-        await page.screenshot({ path: 'screenshots/console/NewSurvey-001/07-survey-questions.png', fullPage: true });
 
         await page.screenshot({ 
-            path: `${screenshotBase}/06-new-survey-page.png`, 
+            path: `${screenshotBase}/07-new-survey-page.png`, 
             fullPage: true 
         });
 
@@ -100,7 +102,7 @@ test.describe('New Survey Page', () => {
         await expect(descriptionInput).toBeVisible();
 
         await page.screenshot({ 
-            path: `${screenshotBase}/07-all-fields-visible.png`, 
+            path: `${screenshotBase}/08-all-basic-fields-visible.png`, 
             fullPage: true 
         });
 
@@ -126,6 +128,11 @@ test.describe('New Survey Page', () => {
         const toAddNewQuestionButton = page.getByRole('button', { name: 'Please add a new question.' })
         await expect(toAddNewQuestionButton).toBeVisible()
         await toAddNewQuestionButton.click()
+
+        await page.screenshot({ 
+            path: `${screenshotBase}/09-cost-reward-filled.png`, 
+            fullPage: true 
+        });
 
 
         const firstQuestionType = page.locator('div').filter({ hasText: /^Single ChoiceMultiple ChoiceShort AnswerSubjective$/ }).getByRole('combobox')
