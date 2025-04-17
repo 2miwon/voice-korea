@@ -146,7 +146,7 @@ impl Controller {
     pub fn remove_committee(&mut self, user_id: i64) {
         self.deliberation.with_mut(|req| {
             req.users
-                .retain(|committee_id| !(committee_id.clone() == user_id));
+                .retain(|committee_id| committee_id.clone() != user_id);
         })
     }
 

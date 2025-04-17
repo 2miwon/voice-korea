@@ -127,6 +127,23 @@ impl Controller {
         d
     }
 
+    pub fn add_committee(&mut self, user_id: i64) {
+        self.discussion.with_mut(|req| {
+            req.users.push(user_id);
+        });
+    }
+
+    pub fn remove_committee(&mut self, user_id: i64) {
+        self.discussion.with_mut(|req| {
+            req.users
+                .retain(|committee_id| committee_id.clone() != user_id);
+        })
+    }
+
+    pub fn clear_committee(&mut self) {
+        self.discussion.with_mut(|req| req.users = vec![]);
+    }
+
     pub fn get_selected_resources(&self) -> Vec<ResourceFile> {
         let metadatas = self.metadatas().unwrap_or_default();
         let resources = self.discussion().resources;

@@ -1,7 +1,7 @@
-use super::super::components::introduction_card::IntroductionCard;
+use super::super::components::{AssignMember, IntroductionCard};
 use super::*;
 use crate::pages::deliberations::new::details::votes::components::{
-    member::FinalSurveyMember, question::QuestionList, reward::FinalSurveyReward,
+    question::QuestionList, reward::FinalSurveyReward,
 };
 use bdk::prelude::*;
 use controller::*;
@@ -49,16 +49,21 @@ pub fn DeliberationVoteSettingPage(lang: Language) -> Element {
                                 },
                             }
 
-                            FinalSurveyMember {
+                            AssignMember {
                                 lang,
 
-                                final_survey: ctrl.get_final_survey(),
-                                set_final_survey: move |survey| {
-                                    ctrl.set_final_survey(survey);
-                                },
-
-                                total_committees: ctrl.get_committees(),
+                                committees: ctrl.get_committees(),
                                 selected_committees: ctrl.get_selected_committee(),
+
+                                add_committee: move |user_id: i64| {
+                                    ctrl.add_committee(user_id);
+                                },
+                                remove_committee: move |id: i64| {
+                                    ctrl.remove_committee(id);
+                                },
+                                clear_committee: move |_| {
+                                    ctrl.clear_committee();
+                                },
                             }
                         }
                     }

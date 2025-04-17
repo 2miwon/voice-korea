@@ -1,9 +1,9 @@
 #![allow(unused_variables)]
-use super::super::components::introduction_card::IntroductionCard;
+use super::super::components::{AssignMember, IntroductionCard};
 use super::*;
 use crate::{
     pages::deliberations::new::details::deliberation::components::{
-        elearning::DeliberationElearning, evaluation::Evaluation, member::DeliberationMember,
+        elearning::DeliberationElearning, evaluation::Evaluation,
     },
     service::metadata_api::MetadataApi,
 };
@@ -52,11 +52,10 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                     },
                 }
 
-                DeliberationMember {
+                AssignMember {
                     lang,
-                    deliberation: ctrl.deliberation(),
 
-                    total_committees: ctrl.get_committees(),
+                    committees: ctrl.get_committees(),
                     selected_committees: ctrl.get_selected_committee(),
 
                     add_committee: move |user_id: i64| {

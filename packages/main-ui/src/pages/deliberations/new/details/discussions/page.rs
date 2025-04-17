@@ -1,12 +1,12 @@
-use super::super::components::introduction_card::IntroductionCard;
+use super::super::components::{AssignMember, IntroductionCard};
 use super::*;
 use crate::pages::deliberations::new::details::discussions::components::{
-    discussion_group::DiscussionGroup, document::Document, member::DiscussionMember,
+    discussion_group::DiscussionGroup, document::Document,
 };
 use bdk::prelude::*;
 use controller::*;
 use i18n::*;
-use models::{DeliberationDiscussionCreateRequest, File};
+use models::File;
 
 // TODO: implement discussion
 #[component]
@@ -58,13 +58,18 @@ pub fn DeliberationDiscussionSettingPage(lang: Language) -> Element {
                         selected_resources: ctrl.get_selected_resources(),
                     }
 
-                    DiscussionMember {
+                    AssignMember {
                         lang,
-                        total_committees: ctrl.get_committees(),
+                        committees: ctrl.get_committees(),
                         selected_committees: ctrl.get_selected_committee(),
-                        discussion: discussion.clone(),
-                        set_discussion: move |info: DeliberationDiscussionCreateRequest| {
-                            ctrl.set_discussion(info.clone());
+                        add_committee: move |user_id: i64| {
+                            ctrl.add_committee(user_id);
+                        },
+                        remove_committee: move |id: i64| {
+                            ctrl.remove_committee(id);
+                        },
+                        clear_committee: move |_| {
+                            ctrl.clear_committee();
                         },
                     }
 

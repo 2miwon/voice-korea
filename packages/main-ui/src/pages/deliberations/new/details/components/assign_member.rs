@@ -1,37 +1,31 @@
-use bdk::prelude::*;
-use models::{DeliberationContentCreateRequest, OrganizationMemberSummary};
-
+use super::i18n::AssignMemberTranslate;
 use crate::{
     components::expandable_card::ExpandableCard,
-    pages::deliberations::new::{
-        components::committee_dropdown::CommitteeDropdown,
-        details::deliberation::i18n::DeliberationMmeberTranslate,
-    },
+    pages::deliberations::new::components::committee_dropdown::CommitteeDropdown,
 };
+use bdk::prelude::*;
+use models::OrganizationMemberSummary;
 
 #[component]
-pub fn DeliberationMember(
+pub fn AssignMember(
     lang: Language,
-
-    deliberation: DeliberationContentCreateRequest,
-
-    total_committees: Vec<OrganizationMemberSummary>,
+    committees: Vec<OrganizationMemberSummary>,
     selected_committees: Vec<OrganizationMemberSummary>,
 
     add_committee: EventHandler<i64>,
     remove_committee: EventHandler<i64>,
     clear_committee: EventHandler<MouseEvent>,
 ) -> Element {
-    let tr: DeliberationMmeberTranslate = translate(&lang);
+    let tr: AssignMemberTranslate = translate(&lang);
 
     rsx! {
         ExpandableCard { required: false, header: tr.title, description: tr.description,
             CommitteeDropdown {
-                id: "deliberation-committee",
+                id: "assign-committee",
                 hint: tr.search_committee,
 
                 selected_committees,
-                committees: total_committees,
+                committees,
 
                 add_committee: move |member: OrganizationMemberSummary| {
                     add_committee.call(member.user_id);

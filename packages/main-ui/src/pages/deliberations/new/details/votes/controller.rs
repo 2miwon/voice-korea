@@ -110,6 +110,22 @@ impl Controller {
         d
     }
 
+    pub fn add_committee(&mut self, user_id: i64) {
+        self.final_survey.with_mut(|req| {
+            req.users.push(user_id);
+        });
+    }
+
+    pub fn remove_committee(&mut self, user_id: i64) {
+        self.final_survey.with_mut(|req| {
+            req.users.retain(|id| id.clone() != user_id);
+        });
+    }
+
+    pub fn clear_committee(&mut self) {
+        self.final_survey.with_mut(|req| req.users = vec![]);
+    }
+
     pub fn get_selected_committee(&self) -> Vec<OrganizationMemberSummary> {
         let total_committees = self.members().unwrap_or_default();
         let final_survey = self.get_final_survey();

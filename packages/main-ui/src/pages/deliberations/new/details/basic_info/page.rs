@@ -1,10 +1,9 @@
-use super::super::components::introduction_card::IntroductionCard;
+use super::super::components::{AssignMember, IntroductionCard};
 use super::*;
 use crate::{
     components::expandable_card::ExpandableCard,
     pages::deliberations::new::{
-        components::{committee_dropdown::CommitteeDropdown, survey_dropdown::SurveyDropdown},
-        step::material_upload::MaterialUpload,
+        components::survey_dropdown::SurveyDropdown, step::material_upload::MaterialUpload,
     },
 };
 use bdk::prelude::*;
@@ -12,7 +11,7 @@ use controller::*;
 use i18n::*;
 use models::{
     deliberation_basic_infos::deliberation_basic_info::DeliberationBasicInfoCreateRequest, File,
-    OrganizationMemberSummary, ResourceFile, ResourceFileSummary, SurveyV2Summary,
+    ResourceFile, ResourceFileSummary, SurveyV2Summary,
 };
 
 #[component]
@@ -51,14 +50,18 @@ pub fn DeliberationBasicInfoSettingPage(lang: Language) -> Element {
                             ctrl.set_end_date(timestamp);
                         },
                     }
-                    BasicMember {
+                    AssignMember {
                         lang,
-                        total_committees: ctrl.get_committees(),
+                        committees: ctrl.get_committees(),
                         selected_committees: ctrl.get_selected_committee(),
-                        basic_info: basic_info.clone(),
-                        set_basic_info: move |info: DeliberationBasicInfoCreateRequest| {
-                            tracing::debug!("info:{:?}", info);
-                            ctrl.set_basic_info(info.clone());
+                        add_committee: move |user_id: i64| {
+                            ctrl.add_committee(user_id);
+                        },
+                        remove_committee: move |id: i64| {
+                            ctrl.remove_committee(id);
+                        },
+                        clear_committee: move |_| {
+                            ctrl.clear_committee();
                         },
                     }
                     BasicMaterial {
@@ -213,63 +216,6 @@ pub fn ConnectProject(
                     move |_| {
                         let select_ids = vec![];
                         basic.surveys = select_ids.clone();
-                        set_basic_info.call(basic.clone());
-                    }
-                },
-            }
-        }
-    }
-}
-
-#[component]
-pub fn BasicMember(
-    lang: Language,
-
-    basic_info: DeliberationBasicInfoCreateRequest,
-    set_basic_info: EventHandler<DeliberationBasicInfoCreateRequest>,
-
-    total_committees: Vec<OrganizationMemberSummary>,
-    selected_committees: Vec<OrganizationMemberSummary>,
-) -> Element {
-    let tr: BasicMemberTranslate = translate(&lang);
-
-    let select_ids: Vec<i64> = selected_committees
-        .clone()
-        .iter()
-        .map(|v| v.user_id)
-        .collect();
-    rsx! {
-        ExpandableCard { required: false, header: tr.title, description: tr.description,
-            CommitteeDropdown {
-                id: "basic-committee",
-                hint: tr.search_committee,
-
-                selected_committees,
-                committees: total_committees,
-
-                add_committee: {
-                    let mut select_ids = select_ids.clone();
-                    let mut basic = basic_info.clone();
-                    move |member: OrganizationMemberSummary| {
-                        select_ids.push(member.user_id);
-                        basic.users = select_ids.clone();
-                        set_basic_info.call(basic.clone());
-                    }
-                },
-                remove_committee: {
-                    let mut select_ids = select_ids.clone();
-                    let mut basic = basic_info.clone();
-                    move |id: i64| {
-                        select_ids.retain(|committee_id| !(committee_id.clone() == id));
-                        basic.users = select_ids.clone();
-                        set_basic_info.call(basic.clone());
-                    }
-                },
-                clear_committee: {
-                    let mut basic = basic_info.clone();
-                    move |_| {
-                        let select_ids = vec![];
-                        basic.users = select_ids.clone();
                         set_basic_info.call(basic.clone());
                     }
                 },
