@@ -2,12 +2,9 @@ use bdk::prelude::*;
 use by_components::icons::{arrows::ChevronDown, edit::Search};
 use models::deliberation_project::{DeliberationProjectSummary, ProjectSorter};
 
-use crate::{
-    pages::{
-        components::project_box::ProjectBox,
-        projects::{controller::Controller, i18n::ProjectListTranslate},
-    },
-    routes::Route,
+use crate::pages::{
+    components::project_card::ProjectCard,
+    projects::{controller::Controller, i18n::ProjectListTranslate},
 };
 
 #[component]
@@ -15,7 +12,6 @@ pub fn ProjectListPage(lang: Language) -> Element {
     let mut ctrl = Controller::new(lang)?;
 
     let projects = ctrl.projects()?.items;
-    tracing::debug!("deliberation projects: {:?}", projects);
 
     rsx! {
         div { class: "flex flex-col w-full justify-center items-center mt-80",
@@ -93,7 +89,6 @@ pub fn SearchProject(lang: Language, onsearch: EventHandler<String>) -> Element 
 
 #[component]
 pub fn DeliberationList(lang: Language, projects: Vec<DeliberationProjectSummary>) -> Element {
-    let nav = use_navigator();
     let tr: ProjectListTranslate = translate(&lang);
 
     rsx! {
@@ -102,26 +97,12 @@ pub fn DeliberationList(lang: Language, projects: Vec<DeliberationProjectSummary
                 "{tr.project}"
             }
 
-            div { class: "w-full grid grid-cols-3 gap-20",
-                for deliberation in projects.clone() {
-                    div {
-                        class: "cursor-pointer",
-                        onclick: {
-                            let project_id = deliberation.clone().id.clone();
-                            move |_| {
-                                nav.push(Route::ProjectPage {
-                                    lang,
-                                    project_id,
-                                });
-                            }
-                        },
-                        ProjectBox {
-                            lang,
-                            deliberation: deliberation.clone().into(),
-                        }
-                    }
+            div { class: "grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-20 w-full mt-30 [&>:nth-child(n+3)]:hidden tablet:[&>:nth-child(n+3)]:block tablet:[&>:nth-child(n+5)]:hidden desktop:[&>*]:!block",
+                for deliberation in projects {
+                    ProjectCard { lang, deliberation: deliberation.into() }
                 }
             }
+        
         }
     }
 }

@@ -2,11 +2,15 @@ use bdk::prelude::*;
 use by_components::icons as by_components_icon;
 use dioxus_translate::{translate, Language};
 
+mod controller;
 mod i18n;
+
 use crate::{
     components::{
+        button::Button,
+        custom_checkbox::CustomCheckbox,
         icons::{self, Logo},
-        input::InputBox,
+        input::Input,
     },
     routes::Route,
     service::user_service::{UserEvent, UserService},
@@ -21,35 +25,8 @@ use i18n::{
 pub fn SeeDetailButton(lang: Language) -> Element {
     let tr: SeeDetailButtonTranslate = translate(&lang);
     rsx! {
-        div { class: "flex flex-row bg-[#7C8292] rounded-[4px] px-[10px] py-[3px] font-semibold text-white text-[14px]",
-            "{tr.see_detail}"
-        }
-    }
-}
-
-#[component]
-fn CustomCheckbox(lang: Language, mut checked: bool, onchange: EventHandler<bool>) -> Element {
-    rsx! {
-        label { class: "flex items-center cursor-pointer",
-            input {
-                r#type: "checkbox",
-                class: "hidden",
-                checked: "{checked}",
-                onchange: move |_| {
-                    onchange.call(!checked);
-                },
-            }
-            div {
-                class: format!(
-                    "w-[24px] h-[24px] flex items-center justify-center rounded-md transition-all {}",
-                    if checked { "bg-[#8095EA]" } else { "border-1 bg-white border-gray-400" },
-                ),
-                div { class: "text-white text-lg",
-                    if checked {
-                        div { "✔" }
-                    }
-                }
-            }
+        div { class: "flex flex-row bg-third rounded-[4px] px-[10px] py-[3px] font-semibold text-white text-[14px]",
+            {tr.see_detail}
         }
     }
 }
@@ -61,20 +38,20 @@ pub fn CompletePopup(lang: Language, onclose: EventHandler<MouseEvent>) -> Eleme
     rsx! {
         div { class: "flex flex-col min-w-[420px] max-[420px]:min-w-[300px] justify-center items-center gap-[35px]",
             div { class: "flex flex-col w-full justify-center items-center gap-[15px]",
-                div { class: "flex flex-row w-[88px] h-[88px] justify-center items-center bg-[#7C8292] rounded-[100px]",
-                    Logo { width: "47", height: "47", class: "fill-[#ffffff]" }
+                div { class: "flex flex-row w-[88px] h-[88px] justify-center items-center bg-third rounded-[100px]",
+                    Logo { width: "47", height: "47", class: "fill-white" }
                 }
-                div { class: "flex flex-col w-full justify-center items-center font-semibold text-[16px] text-[#35343F] leading-[24px]",
+                div { class: "flex flex-col w-full justify-center items-center font-semibold text-[16px] text-key-gray leading-[24px]",
                     div { "{tr.complete_message_1}" }
                     div { "{tr.complete_message_2}" }
                 }
             }
             div {
-                class: "cursor-pointer flex flex-row w-full h-[57px] justify-center items-center rounded-[12px] bg-[#8095EA] font-extrabold text-[18px] text-white",
+                class: "cursor-pointer flex flex-row w-full h-[57px] justify-center items-center rounded-[12px] bg-primary font-extrabold text-[18px] text-white",
                 onclick: move |_| {
                     popup_service.close();
                 },
-                "{tr.start}"
+                {tr.start}
             }
         }
     }
@@ -97,41 +74,40 @@ pub fn SignupPopup(lang: Language, email: String, profile_url: String) -> Elemen
                 div { class: "flex flex-col gap-[5px] w-full",
                     div { class: "flex flex-row w-full justify-start items-start gap-[3px]",
                         div { class: "font-bold text-[#ff0004] text-[14px]", "*" }
-                        div { class: "font-bold text-[#222222] text-[14px]", "{tr.nickname}" }
+                        div { class: "font-bold text-[#222222] text-[14px]", {tr.nickname} }
                     }
-                    InputBox {
-                        placeholder: "{tr.nickname_hint}",
+                    Input {
+                        placeholder: tr.nickname_hint,
                         value: nickname(),
                         onchange: move |v: String| {
                             nickname.set(v);
                         },
                     }
-                    div { class: "font-normal text-[#7C8292] text-[14px]", "{tr.nickname_warning}" }
+                    div { class: "font-normal text-[#7C8292] text-[14px]", {tr.nickname_warning} }
                     if nickname_error() != "" {
                         div { class: "font-normal text-red-400 text-[14px]", {nickname_error()} }
                     }
                 }
                 div { class: "flex flex-col w-full justify-start items-center gap-[15px]",
                     div { class: "flex flex-row w-full gap-[10px]",
+
                         CustomCheckbox {
-                            lang,
                             checked: checked_1(),
                             onchange: move |v| {
                                 checked_1.set(v);
                             },
                         }
-                        div { class: "font-medium !text-davy-gray text-[16px]", "{tr.agree_1}" }
+                        div { class: "font-medium !text-davy-gray text-[16px]", {tr.agree_1} }
                         SeeDetailButton { lang }
                     }
                     div { class: "flex flex-row w-full gap-[10px]",
                         CustomCheckbox {
-                            lang,
                             checked: checked_2(),
                             onchange: move |v| {
                                 checked_2.set(v);
                             },
                         }
-                        div { class: "font-medium !text-davy-gray text-[16px]", "{tr.agree_2}" }
+                        div { class: "font-medium !text-davy-gray text-[16px]", {tr.agree_2} }
                         SeeDetailButton { lang }
                     }
                     if check_error() != "" {
@@ -140,7 +116,7 @@ pub fn SignupPopup(lang: Language, email: String, profile_url: String) -> Elemen
                 }
             }
             div {
-                class: "cursor-pointer flex flex-row w-full h-[57px] justify-center items-center rounded-[12px] bg-[#8095EA] font-extrabold text-[18px] text-white",
+                class: "cursor-pointer flex flex-row w-full h-[57px] justify-center items-center rounded-[12px] bg-primary font-extrabold text-[18px] text-white",
                 onclick: move |_| {
                     let email = email.clone();
                     async move {
@@ -173,7 +149,7 @@ pub fn SignupPopup(lang: Language, email: String, profile_url: String) -> Elemen
                         };
                     }
                 },
-                "{tr.next}"
+                {tr.next}
             }
         }
     }
@@ -188,7 +164,7 @@ pub fn GoogleLoginPopup(lang: Language, onclose: EventHandler<MouseEvent>) -> El
     rsx! {
         div { class: "flex flex-col min-w-[420px] max-[420px]:min-w-[300px] justify-between items-center",
             div {
-                class: "cursor-pointer flex flex-row w-full bg-[#8095EA] rounded-[8px] p-[8px] gap-[15px] justify-start items-center",
+                class: "cursor-pointer flex flex-row w-full bg-primary rounded-[8px] p-[8px] gap-[15px] justify-start items-center",
                 onclick: move |e: Event<MouseData>| {
                     let onclose = onclose.clone();
                     async move {
@@ -223,112 +199,67 @@ pub fn GoogleLoginPopup(lang: Language, onclose: EventHandler<MouseEvent>) -> El
             }
 
             div { class: "flex flex-row w-full justify-center items-center gap-[20px] font-semibold text-[#A3A3A3] text-[14px] mt-[45px]",
-                div { "{tr.privacy}" }
-                div { "{tr.usage}" }
+                div { {tr.privacy} }
+                div { {tr.usage} }
             }
         }
     }
 }
 
 #[component]
-pub fn Header(lang: Language) -> Element {
+pub fn Header(lang: Language, children: Element) -> Element {
     let translates: Translate = translate(&lang);
-    let mut popup_service: PopupService = use_context();
-    let user_service: UserService = use_context();
-    let email = (user_service.email)();
 
-    let onclick = {
-        let email = email.clone();
-        move |_| {
-            tracing::debug!("signup button clicked");
-
-            if email != "" {
-                return;
-            }
-
-            popup_service
-                .open(rsx! {
-                    GoogleLoginPopup {
-                        lang: lang.clone(),
-                        onclose: move |_| {
-                            popup_service.close();
-                        },
-                    }
-                })
-                .with_id("google_login")
-                .with_title(translates.login);
-        }
-    };
+    let mut ctrl = controller::Controller::new(lang)?;
 
     rsx! {
-        header { class: "flex justify-between my-25 h-30 items-center",
-            Link {
-                class: "flex flex-row items-center justify-around gap-4 h-full",
-                to: Route::MainPage {
-                    lang: lang.clone(),
-                },
-                icons::Logo {}
-                div { class: "font-extrabold text-base text-logo", "VOICE KOREA" }
+        header { class: "fixed top-0 left-0 w-screen h-(--header-height) overflow-hidden flex items-center justify-center z-100 bg-white",
+            div { class: "flex justify-between my-25 h-30 items-center w-full max-w-desktop  gap-45",
+                Link {
+                    class: "flex flex-row items-center justify-around gap-4 h-full",
+                    to: Route::MainPage { lang },
+                    icons::Logo {}
+                    div { class: "font-extrabold text-base text-logo", "VOICE KOREA" }
+                }
+                //Menu Area
+                div { class: "flex-1", {children} }
+                //Login Area
+                if !ctrl.user.is_login() {
+                    div {
+                        onclick: move |_| {
+                            ctrl.google_login();
+                        },
+                        {translates.login}
+                    }
+                }
+                Button {
+                    class: "flex flex-row w-fit h-fit justify-center items-center rounded-lg p-5 bg-white border border-key-gray",
+                    onclick: move |_| {
+                        ctrl.move_to_console();
+                    },
+                    {translates.deliberation_design}
+                }
+                if ctrl.user.is_login() {
+                    Profile { name: ctrl.user.get_nicename() }
+                }
             }
-            //TODO: Add more menus
-            div { class: "flex font-bold justify-center items-center text-key-gray text-15 leading-19 gap-45",
-                Link {
-                    //TODO: Change Target
-                    to: Route::ComingSoonPage { lang },
-                    "{translates.service}"
-                }
-                Link {
-                    to: Route::ProjectListPage {
-                        lang: lang.clone(),
-                    },
-                    "{translates.project}"
-                }
-                Link {
-                    //TODO: Change Target
-                    to: Route::ComingSoonPage {
-                        lang: lang.clone(),
-                    },
-                    "{translates.organization}"
-                }
-                Link {
-                    //TODO: Change Target
-                    to: Route::ComingSoonPage {
-                        lang: lang.clone(),
-                    },
-                    "{translates.plan}"
-                }
-                Link {
-                    //TODO: Change Target
-                    to: Route::ComingSoonPage {
-                        lang: lang.clone(),
-                    },
-                    "{translates.contact}"
-                }
-                Link {
-                    //TODO: Change Target
-                    to: Route::ComingSoonPage {
-                        lang: lang.clone(),
-                    },
-                    "{translates.guide}"
-                }
-                div { class: "cursor-pointer", onclick,
-                    if email == "" {
-                        "{translates.login}"
-                    } else {
-                        "{translates.logout}"
-                    }
-                }
+        }
+    }
+}
 
-                if email == "" {
-                    div { class: "flex flex-row w-fit h-fit justify-center items-center rounded-lg px-5 py-10 bg-white border border-key-gray",
-                        "{translates.public_opinion_design}"
-                    }
-                } else {
-                    Link {
-                        class: "cursor-pointer w-28 h-28 rounded-full bg-profile-gray",
-                        to: Route::ProfilePage { lang },
-                    }
+#[component]
+fn Profile(name: String, image_url: Option<String>) -> Element {
+    rsx! {
+        div { class: "gap-10 flex flex-row justify-center items-center",
+            div { class: "w-28 h-28 rounded-full bg-profile-gray overflow-hidden",
+                if image_url.is_some() {
+                    img { src: image_url }
                 }
+            }
+            span { class: "text-[15px]/18 font-bold text-black", {name} }
+            img {
+                class: "w-24 h-24",
+                src: asset!("/public/images/cert_badge.png"),
             }
         }
     }

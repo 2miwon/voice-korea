@@ -26,3 +26,27 @@ pub fn InputBox(
         }
     }
 }
+
+#[component]
+pub fn Input(
+    #[props(default = None)] id: Option<String>,
+    #[props(default = "".to_string())] class: String,
+    #[props(default = "".to_string())] placeholder: String,
+    value: String,
+    onchange: EventHandler<String>,
+    #[props(extends = GlobalAttributes)] attributes: Vec<Attribute>,
+) -> Element {
+    rsx! {
+        input {
+            r#type: "text",
+            id,
+            class: "px-27 py-17 bg-box-gray rounded-lg text-[18px]/24 border-none focus:outline-primary {class}",
+            value,
+            placeholder,
+            onchange: move |e| {
+                onchange.call(e.value());
+            },
+            ..attributes,
+        }
+    }
+}

@@ -1,4 +1,3 @@
-#![allow(unused)]
 use bdk::prelude::*;
 
 use crate::components::icons::triangle::{TriangleDown, TriangleUp};
