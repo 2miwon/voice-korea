@@ -28,14 +28,14 @@ pub fn MainFooter(lang: Language) -> Element {
                         to: Route::MainPage {
                             lang: lang.clone(),
                         },
-                        "{tr.policy}"
+                        {tr.policy}
                     }
                     Link {
                         //TODO: Change Target
                         to: Route::MainPage {
                             lang: lang.clone(),
                         },
-                        "{tr.terms}"
+                        {tr.terms}
                     }
                 }
             }

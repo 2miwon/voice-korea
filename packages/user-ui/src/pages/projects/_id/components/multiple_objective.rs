@@ -32,7 +32,7 @@ pub fn MultipleObjective(
                 for (i , option) in options().iter().enumerate() {
                     div { class: "flex flex-row gap-[10px]",
                         CustomCheckbox {
-                            blocked,
+                            disabled: blocked,
                             checked: answer.contains(&((i + 1) as i32)),
                             onchange: move |checked: bool| {
                                 if checked {

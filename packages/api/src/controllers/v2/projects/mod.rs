@@ -64,6 +64,17 @@ impl DeliberationProjectController {
         } else {
             builder = builder.order_by_created_at_asc();
         }
+        if let Some(cond) = param.status {
+            let status: DeliberationStatus = cond.status.into();
+            match cond.op {
+                ProjectStatusOp::Equal => {
+                    builder = builder.status_equals(status);
+                }
+                ProjectStatusOp::NotEqual => {
+                    builder = builder.status_not_equals(status);
+                }
+            }
+        }
 
         let items: Vec<DeliberationProjectSummary> = builder
             .status_greater_than_equals(DeliberationStatus::Ready)

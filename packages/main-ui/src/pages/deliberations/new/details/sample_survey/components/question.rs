@@ -106,7 +106,7 @@ pub fn AddQuestion(lang: Language) -> Element {
                 Plus { width: "12", height: "12", color: "#b4b4b4" }
             }
             div { class: "mt-10 font-medium text-[15px] text-hint-gray leading-22",
-                "{tr.add_question}"
+                {tr.add_question}
             }
         }
     }

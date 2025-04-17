@@ -1,70 +1,72 @@
-use bdk::prelude::*;
-use models::Question;
-
-use crate::pages::deliberations::new::details::votes::components::{
-    introduction::Introduction, member::Member, question::QuestionList, reward::Reward,
-};
-
+use super::super::components::introduction_card::IntroductionCard;
 use super::*;
+use crate::pages::deliberations::new::details::votes::components::{
+    member::Member, question::QuestionList, reward::Reward,
+};
+use bdk::prelude::*;
 use controller::*;
 use i18n::*;
+use models::Question;
 
 #[component]
 pub fn DeliberationVoteSettingPage(lang: Language) -> Element {
     let mut ctrl = Controller::new(lang)?;
     let tr: VoteTranslate = translate(&lang);
-
     let final_survey = ctrl.final_survey();
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
-            div { class: "flex flex-col w-full justify-start items-start gap-20",
-                div { class: "flex flex-col w-full justify-start items-start gap-10",
-                    div { class: "font-medium text-base text-text-black", {tr.vote_setting} }
-                    div { class: "flex flex-col w-full justify-start items-start gap-20",
-                        Introduction {
-                            lang,
-                            final_survey: final_survey.clone(),
-                            start_date_id: "final_survey_start_date",
-                            end_date_id: "final_survey_end_date",
-                            set_title: move |title: String| {
-                                ctrl.set_title(title);
-                            },
-                            set_description: move |description: String| {
-                                ctrl.set_description(description);
-                            },
-                            set_start_date: move |start_date: i64| {
-                                ctrl.set_start_date(start_date);
-                            },
-                            set_end_date: move |end_date: i64| {
-                                ctrl.set_end_date(end_date);
-                            },
-                        }
+            div { class: "flex flex-col w-full justify-start items-start",
+                div { class: "flex flex-col w-full justify-start items-start gap-20",
+                    div { class: "flex flex-col w-full justify-start items-start gap-10",
+                        div { class: "font-medium text-base text-text-black", {tr.vote_setting} }
+                        div { class: "flex flex-col w-full justify-start items-start gap-20",
+                            IntroductionCard {
+                                lang,
+                                description: tr.introduction_description.to_string(),
+                                text_value: final_survey.clone().title,
+                                started_at: final_survey.clone().started_at,
+                                ended_at: final_survey.clone().ended_at,
+                                content: final_survey.clone().description,
+                                set_title: move |title: String| {
+                                    ctrl.set_title(title);
+                                },
+                                set_description: move |description: String| {
+                                    ctrl.set_description(description);
+                                },
+                                set_start_date: move |timestamp: i64| {
+                                    ctrl.set_start_date(timestamp);
+                                },
+                                set_end_date: move |timestamp: i64| {
+                                    ctrl.set_end_date(timestamp);
+                                },
+                            }
 
-                        Reward {
-                            lang,
-                            final_survey: final_survey.clone(),
-                            set_estimate_time: move |estimate_time: i64| {
-                                ctrl.set_estimate_time(estimate_time);
-                            },
-                            set_point: move |point: i64| {
-                                ctrl.set_point(point);
-                            },
-                        }
+                            Reward {
+                                lang,
+                                final_survey: final_survey.clone(),
+                                set_estimate_time: move |estimate_time: i64| {
+                                    ctrl.set_estimate_time(estimate_time);
+                                },
+                                set_point: move |point: i64| {
+                                    ctrl.set_point(point);
+                                },
+                            }
 
-                        Member {
-                            lang,
-                            total_committees: ctrl.get_committees(),
-                            selected_committees: ctrl.get_selected_committee(),
-                            add_committee: move |id: i64| {
-                                ctrl.add_committee(id);
-                            },
-                            remove_committee: move |id: i64| {
-                                ctrl.remove_committee(id);
-                            },
-                            clear_committee: move |_| {
-                                ctrl.clear_committee();
-                            },
+                            Member {
+                                lang,
+                                total_committees: ctrl.get_committees(),
+                                selected_committees: ctrl.get_selected_committee(),
+                                add_committee: move |id: i64| {
+                                    ctrl.add_committee(id);
+                                },
+                                remove_committee: move |id: i64| {
+                                    ctrl.remove_committee(id);
+                                },
+                                clear_committee: move |_| {
+                                    ctrl.clear_committee();
+                                },
+                            }
                         }
                     }
                 }

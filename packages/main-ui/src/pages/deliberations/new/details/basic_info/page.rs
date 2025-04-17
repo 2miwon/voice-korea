@@ -1,13 +1,12 @@
-use bdk::prelude::*;
-use models::{File, ResourceFileSummary};
-
-use crate::pages::deliberations::new::details::basic_info::components::{
-    introduction::Introduction, material::Material, member::Member,
-};
-
+use super::super::components::introduction_card::IntroductionCard;
 use super::*;
+use crate::pages::deliberations::new::details::basic_info::components::{
+    material::Material, member::Member,
+};
+use bdk::prelude::*;
 use controller::*;
 use i18n::*;
+use models::{File, ResourceFileSummary};
 
 #[component]
 pub fn DeliberationBasicInfoSettingPage(lang: Language) -> Element {
@@ -25,22 +24,26 @@ pub fn DeliberationBasicInfoSettingPage(lang: Language) -> Element {
             div { class: "flex flex-col w-full justify-start items-start",
                 div { class: "font-medium text-base text-text-black mb-10", {tr.post_setting} }
                 div { class: "flex flex-col w-full justify-start items-start gap-20",
-                    Introduction {
+                    IntroductionCard {
                         lang,
-                        basic_info,
                         start_date_id: "basic_start_date",
                         end_date_id: "basic_end_date",
+                        description: tr.introduction_description.to_string(),
+                        text_value: basic_info.clone().title,
+                        started_at: basic_info.clone().started_at,
+                        ended_at: basic_info.clone().ended_at,
+                        content: basic_info.clone().description,
                         set_title: move |title: String| {
                             ctrl.set_title(title);
                         },
                         set_description: move |description: String| {
                             ctrl.set_description(description);
                         },
-                        set_start_date: move |start_date: i64| {
-                            ctrl.set_start_date(start_date);
+                        set_start_date: move |timestamp: i64| {
+                            ctrl.set_start_date(timestamp);
                         },
-                        set_end_date: move |end_date: i64| {
-                            ctrl.set_end_date(end_date);
+                        set_end_date: move |timestamp: i64| {
+                            ctrl.set_end_date(timestamp);
                         },
                     }
                     Member {

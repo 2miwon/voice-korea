@@ -21,7 +21,7 @@
   --color-quiz-border: #ebeff5;
   --color-discussion-border-gray: #bfc8d9;
   --color-hint-gray: #b4b4b4;
-
+  --color-disabled: #b4b4b4;
   --color-footer: #1f1d2c;
   --color-logo: #34333e;
   --color-text-black: #222222;
@@ -42,5 +42,6 @@
   --breakpoint-tablet: 768px;
   --breakpoint-mobile: 480px;
 
+  --container-desktop: 1300px;
   --header-height: 80px;
 }

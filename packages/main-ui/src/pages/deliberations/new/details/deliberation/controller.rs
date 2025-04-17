@@ -1,8 +1,6 @@
 use bdk::prelude::*;
 use models::{
-    deliberation_user::DeliberationUserCreateRequest, elearning::ElearningCreateRequest,
-    DeliberationContentCreateRequest, File, OrganizationMember, OrganizationMemberQuery,
-    OrganizationMemberSummary, ResourceFile,
+    deliberation_user::DeliberationUserCreateRequest, elearning::ElearningCreateRequest, *,
 };
 
 use crate::{
@@ -12,13 +10,13 @@ use crate::{
     utils::time::current_timestamp,
 };
 
-use super::DeliberationNewController;
+use super::{components::load_data_modal::LoadDataModal, DeliberationNewController};
 
 #[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     #[allow(dead_code)]
     lang: Language,
-
+    org_id: i64,
     // pub _parent: super::super::Controller,
     pub e_learning_tab: Signal<bool>,
 
@@ -26,13 +24,11 @@ pub struct Controller {
     pub committee_members: Signal<Vec<DeliberationUserCreateRequest>>,
 
     deliberation: Signal<DeliberationContentCreateRequest>,
+    // elearnings: Signal<Vec<ElearningCreateRequest>>,
+    // questions: Signal<Vec<Option<Question>>>,
     pub parent: DeliberationNewController,
     pub nav: Navigator,
     pub popup_service: PopupService,
-
-    selected_field: Signal<Option<String>>,
-    evaluation_title: Signal<String>,
-    evaluation_content: Signal<String>,
 }
 
 impl Controller {
@@ -64,6 +60,7 @@ impl Controller {
 
         let mut ctrl = Self {
             lang,
+            org_id: user.get_selected_org().unwrap_or_default().id,
             e_learning_tab: use_signal(|| true),
 
             members,
@@ -72,11 +69,9 @@ impl Controller {
             parent: use_context(),
             nav: use_navigator(),
             deliberation,
+            // elearnings: use_signal(|| vec![]),
+            // questions: use_signal(|| vec![]),
             popup_service,
-
-            selected_field: use_signal(|| None),
-            evaluation_title: use_signal(|| "".to_string()),
-            evaluation_content: use_signal(|| "".to_string()),
         };
 
         let req = ctrl.parent.deliberation_requests();
@@ -99,9 +94,20 @@ impl Controller {
             if ended_at == 0 {
                 deliberation.ended_at = current_timestamp;
             }
-            ctrl.deliberation.set(deliberation);
+            ctrl.deliberation.set(deliberation.clone());
             ctrl.committee_members.set(committees.clone());
-            ctrl.add_elearning();
+            // if deliberation.elearnings.is_empty() {
+            //     let mut elearning = ElearningCreateRequest::default();
+            //     elearning.resources.push(ResourceFile::default());
+            //     deliberation.elearnings.push(elearning);
+            // } else {
+            //     ctrl.elearnings.set(deliberation.elearnings.clone());
+            // }
+            // if deliberation.questions.is_empty() {
+            //     deliberation.questions.push(None);
+            // } else {
+            //     ctrl.questions.set(deliberation.questions.clone());
+            // }
         });
 
         Ok(ctrl)
@@ -193,30 +199,31 @@ impl Controller {
     }
 
     pub fn set_elearning_necessary(&mut self, index: usize, necessary: bool) {
+        if index >= self.deliberation().elearnings.len() {
+            tracing::error!("Index out of bounds: {}", index);
+            return;
+        }
         self.deliberation.with_mut(|req| {
             req.elearnings[index].necessary = necessary;
         });
     }
 
     pub fn set_elearning_title(&mut self, index: usize, title: String) {
+        if index >= self.deliberation().elearnings.len() {
+            tracing::error!("Index out of bounds: {}", index);
+            return;
+        }
         self.deliberation.with_mut(|req| {
             req.elearnings[index].title = title;
         });
     }
 
     pub async fn set_elearning_metadata(&mut self, index: usize, file: File) {
-        let user: LoginService = use_context();
-        let org = user.get_selected_org();
-        if org.is_none() {
-            btracing::error!("This service requires login.");
-            return;
-        }
-        let org_id = org.unwrap().id;
         let client = models::ResourceFile::get_client(&config::get().api_url);
 
         let file = client
             .create(
-                org_id,
+                self.org_id,
                 file.name.clone(),
                 None,
                 None,
@@ -230,7 +237,11 @@ impl Controller {
 
         self.deliberation.with_mut(|req| {
             tracing::debug!("elearnings: {:?} index: {:?}", req.elearnings, index);
-            req.elearnings[index].resources.push(file);
+            if req.elearnings[index].resources.is_empty() {
+                req.elearnings[index].resources.push(file.clone());
+            } else {
+                req.elearnings[index].resources[0] = file.clone();
+            }
         });
     }
 
@@ -252,33 +263,83 @@ impl Controller {
     }
 
     pub fn set_selected_field(&mut self, index: usize, field: String) {
-        tracing::debug!("set_selected_field: {} {:?}", index, field);
-        self.selected_field.set(Some(field));
+        if index >= self.deliberation().questions.len() {
+            tracing::error!("Index out of bounds: {}", index);
+            return;
+        }
+        self.deliberation.with_mut(|req| {
+            let question_field = Question::new(&field);
+            req.questions[index] = Some(question_field);
+        });
     }
 
-    pub fn set_evaluation_title(&mut self, index: usize, title: String) {
-        tracing::debug!("set_evaluation_title: {} {:?}", index, title);
-        self.evaluation_title.set(title);
+    pub fn set_question_title(&mut self, index: usize, title: String) {
+        if index >= self.deliberation().questions.len() {
+            tracing::error!("Index out of bounds: {}", index);
+            return;
+        }
+        self.deliberation.with_mut(|req| {
+            if let Some(ref mut question) = req.questions[index] {
+                question.set_title(&title);
+            }
+        });
     }
 
-    pub fn set_evaluation_content(&mut self, index: usize, content: String) {
-        tracing::debug!("set_evaluation_content: {} {:?}", index, content);
-        self.evaluation_content.set(content);
+    pub fn set_question_description(&mut self, index: usize, content: String) {
+        if index >= self.deliberation().questions.len() {
+            tracing::error!("Index out of bounds: {}", index);
+            return;
+        }
+        self.deliberation.with_mut(|req| {
+            if let Some(ref mut question) = req.questions[index] {
+                question.set_description(&content);
+            }
+        });
     }
 
     #[allow(dead_code)]
-    pub async fn open_load_from_data_modal(&mut self) {
-        self.popup_service.open(rsx! {}).with_id("load_from_data");
-        // .with_title(translates.create_group);
+    pub fn open_load_from_data_modal(&mut self, index: usize) {
+        let mut ctrl = *self;
+        self.popup_service
+            .open(rsx! {
+                LoadDataModal {
+                    lang: self.lang,
+                    onclose: move |_| {
+                        ctrl.popup_service.close();
+                    },
+                    onupload: move |file: ResourceFile| {
+                        ctrl.set_resource(index, file);
+                        ctrl.popup_service.close();
+                    },
+                }
+            })
+            .with_id("load_from_data");
     }
 
-    pub fn add_evaluation(&mut self) {
-        tracing::debug!("add_evaluation");
-        // TODO: Implement this function
+    pub fn add_question(&mut self) {
+        self.deliberation.with_mut(|req| {
+            req.questions.push(None);
+        });
     }
 
-    pub fn remove_evaluation(&mut self, index: usize) {
-        tracing::debug!("remove_evaluation: {:?}", index);
-        // TODO: Implement this function
+    pub fn remove_question(&mut self, index: usize) {
+        self.deliberation.with_mut(|req| {
+            req.questions.remove(index);
+        });
+    }
+
+    pub fn set_resource(&mut self, index: usize, resource: ResourceFile) {
+        if index >= self.deliberation().elearnings.len() {
+            tracing::error!("Index out of bounds: {}", index);
+            return;
+        }
+        self.deliberation
+            .with_mut(|req: &mut DeliberationContentCreateRequest| {
+                if req.elearnings[index].resources.is_empty() {
+                    req.elearnings[index].resources.push(resource.clone());
+                } else {
+                    req.elearnings[index].resources[0] = resource.clone();
+                }
+            });
     }
 }

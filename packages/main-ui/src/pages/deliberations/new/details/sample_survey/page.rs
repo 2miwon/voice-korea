@@ -1,14 +1,12 @@
-use bdk::prelude::*;
-
-use crate::pages::deliberations::new::details::sample_survey::components::{
-    introduction::Introduction, member::Member, question::QuestionList, reward::Reward,
-};
-
-use models::Question;
-
+use super::super::components::introduction_card::IntroductionCard;
 use super::*;
+use crate::pages::deliberations::new::details::sample_survey::components::{
+    member::Member, question::QuestionList, reward::Reward,
+};
+use bdk::prelude::*;
 use controller::*;
 use i18n::*;
+use models::Question;
 
 #[component]
 pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
@@ -18,26 +16,57 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
-            div { class: "flex flex-col w-full justify-start items-start gap-10",
-                div { class: "font-medium text-base text-text-black", {tr.input_introduction} }
-                div { class: "flex flex-col w-full justify-start items-start gap-20",
-                    Introduction {
-                        lang,
-                        sample_survey: sample_survey.clone(),
-                        start_date_id: "sample_survey_start_date",
-                        end_date_id: "sample_survey_end_date",
-                        set_title: move |title: String| {
-                            ctrl.set_title(title);
-                        },
-                        set_description: move |description: String| {
-                            ctrl.set_description(description);
-                        },
-                        set_start_date: move |start_date: i64| {
-                            ctrl.set_start_date(start_date);
-                        },
-                        set_end_date: move |end_date: i64| {
-                            ctrl.set_end_date(end_date);
-                        },
+            div { class: "flex flex-col w-full justify-start items-start",
+                div { class: "flex flex-col w-full justify-start items-start gap-10",
+                    div { class: "font-medium text-base text-text-black", {tr.input_introduction} }
+                    div { class: "flex flex-col w-full justify-start items-start gap-20",
+                        IntroductionCard {
+                            lang,
+                            start_date_id: "sample_survey_start_date",
+                            end_date_id: "sample_survey_end_date",
+                            description: tr.introduction_description.to_string(),
+                            text_value: sample_survey.clone().title,
+                            started_at: sample_survey.clone().started_at,
+                            ended_at: sample_survey.clone().ended_at,
+                            content: sample_survey.clone().description,
+                            set_title: move |title: String| {
+                                ctrl.set_title(title);
+                            },
+                            set_description: move |description: String| {
+                                ctrl.set_description(description);
+                            },
+                            set_start_date: move |timestamp: i64| {
+                                ctrl.set_start_date(timestamp);
+                            },
+                            set_end_date: move |timestamp: i64| {
+                                ctrl.set_end_date(timestamp);
+                            },
+                        }
+                        Reward {
+                            lang,
+                            sample_survey: sample_survey.clone(),
+                            set_estimate_time: move |estimate_time: i64| {
+                                ctrl.set_estimate_time(estimate_time);
+                            },
+                            set_point: move |point: i64| {
+                                ctrl.set_point(point);
+                            },
+                        }
+
+                        Member {
+                            lang,
+                            total_committees: ctrl.get_committees(),
+                            selected_committees: ctrl.get_selected_committee(),
+                            add_committee: move |id: i64| {
+                                ctrl.add_committee(id);
+                            },
+                            remove_committee: move |id: i64| {
+                                ctrl.remove_committee(id);
+                            },
+                            clear_committee: move |_| {
+                                ctrl.clear_committee();
+                            },
+                        }
                     }
 
                     Reward {

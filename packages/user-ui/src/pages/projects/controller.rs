@@ -6,7 +6,7 @@ use models::{
         DeliberationProject, DeliberationProjectQuery, DeliberationProjectSummary, ProjectQueryBy,
         ProjectSorter,
     },
-    QueryResponse,
+    DeliberationProjectParam, QueryResponse,
 };
 
 #[derive(Debug, Clone, Copy, DioxusController)]
@@ -30,7 +30,13 @@ impl Controller {
             async move {
                 if keyword.is_empty() {
                     DeliberationProject::get_client(&crate::config::get().api_url)
-                        .query_by_custom(ProjectQueryBy { sorter })
+                        .query_by_custom(ProjectQueryBy {
+                            sorter,
+                            status: Some(models::ProjectStatusCondition {
+                                op: models::ProjectStatusOp::NotEqual,
+                                status: models::ProjectStatusValue::Draft,
+                            }),
+                        })
                         .await
                         .unwrap_or_default()
                 } else {
