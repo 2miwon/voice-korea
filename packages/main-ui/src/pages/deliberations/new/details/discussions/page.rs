@@ -8,7 +8,6 @@ use controller::*;
 use i18n::*;
 use models::File;
 
-// TODO: implement discussion
 #[component]
 pub fn DeliberationDiscussionSettingPage(lang: Language) -> Element {
     let mut ctrl = Controller::new(lang)?;
@@ -26,6 +25,8 @@ pub fn DeliberationDiscussionSettingPage(lang: Language) -> Element {
                         started_at: discussion.clone().started_at,
                         ended_at: discussion.clone().ended_at,
                         content: discussion.clone().description,
+                        start_date_id: "discussion_start_date",
+                        end_date_id: "discussion_end_date",
                         set_title: move |title: String| {
                             ctrl.set_title(title);
                         },
@@ -62,8 +63,8 @@ pub fn DeliberationDiscussionSettingPage(lang: Language) -> Element {
                         lang,
                         committees: ctrl.get_committees(),
                         selected_committees: ctrl.get_selected_committee(),
-                        add_committee: move |user_id: i64| {
-                            ctrl.add_committee(user_id);
+                        add_committee: move |id: i64| {
+                            ctrl.add_committee(id);
                         },
                         remove_committee: move |id: i64| {
                             ctrl.remove_committee(id);
@@ -76,29 +77,35 @@ pub fn DeliberationDiscussionSettingPage(lang: Language) -> Element {
                     DiscussionGroup {
                         lang,
                         discussion: discussion.clone(),
-                        set_discussion: move |disc| {
-                            ctrl.set_discussion(disc);
+                        add_discussion: move |_| {
+                            ctrl.add_discussion();
+                        },
+                        remove_discussion: move |index: usize| {
+                            ctrl.remove_discussion(index);
+                        },
+                        update_discussion: move |(index, discussion): (usize, DiscussionCreateRequest)| {
+                            ctrl.update_discussion(index, discussion);
                         },
                     }
                 }
 
                 div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
-                    div {
-                        class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                    button {
+                        class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                         onclick: move |_| {
                             ctrl.back();
                         },
                         {tr.backward}
                     }
-                    div {
+                    button {
                         class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                         onclick: move |_| async move {
                             ctrl.temp_save().await;
                         },
                         {tr.temporary_save}
                     }
-                    div {
-                        class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
+                    button {
+                        class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
                         onclick: move |_| {
                             ctrl.next();
                         },

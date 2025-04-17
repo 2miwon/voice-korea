@@ -60,7 +60,7 @@ translate! {
 
     organization_of_procedures: {
         ko: "공론 절차 구성",
-        en: "Organization of public opinion procedures"
+        en: "Organization of deliberation procedures"
     }
     organization_of_procedures_description: {
         ko: "공론의 방식과 순서를 정해주세요.",
@@ -80,7 +80,7 @@ translate! {
     }
     to_public_opinion_management_list: {
         ko: "공론관리 목록으로",
-        en: "To public opinion management list"
+        en: "To deliberation management list"
     }
     backward: {
         ko: "뒤로",

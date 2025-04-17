@@ -113,7 +113,7 @@ impl Route {
                 Some("공론 조사".to_string())
             }
             Route::DeliberationPage { lang } if lang == &Language::En => {
-                Some("Public Opinion Survey".to_string())
+                Some("Deliberation Survey".to_string())
             }
             // Route::OpinionCreatePage { lang } if lang == &Language::Ko => {
             //     Some("공론 조사".to_string())
@@ -149,25 +149,25 @@ impl Route {
             }
             Route::SurveyPage { lang } if lang == &Language::Ko => Some("여론 조사".to_string()),
             Route::SurveyPage { lang } if lang == &Language::En => {
-                Some("Public Opinion Survey".to_string())
+                Some("Deliberation Survey".to_string())
             }
             Route::SurveyResultPage { lang, .. } if lang == &Language::Ko => {
                 Some("여론 조사".to_string())
             }
             Route::SurveyResultPage { lang, .. } if lang == &Language::En => {
-                Some("Public Opinion Survey".to_string())
+                Some("Deliberation Survey".to_string())
             }
             Route::SurveyCreatePage { lang } if lang == &Language::Ko => {
                 Some("여론 조사".to_string())
             }
             Route::SurveyCreatePage { lang } if lang == &Language::En => {
-                Some("Public Opinion Survey".to_string())
+                Some("Deliberation Survey".to_string())
             }
             Route::SurveyUpdatePage { lang, .. } if lang == &Language::Ko => {
                 Some("여론 조사".to_string())
             }
             Route::SurveyUpdatePage { lang, .. } if lang == &Language::En => {
-                Some("Public Opinion Survey".to_string())
+                Some("Deliberation Survey".to_string())
             }
             Route::LoginPage { lang } if lang == &Language::Ko => Some("로그인".to_string()),
             Route::LoginPage { lang } if lang == &Language::En => Some("Login".to_string()),

@@ -33,6 +33,12 @@ pub fn DeliberationPage(lang: Language) -> Element {
                 onclick: move |_| ctrl.handle_edit(),
                 {translates.edit}
             }
+
+            button {
+                class: "w-full px-20 py-15 text-black cursor-pointer hover:!bg-neutral1",
+                onclick: move |_| async move { ctrl.handle_remove().await },
+                {translates.remove}
+            }
         }
 
         div {
@@ -208,10 +214,14 @@ pub fn DeliberationPage(lang: Language) -> Element {
                                     }
                                 }
                             }
-                            div {
-                                class: "cursor-pointer flex flex-row w-[90px] h-full justify-center items-center",
-                                onclick: move |evt| ctrl.handle_click_menu(deliberation.id, evt),
-                                RowOption { width: "24", height: "24" }
+                            if deliberation.status == DeliberationStatus::Draft {
+                                div {
+                                    class: "cursor-pointer flex flex-row w-90 h-full justify-center items-center",
+                                    onclick: move |evt| ctrl.handle_click_menu(deliberation.id, evt),
+                                    RowOption { width: "24", height: "24" }
+                                }
+                            } else {
+                                div { class: "flex flex-row w-90 h-full justify-center items-center" }
                             }
                         }
                     }

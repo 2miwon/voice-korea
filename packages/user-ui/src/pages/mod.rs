@@ -12,7 +12,6 @@ mod governance;
 mod not_found;
 mod profile;
 mod projects;
-mod users;
 
 pub use coming_soon::*;
 pub use education::page::EducationPage;
@@ -21,4 +20,3 @@ pub use not_found::*;
 pub use page::*;
 pub use profile::*;
 pub use projects::*;
-pub use users::*;

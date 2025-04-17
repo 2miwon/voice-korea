@@ -93,7 +93,7 @@ impl Controller {
 
     pub async fn temp_save(&mut self) {
         self.save_deliberation();
-        self.parent_ctrl.temporary_save().await;
+        self.parent_ctrl.temporary_save(false).await;
     }
 
     pub fn next(&mut self) {

@@ -1,7 +1,7 @@
 use bdk::prelude::*;
 use models::{
     deliberation_user::DeliberationUserCreateRequest, DeliberationFinalSurveyCreateRequest,
-    OrganizationMember, OrganizationMemberQuery, OrganizationMemberSummary,
+    OrganizationMember, OrganizationMemberQuery, OrganizationMemberSummary, Question,
 };
 
 use crate::{routes::Route, service::login_service::LoginService, utils::time::current_timestamp};
@@ -85,8 +85,75 @@ impl Controller {
         Ok(ctrl)
     }
 
-    pub fn set_final_survey(&mut self, info: DeliberationFinalSurveyCreateRequest) {
-        self.final_survey.set(info);
+    pub fn set_title(&mut self, title: String) {
+        self.final_survey.with_mut(|req| {
+            req.title = title;
+        });
+    }
+
+    pub fn set_description(&mut self, description: String) {
+        self.final_survey.with_mut(|req| {
+            req.description = description;
+        });
+    }
+
+    pub fn set_start_date(&mut self, started_at: i64) {
+        self.final_survey.with_mut(|req| {
+            req.started_at = started_at;
+        });
+    }
+
+    pub fn set_end_date(&mut self, ended_at: i64) {
+        self.final_survey.with_mut(|req| {
+            req.ended_at = ended_at;
+        });
+    }
+
+    pub fn set_estimate_time(&mut self, estimate_time: i64) {
+        self.final_survey.with_mut(|req| {
+            req.estimate_time = estimate_time;
+        });
+    }
+
+    pub fn set_point(&mut self, point: i64) {
+        self.final_survey.with_mut(|req| {
+            req.point = point;
+        });
+    }
+
+    pub fn add_committee(&mut self, user_id: i64) {
+        self.final_survey.with_mut(|req| {
+            req.users.push(user_id);
+        });
+    }
+
+    pub fn remove_committee(&mut self, user_id: i64) {
+        self.final_survey.with_mut(|req| {
+            req.users
+                .retain(|committee_id| !(committee_id.clone() == user_id));
+        })
+    }
+
+    pub fn clear_committee(&mut self) {
+        self.final_survey.with_mut(|req| req.users = vec![]);
+    }
+
+    pub fn add_question(&mut self) {
+        self.final_survey.with_mut(|req| {
+            req.surveys.push(Question::default());
+        });
+    }
+
+    pub fn remove_question(&mut self, index: usize) {
+        self.final_survey.with_mut(|req| {
+            req.surveys.remove(index);
+        });
+    }
+
+    pub fn update_question(&mut self, index: usize, question: Question) {
+        self.final_survey.with_mut(|req| {
+            req.surveys[index] = question;
+        });
     }
 
     pub fn get_final_survey(&self) -> DeliberationFinalSurveyCreateRequest {
@@ -145,35 +212,11 @@ impl Controller {
 
     pub async fn temp_save(&mut self) {
         self.parent.save_final_survey(self.final_survey());
-        self.parent.temporary_save().await;
+        self.parent.temporary_save(false).await;
     }
 
     pub fn next(&mut self) {
         self.parent.save_final_survey(self.final_survey());
         self.nav.push(Route::Preview { lang: self.lang });
-    }
-
-    pub fn set_title(&mut self, title: String) {
-        self.final_survey.with_mut(|req| {
-            req.title = title;
-        });
-    }
-
-    pub fn set_description(&mut self, description: String) {
-        self.final_survey.with_mut(|req| {
-            req.description = description;
-        });
-    }
-
-    pub fn set_start_date(&mut self, started_at: i64) {
-        self.final_survey.with_mut(|req| {
-            req.started_at = started_at;
-        });
-    }
-
-    pub fn set_end_date(&mut self, ended_at: i64) {
-        self.final_survey.with_mut(|req| {
-            req.ended_at = ended_at;
-        });
     }
 }

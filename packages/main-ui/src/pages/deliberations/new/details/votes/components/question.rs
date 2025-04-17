@@ -13,7 +13,10 @@ use crate::{
 pub fn QuestionList(
     lang: Language,
     final_survey: DeliberationFinalSurveyCreateRequest,
-    set_final_survey: EventHandler<DeliberationFinalSurveyCreateRequest>,
+
+    add_question: EventHandler<MouseEvent>,
+    remove_question: EventHandler<usize>,
+    update_question: EventHandler<(usize, Question)>,
 ) -> Element {
     let tr: QuestionListTranslate = translate(&lang);
     let questions = final_survey.surveys.clone();
@@ -23,7 +26,7 @@ pub fn QuestionList(
             div {
                 class: "flex flex-col w-full justify-start items-start pt-5 px-40 pb-25 bg-white rounded-lg",
                 style: "box-shadow: 0 4px 6px rgba(53, 70, 177, 0.05);",
-                div { class: "flex flex-row w-full justify-center items-center mb-10",
+                div { class: "flex flex-row w-full justify-center items-center mb-[10px]",
                     RowMenuDial { width: "24", height: "24" }
                 }
 
@@ -32,15 +35,8 @@ pub fn QuestionList(
                         QuestionTypeSelector {
                             selected: questions[index].to_type(&lang),
                             lang,
-                            onchange: {
-                                let final_survey = final_survey.clone();
-                                let mut questions = questions.clone();
-                                move |qtype: String| {
-                                    let mut final_survey = final_survey.clone();
-                                    questions[index] = Question::new(&qtype);
-                                    final_survey.surveys = questions.clone();
-                                    set_final_survey.call(final_survey);
-                                }
+                            onchange: move |qtype: String| {
+                                update_question.call((index, Question::new(&qtype)));
                             },
                         }
 
@@ -52,12 +48,11 @@ pub fn QuestionList(
                             placeholder: tr.input_title_hint,
                             value: questions[index].title(),
                             oninput: {
-                                let mut final_survey = final_survey.clone();
                                 let mut questions = questions.clone();
                                 move |e: Event<FormData>| {
                                     questions[index].set_title(&e.value());
-                                    final_survey.surveys = questions.clone();
-                                    set_final_survey.call(final_survey.clone());
+                                    let question = questions[index].clone();
+                                    update_question.call((index, question));
                                 }
                             },
                         }
@@ -66,46 +61,22 @@ pub fn QuestionList(
                     if matches!(questions[index], Question::ShortAnswer(_) | Question::Subjective(_)) {
                         Subjective {
                             lang,
-                            onchange: {
-                                let mut final_survey = final_survey.clone();
-                                let mut questions = questions.clone();
-                                move |v: Question| {
-                                    questions[index] = v;
-                                    final_survey.surveys = questions.clone();
-                                    set_final_survey.call(final_survey.clone());
-                                }
+                            onchange: move |v: Question| {
+                                update_question.call((index, v));
                             },
-                            onremove: {
-                                let mut final_survey = final_survey.clone();
-                                let mut questions = questions.clone();
-                                move |_| {
-                                    questions.remove(index);
-                                    final_survey.surveys = questions.clone();
-                                    set_final_survey.call(final_survey.clone());
-                                }
+                            onremove: move |_| {
+                                remove_question.call(index);
                             },
                             question: questions[index].clone(),
                         }
                     } else {
                         Objective {
                             lang,
-                            onchange: {
-                                let mut final_survey = final_survey.clone();
-                                let mut questions = questions.clone();
-                                move |v: Question| {
-                                    questions[index] = v;
-                                    final_survey.surveys = questions.clone();
-                                    set_final_survey.call(final_survey.clone());
-                                }
+                            onchange: move |v: Question| {
+                                update_question.call((index, v));
                             },
-                            onremove: {
-                                let mut final_survey = final_survey.clone();
-                                let mut questions = questions.clone();
-                                move |_| {
-                                    questions.remove(index);
-                                    final_survey.surveys = questions.clone();
-                                    set_final_survey.call(final_survey.clone());
-                                }
+                            onremove: move |_| {
+                                remove_question.call(index);
                             },
                             question: questions[index].clone(),
                         }
@@ -117,12 +88,8 @@ pub fn QuestionList(
         button {
             class: "flex flex-row w-full",
             onclick: {
-                let mut final_survey = final_survey.clone();
-                let mut questions = questions.clone();
-                move |_| {
-                    questions.push(Question::default());
-                    final_survey.surveys = questions.clone();
-                    set_final_survey.call(final_survey.clone());
+                move |e| {
+                    add_question.call(e);
                 }
             },
             AddQuestion { lang }

@@ -1,17 +1,19 @@
 use super::super::components::{AssignMember, IntroductionCard};
 use super::*;
 use crate::pages::deliberations::new::details::votes::components::{
+    member::Member, question::QuestionList, reward::Reward,
     question::QuestionList, reward::FinalSurveyReward,
 };
 use bdk::prelude::*;
 use controller::*;
 use i18n::*;
+use models::Question;
 
 #[component]
 pub fn DeliberationVoteSettingPage(lang: Language) -> Element {
     let mut ctrl = Controller::new(lang)?;
     let tr: VoteTranslate = translate(&lang);
-    let final_survey = ctrl.get_final_survey();
+    let final_survey = ctrl.final_survey();
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
@@ -41,11 +43,14 @@ pub fn DeliberationVoteSettingPage(lang: Language) -> Element {
                                 },
                             }
 
-                            FinalSurveyReward {
+                            Reward {
                                 lang,
-                                final_survey: ctrl.get_final_survey(),
-                                set_final_survey: move |survey| {
-                                    ctrl.set_final_survey(survey);
+                                final_survey: final_survey.clone(),
+                                set_estimate_time: move |estimate_time: i64| {
+                                    ctrl.set_estimate_time(estimate_time);
+                                },
+                                set_point: move |point: i64| {
+                                    ctrl.set_point(point);
                                 },
                             }
 
@@ -67,41 +72,48 @@ pub fn DeliberationVoteSettingPage(lang: Language) -> Element {
                             }
                         }
                     }
+                }
 
-                    div { class: "flex flex-col w-full justify-start items-start gap-10",
-                        div { class: "font-medium text-base text-text-black", {tr.voting_items} }
-                        QuestionList {
-                            lang,
+                div { class: "flex flex-col w-full justify-start items-start gap-10",
+                    div { class: "font-medium text-base text-text-black", {tr.voting_items} }
+                    QuestionList {
+                        lang,
 
-                            final_survey: ctrl.get_final_survey(),
-                            set_final_survey: move |survey| {
-                                ctrl.set_final_survey(survey);
-                            },
-                        }
+                        final_survey: final_survey.clone(),
+
+                        add_question: move |_| {
+                            ctrl.add_question();
+                        },
+                        remove_question: move |index: usize| {
+                            ctrl.remove_question(index);
+                        },
+                        update_question: move |(index, question): (usize, Question)| {
+                            ctrl.update_question(index, question);
+                        },
                     }
                 }
-                div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
-                    div {
-                        class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
-                        onclick: move |_| {
-                            ctrl.back();
-                        },
-                        {tr.backward}
-                    }
-                    div {
-                        class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
-                        onclick: move |_| async move {
-                            ctrl.temp_save().await;
-                        },
-                        {tr.temporary_save}
-                    }
-                    div {
-                        class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
-                        onclick: move |_| {
-                            ctrl.next();
-                        },
-                        {tr.next}
-                    }
+            }
+            div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
+                button {
+                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                    onclick: move |_| {
+                        ctrl.back();
+                    },
+                    {tr.backward}
+                }
+                button {
+                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                    onclick: move |_| async move {
+                        ctrl.temp_save().await;
+                    },
+                    {tr.temporary_save}
+                }
+                button {
+                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
+                    onclick: move |_| {
+                        ctrl.next();
+                    },
+                    {tr.next}
                 }
             }
         }
