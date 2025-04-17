@@ -92,10 +92,10 @@ test.describe('New Survey Page', () => {
         const titleInput = page.getByRole('textbox', { name: 'Please enter a description' }).first()
         await expect(titleInput).toBeVisible();
 
-        const startDatePicker = page.getByRole('button', { name: "/04/16" })
+        const startDatePicker = page.getByRole('button', { name: "/04/17" })
         await expect(startDatePicker).toBeVisible();
 
-        const endDatePicker = page.getByRole('button', { name: "/04/17" })
+        const endDatePicker = page.getByRole('button', { name: "/04/18" })
         await expect(endDatePicker).toBeVisible();
 
         const descriptionInput = page.getByRole('textbox', { name: 'Please enter a description' }).nth(1)
@@ -145,7 +145,7 @@ test.describe('New Survey Page', () => {
         await expect(firstQuestionType).toBeVisible()
         await firstQuestionType.selectOption('Multiple Choice')
 
-        const firstQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' }).nth(2)
+        const firstQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' })
         await expect(firstQuestionTypeDescriptionInput).toBeVisible()
         await firstQuestionTypeDescriptionInput.fill('A Multiple Question Type')
 
@@ -186,7 +186,7 @@ test.describe('New Survey Page', () => {
         await expect(secondQuestionType).toBeVisible()
         await secondQuestionType.selectOption('Single Choice')
 
-        const secondQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' }).nth(3)
+        const secondQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' }).nth(1)
         await expect(secondQuestionTypeDescriptionInput).toBeVisible()
         await secondQuestionTypeDescriptionInput.fill('A Single Question Type')
 
@@ -219,7 +219,7 @@ test.describe('New Survey Page', () => {
         await expect(thirdQuestionType).toBeVisible()
         await thirdQuestionType.selectOption('Short Answer')
 
-        const thirdQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' }).nth(4)
+        const thirdQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' }).nth(2)
         await expect(thirdQuestionTypeDescriptionInput).toBeVisible()
         await thirdQuestionTypeDescriptionInput.fill('A Short Answer Type')
 
@@ -243,7 +243,7 @@ test.describe('New Survey Page', () => {
         await expect(fourthQuestionType).toBeVisible()
         await fourthQuestionType.selectOption('Subjective')
 
-        const fourthQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' }).nth(5)
+        const fourthQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' }).nth(3)
         await expect(fourthQuestionTypeDescriptionInput).toBeVisible()
         await fourthQuestionTypeDescriptionInput.fill('A Subjective Type')
 
