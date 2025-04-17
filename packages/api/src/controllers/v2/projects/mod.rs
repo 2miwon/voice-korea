@@ -64,12 +64,7 @@ impl DeliberationProjectController {
             builder = builder.order_by_created_at_asc();
         }
         if let Some(cond) = param.status {
-            let status = match cond.status {
-                ProjectStatusValue::Draft => DeliberationStatus::Draft,
-                ProjectStatusValue::Ready => DeliberationStatus::Ready,
-                ProjectStatusValue::InProgress => DeliberationStatus::InProgress,
-                ProjectStatusValue::Finish => DeliberationStatus::Finish,
-            };
+            let status: DeliberationStatus = cond.status.into();
             match cond.op {
                 ProjectStatusOp::Equal => {
                     builder = builder.status_equals(status);

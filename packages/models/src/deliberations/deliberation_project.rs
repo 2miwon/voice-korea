@@ -56,6 +56,18 @@ pub struct ProjectStatusCondition {
     pub status: ProjectStatusValue,
     pub op: ProjectStatusOp,
 }
+
+impl From<ProjectStatusValue> for DeliberationStatus {
+    fn from(status: ProjectStatusValue) -> Self {
+        match status {
+            ProjectStatusValue::Draft => DeliberationStatus::Draft,
+            ProjectStatusValue::Ready => DeliberationStatus::Ready,
+            ProjectStatusValue::InProgress => DeliberationStatus::InProgress,
+            ProjectStatusValue::Finish => DeliberationStatus::Finish,
+        }
+    }
+}
+
 //FIXME:
 // Using an enum structure would improve readability.
 // pub enum ProjectStatusCondition {
