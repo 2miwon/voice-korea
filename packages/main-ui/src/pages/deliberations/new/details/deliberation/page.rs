@@ -2,8 +2,11 @@
 use super::super::components::{AssignMember, IntroductionCard};
 use super::*;
 use crate::{
-    pages::deliberations::new::details::deliberation::components::{
-        elearning::DeliberationElearning, evaluation::Evaluation,
+    pages::deliberations::new::{
+        components::footer_buttons::FooterButtons,
+        details::deliberation::components::{
+            elearning::DeliberationElearning, evaluation::Evaluation,
+        },
     },
     service::metadata_api::MetadataApi,
 };
@@ -132,28 +135,17 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                     }
                 }
 
-                div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
-                    button {
-                        class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
-                        onclick: move |_| {
-                            ctrl.back();
-                        },
-                        {tr.backward}
-                    }
-                    button {
-                        class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
-                        onclick: move |_| async move {
-                            ctrl.temp_save().await;
-                        },
-                        {tr.temporary_save}
-                    }
-                    button {
-                        class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
-                        onclick: move |_| {
-                            ctrl.next();
-                        },
-                        {tr.next}
-                    }
+                FooterButtons {
+                    lang,
+                    on_backward: move |_| {
+                        ctrl.back();
+                    },
+                    on_temp_save: move |_| async move { ctrl.temp_save().await },
+                    on_next: move |_| {
+                        ctrl.next();
+                    },
+                    on_save: None,
+                    next_valid: true,
                 }
             }
         }

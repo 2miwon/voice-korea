@@ -59,16 +59,4 @@ translate! {
         ko: "역할 분담",
         en: "Division of Roles"
     }
-    backward: {
-        ko: "뒤로",
-        en: "Backward"
-    }
-    temporary_save: {
-        ko: "임시저장",
-        en: "Temporary Save"
-    }
-    next: {
-        ko: "다음으로",
-        en: "Next"
-    }
 }

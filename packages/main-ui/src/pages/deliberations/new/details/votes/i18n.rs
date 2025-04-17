@@ -3,19 +3,6 @@ use bdk::prelude::*;
 translate! {
     VoteTranslate;
 
-    backward: {
-        ko: "뒤로",
-        en: "Backward"
-    }
-    temporary_save: {
-        ko: "임시저장",
-        en: "Temporary Save"
-    }
-    next: {
-        ko: "다음으로",
-        en: "Next"
-    }
-
     organization_management: {
         ko: "조직 관리",
         en: "Organization Management"
@@ -59,39 +46,5 @@ translate! {
     add_question: {
         ko: "새로운 질문을 추가해주세요.",
         en: "Please add a new question."
-    }
-}
-
-translate! {
-    FinalSurveyRewardTranslate;
-
-    title: {
-        ko: "예상 소요 시간 및 리워드",
-        en: "Expected Time and Rewards"
-    }
-
-    description: {
-        ko: "설문 응답에 걸리는 예상 소요 시간과 리워드를 입력해주세요. 입력된 시간은 리워드 지급과는 무관합니다.",
-        en: "Please enter the estimated time it will take to complete the survey and the reward you wish to receive. The time you enter has no bearing on reward payment."
-    }
-
-    expected_time: {
-        ko: "예상 소요 시간",
-        en: "Estimated time"
-    }
-
-    expected_time_hint: {
-        ko: "소요 시간 입력 (단위: 초)",
-        en: "Enter the time required (in seconds)"
-    }
-
-    expected_point: {
-        ko: "응답 시 지급 포인트 입력",
-        en: "Enter payment points when responding"
-    }
-
-    expected_point_hint: {
-        ko: "포인트 입력",
-        en: "Input point"
     }
 }

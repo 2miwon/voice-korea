@@ -1,8 +1,8 @@
-use super::super::components::{AssignMember, IntroductionCard};
+use super::super::components::{AssignMember, IntroductionCard, Reward};
 use super::*;
-use crate::pages::deliberations::new::details::sample_survey::components::{
-    member::Member, question::QuestionList, reward::Reward,
-    question::QuestionList, reward::SampleSurveyReward,
+use crate::pages::deliberations::new::{
+    components::footer_buttons::FooterButtons,
+    details::sample_survey::components::question::QuestionList,
 };
 use bdk::prelude::*;
 use controller::*;
@@ -17,7 +17,7 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
-            div { class: "flex flex-col w-full justify-start items-start",
+            div { class: "flex flex-col w-full justify-start items-start gap-20",
                 div { class: "flex flex-col w-full justify-start items-start gap-10",
                     div { class: "font-medium text-base text-text-black", {tr.input_introduction} }
                     div { class: "flex flex-col w-full justify-start items-start gap-20",
@@ -45,7 +45,8 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
                         }
                         Reward {
                             lang,
-                            sample_survey: sample_survey.clone(),
+                            point: sample_survey.clone().point,
+                            estimate_time: sample_survey.clone().estimate_time,
                             set_estimate_time: move |estimate_time: i64| {
                                 ctrl.set_estimate_time(estimate_time);
                             },
@@ -69,32 +70,6 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
                             },
                         }
                     }
-
-                    Reward {
-                        lang,
-                        sample_survey: sample_survey.clone(),
-                        set_estimate_time: move |estimate_time: i64| {
-                            ctrl.set_estimate_time(estimate_time);
-                        },
-                        set_point: move |point: i64| {
-                            ctrl.set_point(point);
-                        },
-                    }
-
-                    Member {
-                        lang,
-                        total_committees: ctrl.get_committees(),
-                        selected_committees: ctrl.get_selected_committee(),
-                        add_committee: move |id: i64| {
-                            ctrl.add_committee(id);
-                        },
-                        remove_committee: move |id: i64| {
-                            ctrl.remove_committee(id);
-                        },
-                        clear_committee: move |_| {
-                            ctrl.clear_committee();
-                        },
-                    }
                 }
 
                 div { class: "flex flex-col w-full justify-start items-start gap-10",
@@ -116,28 +91,17 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
                     }
                 }
             }
-            div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
-                button {
-                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
-                    onclick: move |_| {
-                        ctrl.back();
-                    },
-                    {tr.backward}
-                }
-                button {
-                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
-                    onclick: move |_| async move {
-                        ctrl.temp_save().await;
-                    },
-                    {tr.temporary_save}
-                }
-                button {
-                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
-                    onclick: move |_| {
-                        ctrl.next();
-                    },
-                    {tr.next}
-                }
+            FooterButtons {
+                lang,
+                on_backward: move |_| {
+                    ctrl.back();
+                },
+                on_temp_save: move |_| async move { ctrl.temp_save().await },
+                on_next: move |_| {
+                    ctrl.next();
+                },
+                on_save: None,
+                next_valid: true,
             }
         }
     }

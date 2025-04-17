@@ -1,5 +1,5 @@
 #![allow(non_snake_case)]
-use super::*;
+use super::{super::components::footer_buttons::FooterButtons, *};
 use bdk::prelude::*;
 use controller::*;
 use i18n::*;
@@ -68,30 +68,19 @@ pub fn CompositionCommitee(lang: Language) -> Element {
                 }
             }
 
-            div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
-                button {
-                    class: "flex flex-row w-70 h-55 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
-                    onclick: move |_| {
-                        ctrl.save_deliberation();
-                        ctrl.back();
-                    },
-                    {tr.backward}
-                }
-                button {
-                    class: "flex flex-row w-105 h-55 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
-                    onclick: move |_| async move {
-                        ctrl.temp_save().await;
-                    },
-                    {tr.temporary_save}
-                }
-                button {
-                    class: "flex flex-row w-110 h-55 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
-                    onclick: move |_| {
-                        ctrl.save_deliberation();
-                        ctrl.next();
-                    },
-                    {tr.next}
-                }
+            FooterButtons {
+                lang,
+                on_backward: move |_| {
+                    ctrl.save_deliberation();
+                    ctrl.back();
+                },
+                on_temp_save: move |_| async move { ctrl.temp_save().await },
+                on_next: move |_| {
+                    ctrl.save_deliberation();
+                    ctrl.next();
+                },
+                on_save: None,
+                next_valid: true,
             }
         }
     }

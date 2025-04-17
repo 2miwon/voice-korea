@@ -191,23 +191,6 @@ impl Controller {
         });
     }
 
-    pub fn add_committee(&mut self, user_id: i64) {
-        self.discussion.with_mut(|req| {
-            req.users.push(user_id);
-        });
-    }
-
-    pub fn remove_committee(&mut self, user_id: i64) {
-        self.discussion.with_mut(|req| {
-            req.users
-                .retain(|committee_id| !(committee_id.clone() == user_id));
-        })
-    }
-
-    pub fn clear_committee(&mut self) {
-        self.discussion.with_mut(|req| req.users = vec![]);
-    }
-
     pub fn add_discussion(&mut self) {
         let mut disc = DiscussionCreateRequest::default();
         disc.started_at = current_timestamp();
