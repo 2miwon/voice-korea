@@ -125,14 +125,20 @@ test.describe('New Survey Page', () => {
         await expect(estimatedPaymentPointsInput).toBeVisible()
         await estimatedPaymentPointsInput.fill('4')
 
+        await page.screenshot({ 
+            path: `${screenshotBase}/09-cost-reward-filled.png`, 
+            fullPage: true 
+        });
+
         const toAddNewQuestionButton = page.getByRole('button', { name: 'Please add a new question.' })
         await expect(toAddNewQuestionButton).toBeVisible()
         await toAddNewQuestionButton.click()
 
         await page.screenshot({ 
-            path: `${screenshotBase}/09-cost-reward-filled.png`, 
+            path: `${screenshotBase}/10-add-question-first.png`, 
             fullPage: true 
         });
+
 
 
         const firstQuestionType = page.locator('div').filter({ hasText: /^Single ChoiceMultiple ChoiceShort AnswerSubjective$/ }).getByRole('combobox')
@@ -155,7 +161,20 @@ test.describe('New Survey Page', () => {
         await expect(firstMultipleOption).toBeVisible()
         await firstMultipleOption.fill("So happy")
 
-        await initiateAddOptions.click()
+        await page.screenshot({ 
+            path: `${screenshotBase}/11-first-question-filled.png`, 
+            fullPage: true 
+        });
+
+        await toAddNewQuestionButton.click()
+
+        await page.screenshot({ 
+            path: `${screenshotBase}/12-add-question-second.png`, 
+            fullPage: true 
+        });
+
+
+
 
         const secondMultipleOption = page.getByRole('textbox', { name: 'Option 2' })
         await expect(secondMultipleOption).toBeVisible()
@@ -183,8 +202,18 @@ test.describe('New Survey Page', () => {
         await expect(firstSingleOption).toBeVisible()
         await firstSingleOption.fill("So happy")
 
+        await page.screenshot({ 
+            path: `${screenshotBase}/13-second-question-filled.png`, 
+            fullPage: true 
+        });
+
 
         await toAddNewQuestionButton.click()
+
+        await page.screenshot({ 
+            path: `${screenshotBase}/14-add-question-third.png`, 
+            fullPage: true 
+        });
 
         const thirdQuestionType = page.getByRole('combobox').nth(3)
         await expect(thirdQuestionType).toBeVisible()
@@ -198,7 +227,17 @@ test.describe('New Survey Page', () => {
         await expect(thirdQuestionTypeTitleInput).toBeVisible()
         await thirdQuestionTypeTitleInput.fill('My Short Answer')
 
+        await page.screenshot({ 
+            path: `${screenshotBase}/15-third-question-filled.png`, 
+            fullPage: true 
+        });
+
         await toAddNewQuestionButton.click()
+
+        await page.screenshot({ 
+            path: `${screenshotBase}/16-add-question-fourth.png`, 
+            fullPage: true 
+        });
 
         const fourthQuestionType = page.getByRole('combobox').nth(4)
         await expect(fourthQuestionType).toBeVisible()
@@ -212,10 +251,20 @@ test.describe('New Survey Page', () => {
         await expect(fourthQuestionTypeTitleInput).toBeVisible()
         await fourthQuestionTypeTitleInput.fill('My Subjective')
 
+        await page.screenshot({ 
+            path: `${screenshotBase}/17-fourth-question-filled.png`, 
+            fullPage: true 
+        });
+
 
         const toNextPage = page.getByRole('button', { name: 'Next' })
         await expect(toNextPage).toBeVisible()
         await toNextPage.click()
+
+        await page.screenshot({ 
+            path: `${screenshotBase}/18-next-page.png`, 
+            fullPage: true 
+        });
 
 
         const propositionPage = page.getByText('Participant Attribute Setting')
@@ -234,6 +283,11 @@ test.describe('New Survey Page', () => {
         const attributeGroupOptions = page.getByRole('button', { name: 'Enter Contents' })
         await expect(attributeGroupOptions).toBeVisible()
 
+        await page.screenshot({ 
+            path: `${screenshotBase}/19-propose-page.png`, 
+            fullPage: true 
+        });
+
 
 
         const errorMessages = [
@@ -246,11 +300,9 @@ test.describe('New Survey Page', () => {
 
         await page.waitForLoadState('networkidle');
         await page.screenshot({ 
-            path: `${screenshotBase}/10-survey-submitted.png`, 
+            path: `${screenshotBase}/20-survey-submitted.png`, 
             fullPage: true 
         });
-
-        // await expect(page).toHaveURL(/.*surveys$/, );
     });
 
 });
