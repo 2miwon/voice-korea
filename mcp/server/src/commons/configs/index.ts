@@ -3,6 +3,7 @@ dotenv.config();
 
 enum EnvironmentKeys {
     NODE_ENV = 'NODE_ENV',
+    OPENAI_API_KEY = 'OPENAI_API_KEY',
     PORT = 'PORT',
 }
 
@@ -15,6 +16,11 @@ export const CONFIGS ={
     NODE_ENV: get(EnvironmentKeys.NODE_ENV),
     APP_NAME:"MCP Service",
     SERVER_PORT: get(EnvironmentKeys.PORT),
+    OpenAI:{
+        KEY: get(EnvironmentKeys.OPENAI_API_KEY),
+        URL: 'https://openrouter.ai/api/v1',
+        MODEL: 'meta-llama/llama-3-8b-instruct'
+    },
     IS_PRODUCTION: process.env.NODE_ENV === "prod" || process.env.NODE_ENV === "production" ? true : false,
     HTTP_ALLOWED_HEADERS: [
         "Content-Type",
