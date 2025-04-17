@@ -83,11 +83,6 @@ pub fn SignupPopup(lang: Language, email: String, profile_url: String) -> Elemen
                             nickname.set(v);
                         },
                     }
-                    // InputBox {
-                    //     placeholder: "{tr.nickname_hint}",
-                    //     value: nickname(),
-
-                    // }
                     div { class: "font-normal text-[#7C8292] text-[14px]", {tr.nickname_warning} }
                     if nickname_error() != "" {
                         div { class: "font-normal text-red-400 text-[14px]", {nickname_error()} }
@@ -219,7 +214,7 @@ pub fn Header(lang: Language, children: Element) -> Element {
 
     rsx! {
         header { class: "fixed top-0 left-0 w-screen h-(--header-height) overflow-hidden flex items-center justify-center z-100 bg-white",
-            div { class: "flex justify-between my-25 h-30 items-center w-full max-w-(--desktop-max-width) gap-45",
+            div { class: "flex justify-between my-25 h-30 items-center w-full max-w-desktop  gap-45",
                 Link {
                     class: "flex flex-row items-center justify-around gap-4 h-full",
                     to: Route::MainPage { lang },

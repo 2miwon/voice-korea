@@ -42,6 +42,6 @@
   --breakpoint-tablet: 768px;
   --breakpoint-mobile: 480px;
 
-  --desktop-max-width: 1300px;
+  --container-desktop: 1300px;
   --header-height: 80px;
 }
