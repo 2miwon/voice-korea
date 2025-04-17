@@ -9,11 +9,11 @@ translate! {
     },
     public_opinion_management: {
         ko: "공론관리",
-        en: "Public Opinion Management"
+        en: "Deliberation Management"
     },
     public_opinion_info: {
         ko: "공론 관리 페이지는 의견과 토론 내용을 체계적으로 관리하고 공유할 수 있도록 도와줍니다.",
-        en: "The public opinion management page helps you systematically manage and share opinions and discussions."
+        en: "The deliberation management page helps you systematically manage and share opinions and discussions."
     },
     search_hint: {
         ko: "검색어를 입력해주세요.",
@@ -21,7 +21,7 @@ translate! {
     },
     start_public_opinion: {
         ko: "공론 시작하기",
-        en: "Start Public Opinion"
+        en: "Start Deliberation"
     },
     field: {
         ko: "분야",

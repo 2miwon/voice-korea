@@ -9,6 +9,8 @@ use by_components::rich_texts::RichText;
 #[component]
 pub fn IntroductionCard(
     lang: Language,
+    #[props(default = "start_date".to_string())] start_date_id: String,
+    #[props(default = "end_date".to_string())] end_date_id: String,
     description: String,
     text_value: String,
     started_at: i64,

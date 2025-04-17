@@ -33,6 +33,8 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                 div { class: "font-medium text-base text-text-black", {tr.post_setting} }
                 IntroductionCard {
                     lang,
+                    start_date_id: "deliberation_start_date",
+                    end_date_id: "deliberation_end_date",
                     description: tr.introduction_description.to_string(),
                     text_value: deliberation.title,
                     started_at: deliberation.started_at,
@@ -132,21 +134,21 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                 }
 
                 div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
-                    div {
+                    button {
                         class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                         onclick: move |_| {
                             ctrl.back();
                         },
                         {tr.backward}
                     }
-                    div {
+                    button {
                         class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                         onclick: move |_| async move {
                             ctrl.temp_save().await;
                         },
                         {tr.temporary_save}
                     }
-                    div {
+                    button {
                         class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
                         onclick: move |_| {
                             ctrl.next();

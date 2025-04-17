@@ -36,14 +36,14 @@ impl From<Route> for DeliberationNewStep {
     }
 }
 
-#[derive(Debug, Clone, Copy, DioxusController)]
+#[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
-    #[allow(dead_code)]
     lang: Language,
     #[allow(dead_code)]
     popup_service: Signal<PopupService>,
     current_step: DeliberationNewStep,
     pub user: LoginService,
+    pub nav: Navigator,
 
     deliberation_requests: Signal<DeliberationCreateRequest>,
     deliberation_id: Signal<Option<i64>>,
@@ -61,6 +61,7 @@ impl Controller {
             lang,
             user,
             current_step,
+            nav: use_navigator(),
             popup_service: use_signal(|| popup_service),
             deliberation_requests,
             deliberation_id: use_signal(|| None),
@@ -187,7 +188,38 @@ impl Controller {
         });
     }
 
-    pub async fn temporary_save(&mut self) {
+    pub async fn start_deliberation(&mut self) {
+        let cli = Deliberation::get_client(config::get().api_url);
+
+        let org = self.user.get_selected_org();
+        if org.is_none() {
+            btracing::e!(self.lang, ApiError::OrganizationNotFound);
+            return;
+        }
+        let org_id = org.unwrap().id;
+
+        let _ = self.temporary_save(true).await;
+
+        let deliberation_id = self.deliberation_id();
+
+        match cli
+            .start_deliberation(org_id, deliberation_id.unwrap_or_default())
+            .await
+        {
+            Ok(_) => {
+                self.nav
+                    .replace(Route::DeliberationPage { lang: self.lang });
+            }
+            Err(e) => {
+                btracing::error!("start deliberation failed with error: {:?}", e);
+            }
+        }
+    }
+
+    pub async fn temporary_save(&mut self, is_start: bool) {
+        let route: Route = use_route();
+        let current_path = route.to_string();
+        tracing::debug!("current path: {}", current_path);
         let cli = Deliberation::get_client(config::get().api_url);
 
         let org = self.user.get_selected_org();
@@ -207,8 +239,6 @@ impl Controller {
         let id = self.deliberation_id();
 
         let DeliberationCreateRequest {
-            started_at,
-            ended_at,
             thumbnail_image,
             title,
             description,
@@ -228,6 +258,51 @@ impl Controller {
             drafts,
             ..
         } = self.deliberation_requests();
+
+        let default_basic_info = &DeliberationBasicInfoCreateRequest::default();
+        let default_sample_survey = &DeliberationSampleSurveyCreateRequest::default();
+        let default_content = &DeliberationContentCreateRequest::default();
+        let default_discussion = &DeliberationDiscussionCreateRequest::default();
+        let default_final_survey = &DeliberationFinalSurveyCreateRequest::default();
+
+        let basic_info = basic_infos.get(0).unwrap_or(default_basic_info);
+        let sample_survey = sample_surveys.get(0).unwrap_or(default_sample_survey);
+        let content = contents.get(0).unwrap_or(default_content);
+        let discussion = deliberation_discussions
+            .get(0)
+            .unwrap_or(default_discussion);
+        let final_survey = final_surveys.get(0).unwrap_or(default_final_survey);
+
+        let start_dates = vec![
+            basic_info.started_at,
+            sample_survey.started_at,
+            content.started_at,
+            discussion.started_at,
+            final_survey.started_at,
+        ];
+
+        let end_dates = vec![
+            basic_info.ended_at,
+            sample_survey.ended_at,
+            content.ended_at,
+            discussion.ended_at,
+            final_survey.ended_at,
+        ];
+
+        let mut started_at = start_dates[0];
+        let mut ended_at = end_dates[0];
+
+        for s in start_dates {
+            if started_at > s {
+                started_at = s;
+            }
+        }
+
+        for e in end_dates {
+            if ended_at < e {
+                ended_at = e;
+            }
+        }
 
         if id.is_none() {
             match cli
@@ -260,6 +335,13 @@ impl Controller {
                 Ok(d) => {
                     btracing::i!(self.lang, Info::TempSave);
                     self.deliberation_id.set(Some(d.id));
+
+                    if !is_start && current_path.ends_with("/deliberations/new") {
+                        self.nav.replace(Route::DeliberationEditPage {
+                            lang: self.lang,
+                            deliberation_id: d.id,
+                        });
+                    }
                 }
                 Err(e) => btracing::e!(self.lang, e),
             }
@@ -364,7 +446,7 @@ impl OverviewController {
             self.project_areas(),
         );
 
-        self.parent.temporary_save().await;
+        self.parent.temporary_save(false).await;
         tracing::debug!("{:?}", self.parent.deliberation_requests());
     }
 

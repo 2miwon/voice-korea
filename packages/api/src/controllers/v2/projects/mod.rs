@@ -35,6 +35,7 @@ impl DeliberationProjectController {
             .title_contains(title.unwrap_or_default())
             .with_count()
             .order_by_created_at_desc()
+            .status_greater_than_equals(DeliberationStatus::Ready)
             .query()
             .map(|row: PgRow| {
                 use sqlx::Row;
@@ -76,6 +77,7 @@ impl DeliberationProjectController {
         }
 
         let items: Vec<DeliberationProjectSummary> = builder
+            .status_greater_than_equals(DeliberationStatus::Ready)
             .query()
             .map(|row: PgRow| {
                 use sqlx::Row;
@@ -102,6 +104,7 @@ impl DeliberationProjectController {
 
         let items: Vec<DeliberationProjectSummary> = builder
             .order_by_created_at_desc()
+            .status_greater_than_equals(DeliberationStatus::Ready)
             .query()
             .map(|row: PgRow| {
                 use sqlx::Row;
@@ -243,7 +246,7 @@ impl DeliberationProjectController {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use models::{ProjectArea, ProjectStatus};
+    use models::ProjectArea;
 
     use crate::tests::{setup, TestContext};
     #[tokio::test]
@@ -286,9 +289,9 @@ mod tests {
         assert!(res.is_ok());
 
         let deliberation = res.unwrap();
-        let id = deliberation.id;
+        let _id = deliberation.id;
 
-        let cli = DeliberationBasicInfo::get_client(&endpoint);
+        let _cli = DeliberationBasicInfo::get_client(&endpoint);
         // FIXME: Uncomment the following lines after implementing the API
         // let res = cli.read(id).await;
         // assert!(res.is_ok());
@@ -339,9 +342,9 @@ mod tests {
         assert!(res.is_ok());
 
         let deliberation = res.unwrap();
-        let id = deliberation.id;
+        let _id = deliberation.id;
 
-        let cli = DeliberationSurvey::get_client(&endpoint);
+        let _cli = DeliberationSurvey::get_client(&endpoint);
         // let res = cli.read(id).await;
         // assert!(res.is_ok());
 

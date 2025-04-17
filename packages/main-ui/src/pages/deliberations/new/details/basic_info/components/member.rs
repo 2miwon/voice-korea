@@ -5,7 +5,7 @@ use crate::{
     components::expandable_card::ExpandableCard,
     pages::deliberations::new::{
         components::committee_dropdown::CommitteeDropdown,
-        details::sample_survey::i18n::SampleSurveyMemberTranslate,
+        details::basic_info::i18n::BasicMemberTranslate,
     },
 };
 
@@ -20,12 +20,12 @@ pub fn Member(
     remove_committee: EventHandler<i64>,
     clear_committee: EventHandler<MouseEvent>,
 ) -> Element {
-    let tr: SampleSurveyMemberTranslate = translate(&lang);
+    let tr: BasicMemberTranslate = translate(&lang);
 
     rsx! {
         ExpandableCard { required: false, header: tr.title, description: tr.description,
             CommitteeDropdown {
-                id: "sample-committee",
+                id: "basic-committee",
                 hint: tr.search_committee,
 
                 selected_committees,

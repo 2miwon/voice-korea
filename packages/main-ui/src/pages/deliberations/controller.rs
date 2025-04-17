@@ -7,7 +7,13 @@ use models::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{routes::Route, service::login_service::LoginService};
+use crate::{
+    pages::deliberations::components::remove_deliberation::RemoveDeliberationModal,
+    routes::Route,
+    service::{login_service::LoginService, popup_service::PopupService},
+};
+
+use super::components::remove_deliberation::RemoveDeliberationModalTranslate;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Opinion {
@@ -25,10 +31,12 @@ pub struct Opinion {
 #[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     pub deliberations: Resource<QueryResponse<DeliberationSummary>>,
+    pub popup_service: PopupService,
     page: Signal<usize>,
     pub size: usize,
     pub search_keyword: Signal<String>,
     pub selected_id: Signal<i64>,
+    pub org_id: Signal<i64>,
     pub context_menu: Signal<bool>,
     pub mouse_pos: Signal<(f64, f64)>,
     pub nav: Navigator,
@@ -90,10 +98,12 @@ impl Controller {
 
         let ctrl = Self {
             lang,
+            popup_service: use_context(),
             deliberations,
             page,
             size,
             search_keyword,
+            org_id: use_signal(|| user.get_selected_org().unwrap_or_default().id),
             selected_id: use_signal(|| 0),
             context_menu: use_signal(|| false),
             mouse_pos: use_signal(|| (0.0, 0.0)),
@@ -141,6 +151,44 @@ impl Controller {
         let rect = e.page_coordinates();
         self.mouse_pos.set((rect.x, rect.y));
         tracing::debug!("opened: {} Mouse position: {:?}", should_open, rect);
+    }
+
+    pub async fn handle_remove(&mut self) {
+        let mut popup_service = self.popup_service;
+        let lang = self.lang;
+        let org_id = self.org_id();
+        let id = self.selected_id();
+
+        let tr: RemoveDeliberationModalTranslate = translate(&lang);
+
+        let mut ctrl = self.clone();
+
+        popup_service
+            .open(rsx! {
+                RemoveDeliberationModal {
+                    lang: self.lang,
+                    onclose: move |_e: MouseEvent| {
+                        popup_service.close();
+                    },
+                    onremove: move |_e: MouseEvent| async move {
+                        let client = Deliberation::get_client(&crate::config::get().api_url);
+                        match client.remove_deliberation(org_id, id).await {
+                            Ok(_) => {
+                                ctrl.deliberations.restart();
+                                ctrl.context_menu.set(false);
+                                popup_service.close();
+                            }
+                            Err(e) => {
+                                btracing::error!("failed to remove deliberation with error: {:?}", e);
+                                ctrl.context_menu.set(false);
+                                popup_service.close();
+                            }
+                        }
+                    },
+                }
+            })
+            .with_id("remove_deliberation")
+            .with_title(tr.title);
     }
 
     pub fn handle_edit(&mut self) {

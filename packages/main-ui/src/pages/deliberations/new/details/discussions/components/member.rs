@@ -1,5 +1,5 @@
 use bdk::prelude::*;
-use models::{DeliberationDiscussionCreateRequest, OrganizationMemberSummary};
+use models::OrganizationMemberSummary;
 
 use crate::{
     components::expandable_card::ExpandableCard,
@@ -10,55 +10,35 @@ use crate::{
 };
 
 #[component]
-pub fn DiscussionMember(
+pub fn Member(
     lang: Language,
-    discussion: DeliberationDiscussionCreateRequest,
-    set_discussion: EventHandler<DeliberationDiscussionCreateRequest>,
 
     total_committees: Vec<OrganizationMemberSummary>,
     selected_committees: Vec<OrganizationMemberSummary>,
+
+    add_committee: EventHandler<i64>,
+    remove_committee: EventHandler<i64>,
+    clear_committee: EventHandler<MouseEvent>,
 ) -> Element {
     let tr: DiscussionMemberTranslate = translate(&lang);
-
-    let select_ids: Vec<i64> = selected_committees
-        .clone()
-        .iter()
-        .map(|v| v.user_id)
-        .collect();
 
     rsx! {
         ExpandableCard { required: false, header: tr.title, description: tr.description,
             CommitteeDropdown {
                 id: "discussion-committee",
                 hint: tr.search_committee,
+
                 selected_committees,
                 committees: total_committees,
 
-                add_committee: {
-                    let mut select_ids = select_ids.clone();
-                    let mut discussion = discussion.clone();
-                    move |member: OrganizationMemberSummary| {
-                        select_ids.push(member.user_id);
-                        discussion.users = select_ids.clone();
-                        set_discussion.call(discussion.clone());
-                    }
+                add_committee: move |member: OrganizationMemberSummary| {
+                    add_committee.call(member.user_id);
                 },
-                remove_committee: {
-                    let mut select_ids = select_ids.clone();
-                    let mut discussion = discussion.clone();
-                    move |id: i64| {
-                        select_ids.retain(|committee_id| !(committee_id.clone() == id));
-                        discussion.users = select_ids.clone();
-                        set_discussion.call(discussion.clone());
-                    }
+                remove_committee: move |id: i64| {
+                    remove_committee.call(id);
                 },
-                clear_committee: {
-                    let mut discussion = discussion.clone();
-                    move |_| {
-                        let select_ids = vec![];
-                        discussion.users = select_ids.clone();
-                        set_discussion.call(discussion.clone());
-                    }
+                clear_committee: move |e| {
+                    clear_committee.call(e);
                 },
             }
         }
