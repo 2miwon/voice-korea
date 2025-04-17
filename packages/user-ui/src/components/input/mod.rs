@@ -40,10 +40,7 @@ pub fn Input(
         input {
             r#type: "text",
             id,
-            class: format!(
-                "px-27 py-17 bg-box-gray rounded-lg text-[18px]/24 border-none focus:outline-primary  {}",
-                class,
-            ),
+            class: "px-27 py-17 bg-box-gray rounded-lg text-[18px]/24 border-none focus:outline-primary {class}",
             value,
             placeholder,
             onchange: move |e| {
