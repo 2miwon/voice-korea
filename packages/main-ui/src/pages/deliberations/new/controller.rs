@@ -39,6 +39,7 @@ impl From<Route> for DeliberationNewStep {
 #[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     lang: Language,
+    #[allow(dead_code)]
     popup_service: Signal<PopupService>,
     current_step: DeliberationNewStep,
     pub user: LoginService,
