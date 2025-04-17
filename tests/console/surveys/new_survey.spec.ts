@@ -67,16 +67,18 @@ test.describe('New Survey Page', () => {
         const startSurveyButton = page.getByRole('link', { name: "Start Survey" });
         await expect(startSurveyButton).toBeVisible();
         await startSurveyButton.click();
-        await page.screenshot({ path: 'screenshots/console/NewSurvey-001/06-survey-started.png', fullPage: true });
+        await page.screenshot({ 
+            path: `${screenshotBase}/06-survey-started.png`, 
+            fullPage: true 
+        });
 
         await page.waitForLoadState('networkidle');
         await page.waitForTimeout(timeouts.wait);
 
         await expect(page).toHaveURL('https://console.dev.voice-korea.com/en/surveys/new', );
-        await page.screenshot({ path: 'screenshots/console/NewSurvey-001/07-survey-questions.png', fullPage: true });
 
         await page.screenshot({ 
-            path: `${screenshotBase}/06-new-survey-page.png`, 
+            path: `${screenshotBase}/07-new-survey-page.png`, 
             fullPage: true 
         });
 
@@ -90,17 +92,17 @@ test.describe('New Survey Page', () => {
         const titleInput = page.getByRole('textbox', { name: 'Please enter a description' }).first()
         await expect(titleInput).toBeVisible();
 
-        const startDatePicker = page.getByRole('button', { name: "/04/16" })
+        const startDatePicker = page.getByRole('button', { name: "/04/17" })
         await expect(startDatePicker).toBeVisible();
 
-        const endDatePicker = page.getByRole('button', { name: "/04/17" })
+        const endDatePicker = page.getByRole('button', { name: "/04/18" })
         await expect(endDatePicker).toBeVisible();
 
         const descriptionInput = page.getByRole('textbox', { name: 'Please enter a description' }).nth(1)
         await expect(descriptionInput).toBeVisible();
 
         await page.screenshot({ 
-            path: `${screenshotBase}/07-all-fields-visible.png`, 
+            path: `${screenshotBase}/08-all-basic-fields-visible.png`, 
             fullPage: true 
         });
 
@@ -123,16 +125,27 @@ test.describe('New Survey Page', () => {
         await expect(estimatedPaymentPointsInput).toBeVisible()
         await estimatedPaymentPointsInput.fill('4')
 
+        await page.screenshot({ 
+            path: `${screenshotBase}/09-cost-reward-filled.png`, 
+            fullPage: true 
+        });
+
         const toAddNewQuestionButton = page.getByRole('button', { name: 'Please add a new question.' })
         await expect(toAddNewQuestionButton).toBeVisible()
         await toAddNewQuestionButton.click()
+
+        await page.screenshot({ 
+            path: `${screenshotBase}/10-add-question-first.png`, 
+            fullPage: true 
+        });
+
 
 
         const firstQuestionType = page.locator('div').filter({ hasText: /^Single ChoiceMultiple ChoiceShort AnswerSubjective$/ }).getByRole('combobox')
         await expect(firstQuestionType).toBeVisible()
         await firstQuestionType.selectOption('Multiple Choice')
 
-        const firstQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' }).nth(2)
+        const firstQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' })
         await expect(firstQuestionTypeDescriptionInput).toBeVisible()
         await firstQuestionTypeDescriptionInput.fill('A Multiple Question Type')
 
@@ -148,7 +161,20 @@ test.describe('New Survey Page', () => {
         await expect(firstMultipleOption).toBeVisible()
         await firstMultipleOption.fill("So happy")
 
-        await initiateAddOptions.click()
+        await page.screenshot({ 
+            path: `${screenshotBase}/11-first-question-filled.png`, 
+            fullPage: true 
+        });
+
+        await toAddNewQuestionButton.click()
+
+        await page.screenshot({ 
+            path: `${screenshotBase}/12-add-question-second.png`, 
+            fullPage: true 
+        });
+
+
+
 
         const secondMultipleOption = page.getByRole('textbox', { name: 'Option 2' })
         await expect(secondMultipleOption).toBeVisible()
@@ -160,7 +186,7 @@ test.describe('New Survey Page', () => {
         await expect(secondQuestionType).toBeVisible()
         await secondQuestionType.selectOption('Single Choice')
 
-        const secondQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' }).nth(3)
+        const secondQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' }).nth(1)
         await expect(secondQuestionTypeDescriptionInput).toBeVisible()
         await secondQuestionTypeDescriptionInput.fill('A Single Question Type')
 
@@ -176,14 +202,24 @@ test.describe('New Survey Page', () => {
         await expect(firstSingleOption).toBeVisible()
         await firstSingleOption.fill("So happy")
 
+        await page.screenshot({ 
+            path: `${screenshotBase}/13-second-question-filled.png`, 
+            fullPage: true 
+        });
+
 
         await toAddNewQuestionButton.click()
+
+        await page.screenshot({ 
+            path: `${screenshotBase}/14-add-question-third.png`, 
+            fullPage: true 
+        });
 
         const thirdQuestionType = page.getByRole('combobox').nth(3)
         await expect(thirdQuestionType).toBeVisible()
         await thirdQuestionType.selectOption('Short Answer')
 
-        const thirdQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' }).nth(4)
+        const thirdQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' }).nth(2)
         await expect(thirdQuestionTypeDescriptionInput).toBeVisible()
         await thirdQuestionTypeDescriptionInput.fill('A Short Answer Type')
 
@@ -191,13 +227,23 @@ test.describe('New Survey Page', () => {
         await expect(thirdQuestionTypeTitleInput).toBeVisible()
         await thirdQuestionTypeTitleInput.fill('My Short Answer')
 
+        await page.screenshot({ 
+            path: `${screenshotBase}/15-third-question-filled.png`, 
+            fullPage: true 
+        });
+
         await toAddNewQuestionButton.click()
+
+        await page.screenshot({ 
+            path: `${screenshotBase}/16-add-question-fourth.png`, 
+            fullPage: true 
+        });
 
         const fourthQuestionType = page.getByRole('combobox').nth(4)
         await expect(fourthQuestionType).toBeVisible()
         await fourthQuestionType.selectOption('Subjective')
 
-        const fourthQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' }).nth(5)
+        const fourthQuestionTypeDescriptionInput = page.getByRole('textbox', { name: 'Please Input Description' }).nth(3)
         await expect(fourthQuestionTypeDescriptionInput).toBeVisible()
         await fourthQuestionTypeDescriptionInput.fill('A Subjective Type')
 
@@ -205,10 +251,20 @@ test.describe('New Survey Page', () => {
         await expect(fourthQuestionTypeTitleInput).toBeVisible()
         await fourthQuestionTypeTitleInput.fill('My Subjective')
 
+        await page.screenshot({ 
+            path: `${screenshotBase}/17-fourth-question-filled.png`, 
+            fullPage: true 
+        });
+
 
         const toNextPage = page.getByRole('button', { name: 'Next' })
         await expect(toNextPage).toBeVisible()
         await toNextPage.click()
+
+        await page.screenshot({ 
+            path: `${screenshotBase}/18-next-page.png`, 
+            fullPage: true 
+        });
 
 
         const propositionPage = page.getByText('Participant Attribute Setting')
@@ -227,6 +283,11 @@ test.describe('New Survey Page', () => {
         const attributeGroupOptions = page.getByRole('button', { name: 'Enter Contents' })
         await expect(attributeGroupOptions).toBeVisible()
 
+        await page.screenshot({ 
+            path: `${screenshotBase}/19-propose-page.png`, 
+            fullPage: true 
+        });
+
 
 
         const errorMessages = [
@@ -239,11 +300,9 @@ test.describe('New Survey Page', () => {
 
         await page.waitForLoadState('networkidle');
         await page.screenshot({ 
-            path: `${screenshotBase}/10-survey-submitted.png`, 
+            path: `${screenshotBase}/20-survey-submitted.png`, 
             fullPage: true 
         });
-
-        // await expect(page).toHaveURL(/.*surveys$/, );
     });
 
 });
