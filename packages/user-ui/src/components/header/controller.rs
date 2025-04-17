@@ -1,9 +1,8 @@
-#![allow(unused)]
 use bdk::prelude::*;
 use dioxus_popup::PopupService;
 
 use super::i18n::Translate;
-use super::{GoogleLoginPopup, SignupPopup};
+use super::GoogleLoginPopup;
 
 use crate::service::user_service::UserService;
 
