@@ -7,14 +7,17 @@ use crate::{
         components::{calendar_dropdown::CalendarDropdown, clock_dropdown::ClockDropdown},
         details::discussions::i18n::DiscussionGroupTranslate,
     },
-    utils::time::{current_timestamp, update_hour_in_timestamp},
+    utils::time::update_hour_in_timestamp,
 };
 
 #[component]
 pub fn DiscussionGroup(
     lang: Language,
     discussion: DeliberationDiscussionCreateRequest,
-    set_discussion: EventHandler<DeliberationDiscussionCreateRequest>,
+
+    add_discussion: EventHandler<MouseEvent>,
+    remove_discussion: EventHandler<usize>,
+    update_discussion: EventHandler<(usize, DiscussionCreateRequest)>,
 ) -> Element {
     let tr: DiscussionGroupTranslate = translate(&lang);
 
@@ -34,12 +37,10 @@ pub fn DiscussionGroup(
                                         id: format!("calendar_discussion_{}_start_date", i),
                                         date: disc.started_at,
                                         onchange: {
-                                            let mut discussion = discussion.clone();
                                             let mut disc = disc.clone();
                                             move |e| {
                                                 disc.started_at = e;
-                                                discussion.discussions[i] = disc.clone();
-                                                set_discussion.call(discussion.clone());
+                                                update_discussion.call((i, disc.clone()));
                                             }
                                         },
                                     }
@@ -47,13 +48,11 @@ pub fn DiscussionGroup(
                                         id: format!("clock_discussion_{}_start_date", i),
                                         time: disc.started_at,
                                         onchange: {
-                                            let mut discussion = discussion.clone();
                                             let mut disc = disc.clone();
                                             move |hour: i64| {
                                                 let date = disc.started_at;
                                                 disc.started_at = update_hour_in_timestamp(date, hour as u32);
-                                                discussion.discussions[i] = disc.clone();
-                                                set_discussion.call(discussion.clone());
+                                                update_discussion.call((i, disc.clone()));
                                             }
                                         },
                                     }
@@ -64,12 +63,10 @@ pub fn DiscussionGroup(
                                         id: format!("calendar_discussion_{}_end_date", i),
                                         date: disc.ended_at,
                                         onchange: {
-                                            let mut discussion = discussion.clone();
                                             let mut disc = disc.clone();
                                             move |e| {
                                                 disc.ended_at = e;
-                                                discussion.discussions[i] = disc.clone();
-                                                set_discussion.call(discussion.clone());
+                                                update_discussion.call((i, disc.clone()));
                                             }
                                         },
                                     }
@@ -77,13 +74,11 @@ pub fn DiscussionGroup(
                                         id: format!("clock_discussion_{}_end_date", i),
                                         time: disc.ended_at,
                                         onchange: {
-                                            let mut discussion = discussion.clone();
                                             let mut disc = disc.clone();
                                             move |hour: i64| {
                                                 let date = disc.ended_at;
                                                 disc.ended_at = update_hour_in_timestamp(date, hour as u32);
-                                                discussion.discussions[i] = disc.clone();
-                                                set_discussion.call(discussion.clone());
+                                                update_discussion.call((i, disc.clone()));
                                             }
                                         },
                                     }
@@ -102,12 +97,10 @@ pub fn DiscussionGroup(
                                     placeholder: tr.input_title_hint,
                                     value: disc.clone().name,
                                     oninput: {
-                                        let mut discussion = discussion.clone();
                                         let mut disc = disc.clone();
                                         move |e: Event<FormData>| {
                                             disc.name = e.value();
-                                            discussion.discussions[i] = disc.clone();
-                                            set_discussion.call(discussion.clone());
+                                            update_discussion.call((i, disc.clone()));
                                         }
                                     },
                                 }
@@ -122,12 +115,10 @@ pub fn DiscussionGroup(
                                 placeholder: tr.input_description_hint,
                                 value: disc.clone().description,
                                 onchange: {
-                                    let mut discussion = discussion.clone();
                                     let mut disc = disc.clone();
                                     move |value: String| {
-                                        disc.description = value.clone();
-                                        discussion.discussions[i] = disc.clone();
-                                        set_discussion.call(discussion.clone());
+                                        disc.description = value;
+                                        update_discussion.call((i, disc.clone()));
                                     }
                                 },
                             }
@@ -136,12 +127,8 @@ pub fn DiscussionGroup(
                         div { class: "flex flex-row w-full justify-end items-center gap-5",
                             button {
                                 class: "cursor-pointer flex flex-row w-80 items-center justify-end",
-                                onclick: {
-                                    let mut discussion = discussion.clone();
-                                    move |_| {
-                                        discussion.discussions.remove(i);
-                                        set_discussion.call(discussion.clone());
-                                    }
+                                onclick: move |_| {
+                                    remove_discussion.call(i);
                                 },
                                 div { class: "font-medium text-text-black text-[15px]",
                                     {tr.delete}
@@ -156,15 +143,8 @@ pub fn DiscussionGroup(
                     div { class: "border-t border-dashed border-gray-300 w-full" }
                     button {
                         class: "cursor-pointer absolute bg-background-gray border border-label-border-gray rounded-[100px] w-43 h-43 flex items-center justify-center shadow",
-                        onclick: {
-                            let mut discussion = discussion.clone();
-                            let mut disc = DiscussionCreateRequest::default();
-                            move |_| {
-                                disc.started_at = current_timestamp();
-                                disc.ended_at = current_timestamp();
-                                discussion.discussions.push(disc.clone());
-                                set_discussion.call(discussion.clone());
-                            }
+                        onclick: move |e| {
+                            add_discussion.call(e);
                         },
                         "+"
                     }

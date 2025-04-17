@@ -5,7 +5,7 @@ pub fn BlockHeader(
     required: bool,
     header: String,
     description: String,
-    onopen: Option<EventHandler<bool>>,
+    #[props(default = None)] onopen: Option<EventHandler<bool>>,
 ) -> Element {
     let mut open = use_signal(|| false);
     rsx! {

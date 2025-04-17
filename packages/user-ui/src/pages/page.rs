@@ -11,7 +11,7 @@ use crate::components::button::Button;
 use crate::components::icons::check::Check;
 use crate::pages::components::inquiry::InquirySection;
 use crate::pages::components::institution_box::InstitutionBox;
-use crate::pages::components::project_box::ProjectCard;
+use crate::pages::components::project_card::ProjectCard;
 use crate::pages::components::review::ReviewSection;
 use crate::pages::i18n::{
     GuideLineTranslate, MainBannerTranslate, MoreButtonTranslate, OpinionFeatureTranslate,

@@ -1,21 +1,15 @@
 use dioxus::prelude::*;
 use dioxus_translate::Language;
 
-use crate::pages::{
-    layout::{MainRootLayout, MainRootLayoutWithoutFooter},
-    *,
-};
+use crate::pages::{layout::MainLayout, *};
 
 #[derive(Clone, Routable)]
 #[rustfmt::skip]
 pub enum Route {
     #[nest("/:lang")]
-        #[layout(MainRootLayout)]
+        #[layout(MainLayout)]
             #[route("/")]
             MainPage { lang: Language },
-        #[end_layout]
-
-        #[layout(MainRootLayoutWithoutFooter)]
             #[route("/coming-soon")]
             ComingSoonPage { lang: Language },
             #[route("/profile")]

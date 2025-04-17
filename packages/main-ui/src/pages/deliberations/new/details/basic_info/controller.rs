@@ -150,8 +150,61 @@ impl Controller {
         Ok(ctrl)
     }
 
-    pub fn set_basic_info(&mut self, info: DeliberationBasicInfoCreateRequest) {
-        self.basic_info.set(info);
+    pub fn set_title(&mut self, title: String) {
+        self.basic_info.with_mut(|req| {
+            req.title = title;
+        });
+    }
+
+    pub fn set_description(&mut self, description: String) {
+        self.basic_info.with_mut(|req| {
+            req.description = description;
+        });
+    }
+
+    pub fn set_start_date(&mut self, started_at: i64) {
+        self.basic_info.with_mut(|req| {
+            req.started_at = started_at;
+        });
+    }
+
+    pub fn set_end_date(&mut self, ended_at: i64) {
+        self.basic_info.with_mut(|req| {
+            req.ended_at = ended_at;
+        });
+    }
+
+    pub fn add_survey(&mut self, survey_id: i64) {
+        self.basic_info.with_mut(|req| {
+            req.surveys.push(survey_id);
+        });
+    }
+
+    pub fn remove_survey(&mut self, survey_id: i64) {
+        self.basic_info.with_mut(|req| {
+            req.surveys.retain(|id| !(id.clone() == survey_id));
+        });
+    }
+
+    pub fn clear_survey(&mut self) {
+        self.basic_info.with_mut(|req| req.surveys = vec![]);
+    }
+
+    pub fn add_committee(&mut self, user_id: i64) {
+        self.basic_info.with_mut(|req| {
+            req.users.push(user_id);
+        });
+    }
+
+    pub fn remove_committee(&mut self, user_id: i64) {
+        self.basic_info.with_mut(|req| {
+            req.users
+                .retain(|committee_id| !(committee_id.clone() == user_id));
+        })
+    }
+
+    pub fn clear_committee(&mut self) {
+        self.basic_info.with_mut(|req| req.users = vec![]);
     }
 
     pub fn get_basic_info(&self) -> DeliberationBasicInfoCreateRequest {
@@ -273,7 +326,7 @@ impl Controller {
 
     pub async fn temp_save(&mut self) {
         self.parent.save_basic_info(self.basic_info());
-        self.parent.temporary_save().await;
+        self.parent.temporary_save(false).await;
     }
 
     pub fn next(&mut self) {

@@ -22,6 +22,7 @@ pub struct LandingController {
 impl LandingController {
     async fn query(&self) -> Result<LandingData> {
         let project_query = DeliberationProjectSummary::query_builder()
+            .status_not_equals(DeliberationStatus::Draft)
             .order_by_created_at_desc()
             .limit(10);
         let organization_query = OrganizationSummary::query_builder()

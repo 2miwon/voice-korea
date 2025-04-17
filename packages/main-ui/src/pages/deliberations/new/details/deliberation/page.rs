@@ -1,10 +1,9 @@
 #![allow(unused_variables)]
+use super::super::components::introduction_card::IntroductionCard;
 use super::*;
 use crate::{
-    components::{icons::ArrowLeft, section::AddSection},
     pages::deliberations::new::details::deliberation::components::{
-        elearning::DeliberationElearning, evaluation::Evaluation, introduction::Introduction,
-        member::DeliberationMember,
+        elearning::DeliberationElearning, evaluation::Evaluation, member::DeliberationMember,
     },
     service::metadata_api::MetadataApi,
 };
@@ -18,22 +17,29 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
     let mut ctrl = Controller::new(lang)?;
     let tr: DeliberationTranslate = translate(&lang);
     let api: MetadataApi = use_context();
+    let deliberation = ctrl.deliberation();
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
-            div { class: "text-header-gray font-medium text-sm mb-10",
-                "{tr.organization_management} / {tr.deliberation_management} / {tr.start_deliberation}"
-            }
-            div { class: "flex flex-row w-full justify-start items-center mb-25 gap-10",
-                div { onclick: move |_| {},
-                    ArrowLeft { width: "24", height: "24", color: "#3a3a3a" }
-                }
-                div { class: "text-header-black font-semibold text-[28px] mr-20", "{tr.deliberation}" }
-            }
+            // div { class: "text-header-gray font-medium text-sm mb-10",
+            //     "{tr.organization_management} / {tr.deliberation_management} / {tr.start_deliberation}"
+            // }
+            // div { class: "flex flex-row w-full justify-start items-center mb-25 gap-10",
+            //     div { onclick: move |_| {},
+            //         ArrowLeft { width: "24", height: "24", color: "#3a3a3a" }
+            //     }
+            //     div { class: "text-header-black font-semibold text-[28px] mr-20", "{tr.deliberation}" }
+            // }
             div { class: "flex flex-col w-full justify-start items-start gap-20",
                 div { class: "font-medium text-base text-text-black", {tr.post_setting} }
-                Introduction {
+                IntroductionCard {
                     lang,
-                    deliberation: ctrl.deliberation(),
+                    start_date_id: "deliberation_start_date",
+                    end_date_id: "deliberation_end_date",
+                    description: tr.introduction_description.to_string(),
+                    text_value: deliberation.title,
+                    started_at: deliberation.started_at,
+                    ended_at: deliberation.ended_at,
+                    content: deliberation.description,
                     set_title: move |title: String| {
                         ctrl.set_title(title);
                     },
@@ -82,7 +88,9 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                         }
                     }
 
-                    if ctrl.e_learning_tab() {
+                    div {
+                        class: "flex",
+                        style: if ctrl.e_learning_tab() { "width: 100%;" } else { "display: none;" },
                         DeliberationElearning {
                             lang,
                             elearnings: ctrl.deliberation().elearnings,
@@ -102,54 +110,45 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                                 ctrl.remove_elearning(index);
                             },
                         }
-                    } else {
+                    }
+                    div {
+                        class: "flex",
+                        style: if ctrl.e_learning_tab() { "display: none;" } else { "width: 100%;" },
                         Evaluation {
                             lang,
-                            evaluations: vec![], // FIXME: this is dummy data
-                            // selected_field: ctrl.selected_field(),
+                            questions: ctrl.deliberation().questions,
                             set_form: move |(index, field): (usize, String)| {
                                 ctrl.set_selected_field(index, field);
                             },
                             set_title: move |(index, title): (usize, String)| {
-                                ctrl.set_evaluation_title(index, title);
+                                ctrl.set_question_title(index, title);
                             },
-                            set_content: move |(index, content): (usize, String)| {
-                                ctrl.set_evaluation_content(index, content);
+                            set_description: move |(index, content): (usize, String)| {
+                                ctrl.set_question_description(index, content);
                             },
-                            removing_evaluation: move |index: usize| {
-                                ctrl.remove_evaluation(index);
+                            removing_question: move |index: usize| {
+                                ctrl.remove_question(index);
                             },
                         }
-                    }
-
-                    AddSection {
-                        lang,
-                        onclick: move |e| {
-                            if ctrl.e_learning_tab() {
-                                ctrl.add_elearning();
-                            } else {
-                                ctrl.add_evaluation();
-                            }
-                        },
                     }
                 }
 
                 div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
-                    div {
+                    button {
                         class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                         onclick: move |_| {
                             ctrl.back();
                         },
                         {tr.backward}
                     }
-                    div {
+                    button {
                         class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
                         onclick: move |_| async move {
                             ctrl.temp_save().await;
                         },
                         {tr.temporary_save}
                     }
-                    div {
+                    button {
                         class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
                         onclick: move |_| {
                             ctrl.next();
