@@ -1,11 +1,15 @@
 use bdk::prelude::*;
 use models::{
-    deliberation_user::DeliberationUserCreateRequest, OrganizationMember, OrganizationMemberQuery,
+    deliberation_role::DeliberationRoleCreateRequest, OrganizationMember, OrganizationMemberQuery,
     OrganizationMemberSummary, Role,
 };
+use regex::Regex;
 
 use super::*;
-use crate::service::login_service::LoginService;
+use crate::{
+    pages::deliberations::new::committees::i18n::CompositionCommitteeTranslate,
+    service::login_service::LoginService,
+};
 
 #[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
@@ -15,9 +19,9 @@ pub struct Controller {
     pub roles: Signal<Vec<Role>>,
 
     pub members: Resource<Vec<OrganizationMemberSummary>>,
-    pub committees: Signal<Vec<DeliberationUserCreateRequest>>,
 
-    pub committee_roles: Signal<Vec<Vec<OrganizationMemberSummary>>>,
+    pub committees: Signal<Vec<DeliberationRoleCreateRequest>>,
+    pub committee_emails: Signal<Vec<String>>,
     pub nav: Navigator,
 }
 
@@ -52,8 +56,8 @@ impl Controller {
             parent_ctrl: use_context(),
             nav: use_navigator(),
 
+            committee_emails: use_signal(|| vec![]),
             committees: use_signal(|| vec![]),
-            committee_roles: use_signal(|| vec![]),
             roles: use_signal(|| {
                 vec![
                     Role::Admin,
@@ -66,18 +70,15 @@ impl Controller {
         };
 
         use_effect({
-            let _req = ctrl.parent_ctrl.deliberation_requests();
+            let req = ctrl.parent_ctrl.deliberation_requests();
             let roles = ctrl.roles();
-            let members = members().unwrap_or_default();
 
             move || {
-                ctrl.committees.set(vec![]);
-
-                for role in roles.clone() {
-                    let members = ctrl.get_role_list(members.clone(), vec![], role);
-
-                    ctrl.committee_roles.push(members);
+                for _ in roles.clone() {
+                    ctrl.committee_emails.push("".to_string());
                 }
+
+                ctrl.committees.set(req.roles.clone());
             }
         });
 
@@ -103,71 +104,58 @@ impl Controller {
     pub fn save_deliberation(&mut self) {
         let mut parent_ctrl = self.parent_ctrl;
         // let roles = self.committees().iter().map(|v| v.clone()).collect();
-        parent_ctrl.save_committees(vec![]);
+        parent_ctrl.save_committees(self.committees());
     }
 
-    pub fn add_committee(&mut self, committee: DeliberationUserCreateRequest) {
-        self.committees.push(committee);
+    pub fn update_email_by_role(&mut self, index: usize, email: String) {
+        self.committee_emails.with_mut(|emails| {
+            emails[index] = email;
+        });
     }
 
-    pub fn remove_committee(&mut self, user_id: i64, role: Role) {
-        self.committees
-            .retain(|committee| !(committee.user_id == user_id && committee.role == role));
+    pub fn remove_email_by_role(&mut self, index: usize) {
+        self.committees.with_mut(|roles| {
+            roles.remove(index);
+        });
     }
 
-    pub fn clear_committee(&mut self, role: Role) {
-        self.committees
-            .retain(|committee| !(committee.role == role));
-    }
+    pub fn add_email_by_role(&mut self, index: usize, role: Role) {
+        let lang = self.lang;
+        let tr: CompositionCommitteeTranslate = translate(&lang);
+        let input = self.committee_emails()[index].clone();
+        let emails: Vec<String> = input
+            .split(",")
+            .map(|s| s.trim())
+            .map(|v| v.to_string())
+            .collect();
 
-    pub fn add_committee_roles(&mut self, index: usize, user_id: i64) {
-        let mut list = self.committee_roles();
-        let members = self.members().unwrap_or_default();
+        for email in emails.clone() {
+            let email_regex = Regex::new(r"(?i)^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$").unwrap();
 
-        if let Some(role_list) = list.get_mut(index) {
-            let user = members.iter().find(|m| m.user_id == user_id);
-            if let Some(user) = user {
-                if !role_list.iter().any(|m| m.user_id == user_id) {
-                    role_list.push(user.clone());
-                }
+            if !email_regex.is_match(&email) {
+                btracing::error!("{}", tr.email_format_error);
+                return;
+            }
+
+            if self.committees().iter().any(|r| r.email == email) {
+                btracing::error!("{}", tr.role_exist_error);
+                return;
             }
         }
-        self.committee_roles.set(list);
-    }
 
-    pub fn remove_committee_roles(&mut self, index: usize, user_id: i64) {
-        let mut list = self.committee_roles();
-        if let Some(role_list) = list.get_mut(index) {
-            role_list.retain(|m| m.user_id != user_id);
-        }
-        self.committee_roles.set(list);
-    }
+        self.committees.with_mut(|roles| {
+            for email in emails.clone() {
+                roles.push(DeliberationRoleCreateRequest {
+                    email,
+                    role: role.clone(),
+                });
+            }
 
-    pub fn clear_committee_roles(&mut self, index: usize) {
-        let mut list = self.committee_roles();
-        if let Some(role_list) = list.get_mut(index) {
-            role_list.clear();
-        }
-        self.committee_roles.set(list);
-    }
+            roles.sort_by_key(|r| r.role.clone() as i32);
+        });
 
-    pub fn get_role_list(
-        &mut self,
-        members: Vec<OrganizationMemberSummary>,
-        committees: Vec<DeliberationUserCreateRequest>,
-        role: Role,
-    ) -> Vec<OrganizationMemberSummary> {
-        let user_ids: Vec<i64> = committees
-            .iter()
-            .filter(|committee| committee.role == role)
-            .map(|committee| committee.user_id)
-            .collect();
-
-        let members = members
-            .into_iter()
-            .filter(|member| user_ids.contains(&member.user_id))
-            .collect();
-
-        members
+        self.committee_emails.with_mut(|e| {
+            e[index] = "".to_string();
+        });
     }
 }
