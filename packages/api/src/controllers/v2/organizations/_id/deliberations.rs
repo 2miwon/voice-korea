@@ -872,7 +872,13 @@ impl DeliberationController {
         contents: Vec<DeliberationContentCreateRequest>,
     ) -> Result<()> {
         for DeliberationContentCreateRequest {
-            users, elearnings, ..
+            users,
+            elearnings,
+            started_at,
+            ended_at,
+            title,
+            description,
+            questions,
         } in contents.clone()
         {
             let results = DeliberationContent::query_builder()
@@ -891,10 +897,24 @@ impl DeliberationController {
                     .next()
                     .unwrap_or_else(DeliberationContent::default)
             } else {
-                results
-                    .into_iter()
-                    .next()
-                    .unwrap_or_else(DeliberationContent::default)
+                let results = results[0].clone();
+                let v = self
+                    .deliberation_contents
+                    .update_with_tx(
+                        &mut *tx,
+                        results.id,
+                        DeliberationContentRepositoryUpdateRequest {
+                            started_at: Some(started_at),
+                            ended_at: Some(ended_at),
+                            title: Some(title),
+                            description: Some(description),
+                            deliberation_id: Some(results.deliberation_id),
+                            questions: Some(questions),
+                        },
+                    )
+                    .await?;
+
+                v.unwrap_or_default()
             };
 
             // update user

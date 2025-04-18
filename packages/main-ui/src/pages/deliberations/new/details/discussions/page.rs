@@ -25,6 +25,7 @@ pub fn DeliberationDiscussionSettingPage(lang: Language) -> Element {
                         started_at: discussion.clone().started_at,
                         ended_at: discussion.clone().ended_at,
                         content: discussion.clone().description,
+                        rich_text_id: "discussion_rich_text",
                         start_date_id: "discussion_start_date",
                         end_date_id: "discussion_end_date",
                         set_title: move |title: String| {
