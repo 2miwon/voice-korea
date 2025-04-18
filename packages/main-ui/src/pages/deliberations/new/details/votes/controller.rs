@@ -64,7 +64,7 @@ impl Controller {
                 .unwrap_or(&DeliberationFinalSurveyCreateRequest::default())
                 .clone();
             let current_timestamp = current_timestamp();
-            let committees = req.roles.clone();
+            let _committees = req.roles.clone();
 
             move || {
                 let started_at = final_survey.clone().started_at;
@@ -79,7 +79,7 @@ impl Controller {
                 }
 
                 ctrl.final_survey.set(final_survey.clone());
-                ctrl.committee_members.set(committees.clone());
+                ctrl.committee_members.set(vec![]);
             }
         });
         Ok(ctrl)

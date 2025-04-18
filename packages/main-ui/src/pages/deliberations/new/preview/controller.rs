@@ -114,11 +114,11 @@ impl Controller {
         // committee
         let roles = ctrl.roles();
         let members = members().unwrap_or_default();
-        let committees = req.roles.clone();
-        ctrl.committees.set(committees.clone());
+        let _committees = req.roles.clone();
+        ctrl.committees.set(vec![]);
         let mut committee_roles = vec![];
         for role in roles.clone() {
-            let members = ctrl.get_role_list(members.clone(), committees.clone(), role);
+            let members = ctrl.get_role_list(members.clone(), vec![], role);
 
             committee_roles.push(members);
         }

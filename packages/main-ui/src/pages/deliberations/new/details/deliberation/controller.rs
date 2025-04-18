@@ -101,7 +101,7 @@ impl Controller {
 
         let current_timestamp = current_timestamp();
 
-        let committees = req.roles;
+        let _committees = req.roles;
 
         use_effect(move || {
             let mut deliberation = req
@@ -118,7 +118,7 @@ impl Controller {
                 deliberation.ended_at = current_timestamp;
             }
             ctrl.deliberation.set(deliberation.clone());
-            ctrl.committee_members.set(committees.clone());
+            ctrl.committee_members.set(vec![]);
             // if deliberation.elearnings.is_empty() {
             //     let mut elearning = ElearningCreateRequest::default();
             //     elearning.resources.push(ResourceFile::default());

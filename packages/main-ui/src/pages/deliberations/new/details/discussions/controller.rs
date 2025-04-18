@@ -89,7 +89,7 @@ impl Controller {
                 .unwrap_or(&DeliberationDiscussionCreateRequest::default())
                 .clone();
             let current_timestamp = current_timestamp();
-            let committees = req.roles.clone();
+            let _committees = req.roles.clone();
 
             move || {
                 let started_at = discussion.clone().started_at;
@@ -104,7 +104,7 @@ impl Controller {
                 }
 
                 ctrl.discussion.set(discussion.clone());
-                ctrl.committee_members.set(committees.clone());
+                ctrl.committee_members.set(vec![]);
             }
         });
         Ok(ctrl)

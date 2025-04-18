@@ -1,6 +1,6 @@
 use bdk::prelude::*;
 use by_macros::DioxusController;
-use models::{deliberation_user::DeliberationUserCreateRequest, DeliberationStatus, *};
+use models::{deliberation_role::DeliberationRoleCreateRequest, DeliberationStatus, *};
 
 use crate::{
     config,
@@ -112,7 +112,7 @@ impl Controller {
         });
     }
 
-    pub fn save_committees(&mut self, roles: Vec<DeliberationUserCreateRequest>) {
+    pub fn save_committees(&mut self, roles: Vec<DeliberationRoleCreateRequest>) {
         self.deliberation_requests.with_mut(|req| {
             req.roles = roles;
         });

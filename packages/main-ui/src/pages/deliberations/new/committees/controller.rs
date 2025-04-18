@@ -66,17 +66,15 @@ impl Controller {
         };
 
         use_effect({
-            let req = ctrl.parent_ctrl.deliberation_requests();
+            let _req = ctrl.parent_ctrl.deliberation_requests();
             let roles = ctrl.roles();
             let members = members().unwrap_or_default();
 
-            let committees = req.roles.clone();
-
             move || {
-                ctrl.committees.set(committees.clone());
+                ctrl.committees.set(vec![]);
 
                 for role in roles.clone() {
-                    let members = ctrl.get_role_list(members.clone(), committees.clone(), role);
+                    let members = ctrl.get_role_list(members.clone(), vec![], role);
 
                     ctrl.committee_roles.push(members);
                 }
@@ -104,8 +102,8 @@ impl Controller {
 
     pub fn save_deliberation(&mut self) {
         let mut parent_ctrl = self.parent_ctrl;
-        let roles = self.committees().iter().map(|v| v.clone()).collect();
-        parent_ctrl.save_committees(roles);
+        // let roles = self.committees().iter().map(|v| v.clone()).collect();
+        parent_ctrl.save_committees(vec![]);
     }
 
     pub fn add_committee(&mut self, committee: DeliberationUserCreateRequest) {
