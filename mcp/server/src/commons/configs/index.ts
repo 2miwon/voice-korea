@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import { AppError } from "../errors/AppError";
 dotenv.config();
 
 enum EnvironmentKeys {
@@ -9,6 +10,10 @@ enum EnvironmentKeys {
 
 export function get(key: EnvironmentKeys): string {
     const envKey = EnvironmentKeys[key];
+    const value = process.env[envKey];
+    if(!value) {
+        throw new AppError(`Environment variable ${envKey} is not set`);
+    }
     return process.env[envKey] as string;
 }
 

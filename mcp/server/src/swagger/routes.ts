@@ -14,6 +14,35 @@ import type { Request as ExRequest, Response as ExResponse, RequestHandler, Rout
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
 const models: TsoaRoute.Models = {
+    "CustomApiResponse": {
+        "dataType": "refObject",
+        "properties": {
+            "message": {"dataType":"string"},
+            "data": {"dataType":"any"},
+            "status_code": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ContextDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "user": {"dataType":"string","required":true},
+            "session": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ProjectListReqDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "prompt": {"dataType":"string","required":true},
+            "context": {"ref":"ContextDTO"},
+            "temperature": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 };
 const templateService = new ExpressTemplateService(models, {"noImplicitAdditionalProperties":"silently-remove-extras","bodyCoercion":true});
 
@@ -32,9 +61,9 @@ export function RegisterRoutes(app: Router) {
 
     
         const argsWithdrawalAccountController_createNewWithdrawalAccount: Record<string, TsoaRoute.ParameterSchema> = {
-                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+                req: {"in":"body","name":"req","required":true,"ref":"ProjectListReqDTO"},
         };
-        app.post('/withdrawal-accounts',
+        app.post('/projects',
             ...(fetchMiddlewares<RequestHandler>(WithdrawalAccountController)),
             ...(fetchMiddlewares<RequestHandler>(WithdrawalAccountController.prototype.createNewWithdrawalAccount)),
 

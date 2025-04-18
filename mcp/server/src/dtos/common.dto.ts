@@ -5,7 +5,7 @@ export class CommonResponseDTO {
 }
 
 export interface CustomApiResponse{
-    message: string;
+    message?: string;
     data?: any, 
     status_code: number;
     }
