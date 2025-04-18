@@ -4,8 +4,8 @@ translate! {
     CompositionCommitteeTranslate;
 
     enter_charge_person: {
-        ko: "담당자명 입력",
-        en: "Enter the person in charge"
+        ko: "담당자 이메일 입력",
+        en: "Enter the email in charge"
     }
     composition_committee_title: {
         ko: "공론 위원회 구성",
