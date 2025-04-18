@@ -21,8 +21,7 @@ pub fn ProjectPage(lang: Language, project_id: ReadOnlySignal<i64>) -> Element {
     tracing::debug!("deliberation: {:?}", deliberation);
 
     rsx! {
-        // TODO(mobile): tab view implemented to fit mobile size
-        div { class: "flex flex-col w-full justify-center items-center mt-80",
+        div { class: "flex flex-col w-full justify-center items-center",
             ProjectHeader { lang, deliberation, active_tab: active_tab.clone() }
             div { class: "w-full flex flex-col justify-center items-center",
                 SuspenseBoundary {

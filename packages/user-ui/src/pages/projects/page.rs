@@ -14,8 +14,8 @@ pub fn ProjectListPage(lang: Language) -> Element {
     let projects = ctrl.projects()?.items;
 
     rsx! {
-        div { class: "flex flex-col w-full justify-center items-center mt-80",
-            div { class: "max-w-desktop mt-60 flex flex-col w-full justify-start items-start gap-20",
+        div { class: "flex flex-col w-full justify-center items-center",
+            div { class: "max-w-desktop flex flex-col w-full justify-start items-start gap-20",
                 div { class: "flex flex-row w-full justify-start items-start gap-15",
                     SearchProject {
                         lang,
@@ -102,7 +102,7 @@ pub fn DeliberationList(lang: Language, projects: Vec<DeliberationProjectSummary
                     ProjectCard { lang, deliberation: deliberation.into() }
                 }
             }
-
+        
         }
     }
 }
