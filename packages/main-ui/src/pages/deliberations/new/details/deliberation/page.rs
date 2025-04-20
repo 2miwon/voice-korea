@@ -17,6 +17,7 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
     let mut ctrl = Controller::new(lang)?;
     let tr: DeliberationTranslate = translate(&lang);
     let api: MetadataApi = use_context();
+
     let deliberation = ctrl.deliberation();
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
@@ -33,6 +34,7 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                 div { class: "font-medium text-base text-text-black", {tr.post_setting} }
                 IntroductionCard {
                     lang,
+                    rich_text_id: "deliberation_rich_text",
                     start_date_id: "deliberation_start_date",
                     end_date_id: "deliberation_end_date",
                     description: tr.introduction_description.to_string(),
@@ -109,6 +111,9 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                             remove_elearning: move |index: usize| {
                                 ctrl.remove_elearning(index);
                             },
+                            open_load_from_data_modal: move |index: usize| {
+                                ctrl.open_load_from_data_modal(index);
+                            },
                         }
                     }
                     div {
@@ -126,8 +131,21 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                             set_description: move |(index, content): (usize, String)| {
                                 ctrl.set_question_description(index, content);
                             },
+                            add_question: move |_| {
+                                ctrl.add_question();
+                            },
                             removing_question: move |index: usize| {
                                 ctrl.remove_question(index);
+                            },
+
+                            change_option: move |(index, i, option): (usize, usize, String)| {
+                                ctrl.change_option(index, i, option);
+                            },
+                            remove_option: move |(index, i): (usize, usize)| {
+                                ctrl.remove_option(index, i);
+                            },
+                            add_option: move |index: usize| {
+                                ctrl.add_option(index);
                             },
                         }
                     }

@@ -13,7 +13,7 @@ pub fn SelectInputField(
     text_value: String,
     onchange: EventHandler<Event<FormData>>,
     oninput: EventHandler<FormEvent>,
-    options: Element,
+    options: Vec<String>,
 ) -> Element {
     rsx! {
         div { class: "flex flex-row w-full justify-start items-center gap-20",

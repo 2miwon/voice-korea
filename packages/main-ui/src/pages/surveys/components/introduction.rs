@@ -90,15 +90,7 @@ pub fn InputIntroduction(
                             end_date.set(timestamp);
                             onchange_end_date.call(timestamp);
                         },
-                        options: rsx! {
-                            for field in ProjectArea::VARIANTS.iter() {
-                                option {
-                                    value: format!("{}", field).as_str(),
-                                    selected: Some(field) == select_field().as_ref(),
-                                    {field.translate(&lang)}
-                                }
-                            }
-                        },
+                        options: ProjectArea::variants(&lang),
                     }
                     Divide {}
                     UnderlineField {

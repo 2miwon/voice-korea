@@ -65,7 +65,7 @@ impl Controller {
                 .unwrap_or(&DeliberationSampleSurveyCreateRequest::default())
                 .clone();
             let current_timestamp = current_timestamp();
-            let committees = req.roles.clone();
+            let _committees = req.roles.clone();
 
             move || {
                 let started_at = sample_surveys.clone().started_at;
@@ -80,7 +80,7 @@ impl Controller {
                 }
 
                 ctrl.sample_survey.set(sample_surveys.clone());
-                ctrl.committee_members.set(committees.clone());
+                ctrl.committee_members.set(vec![]);
             }
         });
 

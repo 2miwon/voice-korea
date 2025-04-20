@@ -17,7 +17,7 @@ pub fn SelectInputDateField(
     oninput: EventHandler<FormEvent>,
     onupdate_start_date: EventHandler<i64>,
     onupdate_end_date: EventHandler<i64>,
-    options: Element,
+    options: Vec<String>,
 ) -> Element {
     rsx! {
         div { class: "flex flex-row w-full justify-start items-center gap-20",

@@ -26,6 +26,7 @@ pub fn DeliberationBasicInfoSettingPage(lang: Language) -> Element {
                 div { class: "flex flex-col w-full justify-start items-start gap-20",
                     IntroductionCard {
                         lang,
+                        rich_text_id: "basic_rich_text",
                         start_date_id: "basic_start_date",
                         end_date_id: "basic_end_date",
                         description: tr.introduction_description.to_string(),

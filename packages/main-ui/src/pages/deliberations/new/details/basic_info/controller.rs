@@ -128,7 +128,7 @@ impl Controller {
                 .unwrap_or(&DeliberationBasicInfoCreateRequest::default())
                 .clone();
             let current_timestamp = current_timestamp();
-            let committees = req.roles.clone();
+            let _committees = req.roles.clone();
 
             move || {
                 let started_at = basic_info.clone().started_at;
@@ -143,7 +143,7 @@ impl Controller {
                 }
 
                 ctrl.basic_info.set(basic_info.clone());
-                ctrl.committee_members.set(committees.clone());
+                ctrl.committee_members.set(vec![]);
             }
         });
 

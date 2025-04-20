@@ -24,6 +24,9 @@ pub fn DeliberationVoteSettingPage(lang: Language) -> Element {
                             IntroductionCard {
                                 lang,
                                 description: tr.introduction_description.to_string(),
+                                rich_text_id: "final_survey_rich_text",
+                                start_date_id: "final_survey_start_date",
+                                end_date_id: "final_survey_end_date",
                                 text_value: final_survey.clone().title,
                                 started_at: final_survey.clone().started_at,
                                 ended_at: final_survey.clone().ended_at,

@@ -22,6 +22,7 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
                     div { class: "flex flex-col w-full justify-start items-start gap-20",
                         IntroductionCard {
                             lang,
+                            rich_text_id: "sample_rich_text",
                             start_date_id: "sample_survey_start_date",
                             end_date_id: "sample_survey_end_date",
                             description: tr.introduction_description.to_string(),

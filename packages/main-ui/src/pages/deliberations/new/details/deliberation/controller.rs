@@ -20,10 +20,11 @@ pub struct Controller {
     // pub _parent: super::super::Controller,
     pub e_learning_tab: Signal<bool>,
 
+    pub metadatas: Resource<Vec<ResourceFileSummary>>,
     pub members: Resource<Vec<OrganizationMemberSummary>>,
     pub committee_members: Signal<Vec<DeliberationUserCreateRequest>>,
 
-    deliberation: Signal<DeliberationContentCreateRequest>,
+    pub deliberation: Signal<DeliberationContentCreateRequest>,
     // elearnings: Signal<Vec<ElearningCreateRequest>>,
     // questions: Signal<Vec<Option<Question>>>,
     pub parent: DeliberationNewController,
@@ -36,6 +37,27 @@ impl Controller {
         let user: LoginService = use_context();
         let deliberation = use_signal(|| DeliberationContentCreateRequest::default());
         let popup_service: PopupService = use_context();
+
+        let metadatas = use_server_future(move || {
+            let page = 1;
+            let size = 100;
+            async move {
+                let client = ResourceFile::get_client(&config::get().api_url);
+                let org_id = user.get_selected_org();
+                if org_id.is_none() {
+                    tracing::error!("Organization ID is missing");
+                    return vec![];
+                }
+                client
+                    .query(
+                        org_id.unwrap().id,
+                        ResourceFileQuery::new(size).with_page(page),
+                    )
+                    .await
+                    .unwrap_or_default()
+                    .items
+            }
+        })?;
 
         let members = use_server_future(move || {
             let page = 1;
@@ -64,6 +86,7 @@ impl Controller {
             e_learning_tab: use_signal(|| true),
 
             members,
+            metadatas,
             committee_members: use_signal(|| vec![]),
 
             parent: use_context(),
@@ -78,7 +101,7 @@ impl Controller {
 
         let current_timestamp = current_timestamp();
 
-        let committees = req.roles;
+        let _committees = req.roles;
 
         use_effect(move || {
             let mut deliberation = req
@@ -95,7 +118,7 @@ impl Controller {
                 deliberation.ended_at = current_timestamp;
             }
             ctrl.deliberation.set(deliberation.clone());
-            ctrl.committee_members.set(committees.clone());
+            ctrl.committee_members.set(vec![]);
             // if deliberation.elearnings.is_empty() {
             //     let mut elearning = ElearningCreateRequest::default();
             //     elearning.resources.push(ResourceFile::default());
@@ -109,6 +132,8 @@ impl Controller {
             //     ctrl.questions.set(deliberation.questions.clone());
             // }
         });
+
+        use_context_provider(|| ctrl);
 
         Ok(ctrl)
     }
@@ -195,6 +220,7 @@ impl Controller {
             let mut elearning = ElearningCreateRequest::default();
             elearning.resources.push(ResourceFile::default());
             req.elearnings.push(elearning);
+            tracing::debug!("elearnings: {:?}", req.elearnings);
         });
     }
 
@@ -252,6 +278,7 @@ impl Controller {
     }
 
     pub async fn temp_save(&mut self) {
+        tracing::debug!("deliberations: {:?}", self.deliberation());
         self.parent.save_content(self.deliberation());
         self.parent.temporary_save(false).await;
     }
@@ -269,7 +296,7 @@ impl Controller {
         }
         self.deliberation.with_mut(|req| {
             let question_field = Question::new(&field);
-            req.questions[index] = Some(question_field);
+            req.questions[index] = question_field;
         });
     }
 
@@ -279,9 +306,7 @@ impl Controller {
             return;
         }
         self.deliberation.with_mut(|req| {
-            if let Some(ref mut question) = req.questions[index] {
-                question.set_title(&title);
-            }
+            req.questions[index].set_title(&title);
         });
     }
 
@@ -291,19 +316,25 @@ impl Controller {
             return;
         }
         self.deliberation.with_mut(|req| {
-            if let Some(ref mut question) = req.questions[index] {
-                question.set_description(&content);
-            }
+            req.questions[index].set_description(&content);
         });
     }
 
-    #[allow(dead_code)]
+    pub fn get_metadatas(&self) -> Vec<ResourceFileSummary> {
+        match self.metadatas() {
+            Ok(v) => v,
+            Err(_) => vec![],
+        }
+    }
+
     pub fn open_load_from_data_modal(&mut self, index: usize) {
         let mut ctrl = *self;
         self.popup_service
             .open(rsx! {
                 LoadDataModal {
                     lang: self.lang,
+                    metadatas: ctrl.get_metadatas(),
+
                     onclose: move |_| {
                         ctrl.popup_service.close();
                     },
@@ -318,13 +349,31 @@ impl Controller {
 
     pub fn add_question(&mut self) {
         self.deliberation.with_mut(|req| {
-            req.questions.push(None);
+            req.questions.push(Question::default());
         });
     }
 
     pub fn remove_question(&mut self, index: usize) {
         self.deliberation.with_mut(|req| {
             req.questions.remove(index);
+        });
+    }
+
+    pub fn change_option(&mut self, question_index: usize, option_index: usize, option: String) {
+        self.deliberation.with_mut(|req| {
+            req.questions[question_index].change_option(option_index, &option);
+        });
+    }
+
+    pub fn remove_option(&mut self, question_index: usize, option_index: usize) {
+        self.deliberation.with_mut(|req| {
+            req.questions[question_index].remove_option(option_index);
+        });
+    }
+
+    pub fn add_option(&mut self, question_index: usize) {
+        self.deliberation.with_mut(|req| {
+            req.questions[question_index].add_option("");
         });
     }
 

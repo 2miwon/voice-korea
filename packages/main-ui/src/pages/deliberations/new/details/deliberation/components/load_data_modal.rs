@@ -1,53 +1,26 @@
 use crate::{
     components::{block_header::BlockHeader, file_list::FileList, icons::Upload},
-    config,
     pages::deliberations::new::step::material_upload::ImportDocument,
-    service::login_service::LoginService,
 };
 use bdk::prelude::*;
-use models::{File, ResourceFile, ResourceFileQuery, ResourceFileSummary};
+use models::{File, ResourceFile, ResourceFileSummary};
 
 #[derive(Clone, Copy, DioxusController)]
 struct Controller {
     pub resources: Signal<Vec<ResourceFile>>,
-    pub metadatas: Resource<Vec<ResourceFileSummary>>,
-    #[allow(dead_code)]
-    pub search_keyword: Signal<String>,
+    pub metadatas: Signal<Vec<ResourceFileSummary>>,
 }
 
 impl Controller {
-    pub fn new() -> std::result::Result<Self, RenderError> {
-        let user: LoginService = use_context();
-        let metadatas = use_server_future(move || {
-            let page = 1;
-            let size = 100;
-            async move {
-                let client = ResourceFile::get_client(&config::get().api_url);
-                let org_id = user.get_selected_org();
-                if org_id.is_none() {
-                    tracing::error!("Organization ID is missing");
-                    return vec![];
-                }
-                client
-                    .query(
-                        org_id.unwrap().id,
-                        ResourceFileQuery::new(size).with_page(page),
-                    )
-                    .await
-                    .unwrap_or_default()
-                    .items
-            }
-        })?;
-
+    pub fn new(metadatas: Vec<ResourceFileSummary>) -> std::result::Result<Self, RenderError> {
         Ok(Self {
+            metadatas: use_signal(|| metadatas),
             resources: use_signal(|| vec![]),
-            metadatas,
-            search_keyword: use_signal(|| "".to_string()),
         })
     }
 
     pub fn get_selected_resources(&self) -> Vec<ResourceFile> {
-        let metadatas = self.metadatas().unwrap_or_default();
+        let metadatas = self.metadatas();
         let resources = self.resources();
 
         metadatas
@@ -59,7 +32,13 @@ impl Controller {
     }
 
     pub fn add_resource(&mut self, resource: ResourceFile) {
-        self.resources.push(resource);
+        self.resources.with_mut(|resources| {
+            if let Some(first) = resources.get_mut(0) {
+                *first = resource;
+            } else {
+                resources.push(resource);
+            }
+        });
     }
 
     pub fn delete_resource(&mut self, id: i64) {
@@ -70,19 +49,20 @@ impl Controller {
 #[component]
 pub fn LoadDataModal(
     lang: Language,
+    metadatas: Vec<ResourceFileSummary>,
+
     onclose: EventHandler<MouseEvent>,
     onupload: EventHandler<ResourceFile>,
 ) -> Element {
     let mut files = use_signal(|| vec![]);
     let tr: LoadDataModalTranslate = translate(&lang);
-    let mut ctrl = Controller::new()?;
+    let mut ctrl = Controller::new(metadatas)?;
 
-    use_effect(move || {
-        let resources = ctrl.resources();
+    use_effect(use_reactive(&ctrl.resources(), move |resources| {
         let all_files: Vec<File> = resources.iter().flat_map(|r| &r.files).cloned().collect();
         files.set(all_files);
         tracing::debug!("Files: {:?}", files());
-    });
+    }));
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start gap-40",
@@ -94,7 +74,7 @@ pub fn LoadDataModal(
             // TODO: Only one file can be uploaded at a time
             ImportDocument {
                 lang,
-                metadatas: ctrl.metadatas()?.clone(),
+                metadatas: ctrl.metadatas(),
                 resources: ctrl.get_selected_resources(),
                 onadd: move |resource: ResourceFileSummary| {
                     ctrl.add_resource(resource.clone().into());
@@ -105,17 +85,22 @@ pub fn LoadDataModal(
             }
             FileList {
                 items: files(),
-                onremove: move |index: usize| {
-                    let id = ctrl.resources()[index].id;
-                    ctrl.delete_resource(id);
+                onremove: {
+                    let resources = ctrl.resources();
+                    move |index: usize| {
+                        let id = resources[index].id;
+                        ctrl.delete_resource(id);
+                    }
                 },
             }
             div { class: "flex flex-row gap-20",
                 button {
                     class: "flex flex-row h-40 px-14 py-8 justify-center items-center bg-primary rounded-[4px] gap-4",
-                    onclick: move |_| {
-                        if let Some(resource) = ctrl.get_selected_resources().get(0) {
-                            onupload.call(resource.clone());
+                    onclick: {
+                        move |_| {
+                            if let Some(resource) = ctrl.get_selected_resources().get(0) {
+                                onupload.call(resource.clone());
+                            }
                         }
                     },
                     Upload { width: "24", height: "24" }
