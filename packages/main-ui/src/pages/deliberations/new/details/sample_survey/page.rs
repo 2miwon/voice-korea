@@ -43,6 +43,7 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
                                 ctrl.set_end_date(timestamp);
                             },
                         }
+
                         Reward {
                             lang,
                             sample_survey: sample_survey.clone(),
@@ -56,48 +57,22 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
 
                         Member {
                             lang,
-                            total_committees: ctrl.get_committees(),
+                            total_committees: ctrl.committee_members(),
                             selected_committees: ctrl.get_selected_committee(),
-                            add_committee: move |id: i64| {
-                                ctrl.add_committee(id);
+                            add_committee: move |email: String| {
+                                ctrl.add_committee(email);
                             },
-                            remove_committee: move |id: i64| {
-                                ctrl.remove_committee(id);
+                            remove_committee: move |email: String| {
+                                ctrl.remove_committee(email);
                             },
                             clear_committee: move |_| {
                                 ctrl.clear_committee();
                             },
                         }
                     }
-
-                    Reward {
-                        lang,
-                        sample_survey: sample_survey.clone(),
-                        set_estimate_time: move |estimate_time: i64| {
-                            ctrl.set_estimate_time(estimate_time);
-                        },
-                        set_point: move |point: i64| {
-                            ctrl.set_point(point);
-                        },
-                    }
-
-                    Member {
-                        lang,
-                        total_committees: ctrl.get_committees(),
-                        selected_committees: ctrl.get_selected_committee(),
-                        add_committee: move |id: i64| {
-                            ctrl.add_committee(id);
-                        },
-                        remove_committee: move |id: i64| {
-                            ctrl.remove_committee(id);
-                        },
-                        clear_committee: move |_| {
-                            ctrl.clear_committee();
-                        },
-                    }
                 }
 
-                div { class: "flex flex-col w-full justify-start items-start gap-10",
+                div { class: "flex flex-col w-full justify-start items-start gap-10 mt-20",
                     div { class: "font-medium text-base text-text-black", {tr.voting_items} }
                     QuestionList {
                         lang,

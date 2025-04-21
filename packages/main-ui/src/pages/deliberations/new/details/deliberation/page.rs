@@ -58,16 +58,15 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
 
                 DeliberationMember {
                     lang,
-                    deliberation: ctrl.deliberation(),
 
-                    total_committees: ctrl.get_committees(),
+                    total_committees: ctrl.committee_members(),
                     selected_committees: ctrl.get_selected_committee(),
 
-                    add_committee: move |user_id: i64| {
-                        ctrl.add_committee(user_id);
+                    add_committee: move |email: String| {
+                        ctrl.add_committee(email);
                     },
-                    remove_committee: move |user_id: i64| {
-                        ctrl.remove_committee(user_id);
+                    remove_committee: move |email: String| {
+                        ctrl.remove_committee(email);
                     },
                     clear_committee: move |_| {
                         ctrl.clear_committee();

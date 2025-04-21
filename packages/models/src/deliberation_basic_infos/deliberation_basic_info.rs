@@ -8,7 +8,7 @@ use bdk::prelude::*;
 use validator::Validate;
 
 #[derive(Validate)]
-#[api_model(base = "/v2/deliberations/:deliberation-id/infos", table = deliberation_basic_infos, action = [create(users = Vec<i64>, resources = Vec<i64>, surveys = Vec<i64>)])]
+#[api_model(base = "/v2/deliberations/:deliberation-id/infos", table = deliberation_basic_infos, action = [create(users = Vec<String>, resources = Vec<i64>, surveys = Vec<i64>)])]
 pub struct DeliberationBasicInfo {
     #[api_model(summary, primary_key)]
     pub id: i64,
@@ -53,7 +53,7 @@ pub struct DeliberationBasicInfo {
 impl Into<DeliberationBasicInfoCreateRequest> for DeliberationBasicInfo {
     fn into(self) -> DeliberationBasicInfoCreateRequest {
         DeliberationBasicInfoCreateRequest {
-            users: self.members.into_iter().map(|u| u.id).collect(),
+            users: self.roles.into_iter().map(|u| u.email).collect(),
             resources: self.resources.into_iter().map(|r| r.id).collect(),
             surveys: self.surveys.into_iter().map(|s| s.id).collect(),
             started_at: self.started_at,

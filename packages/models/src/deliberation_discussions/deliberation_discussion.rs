@@ -11,7 +11,7 @@ use crate::User;
 
 //FIXME: fix to wording when discussion function is implemented
 #[derive(Validate)]
-#[api_model(base = "/v2/deliberations/:deliberation-id/ideas", table = deliberation_discussions, action = [create(users = Vec<i64>, resources = Vec<i64>, discussions = Vec<DiscussionCreateRequest>)])]
+#[api_model(base = "/v2/deliberations/:deliberation-id/ideas", table = deliberation_discussions, action = [create(users = Vec<String>, resources = Vec<i64>, discussions = Vec<DiscussionCreateRequest>)])]
 pub struct DeliberationDiscussion {
     #[api_model(summary, primary_key)]
     pub id: i64,
@@ -56,7 +56,7 @@ pub struct DeliberationDiscussion {
 impl Into<DeliberationDiscussionCreateRequest> for DeliberationDiscussion {
     fn into(self) -> DeliberationDiscussionCreateRequest {
         DeliberationDiscussionCreateRequest {
-            users: self.members.into_iter().map(|u| u.id).collect(),
+            users: self.roles.into_iter().map(|u| u.email).collect(),
             resources: self.resources.into_iter().map(|r| r.id).collect(),
             discussions: self.discussions.into_iter().map(|d| d.into()).collect(),
             started_at: self.started_at,

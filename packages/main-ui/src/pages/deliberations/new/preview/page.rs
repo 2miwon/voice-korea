@@ -21,11 +21,11 @@ pub fn Preview(lang: Language) -> Element {
     let discussion = ctrl.discussion();
     let final_survey = ctrl.final_survey();
 
-    let basic_info_members = basic_info.clone().users;
-    let sample_survey_members = sample_survey.clone().users;
-    let deliberation_members = deliberation.clone().users;
-    let discussion_members = discussion.clone().users;
-    let final_survey_members = final_survey.clone().users;
+    let _basic_info_members = basic_info.clone().users;
+    let _sample_survey_members = sample_survey.clone().users;
+    let _deliberation_members = deliberation.clone().users;
+    let _discussion_members = discussion.clone().users;
+    let _final_survey_members = final_survey.clone().users;
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start gap-20",
@@ -40,11 +40,11 @@ pub fn Preview(lang: Language) -> Element {
                 discussion,
                 final_survey,
 
-                basic_info_members: ctrl.convert_user_ids_to_members(basic_info_members),
-                sample_survey_members: ctrl.convert_user_ids_to_members(sample_survey_members),
-                deliberation_members: ctrl.convert_user_ids_to_members(deliberation_members),
-                discussion_members: ctrl.convert_user_ids_to_members(discussion_members),
-                final_survey_members: ctrl.convert_user_ids_to_members(final_survey_members),
+                basic_info_members: ctrl.convert_user_ids_to_members(vec![]),
+                sample_survey_members: ctrl.convert_user_ids_to_members(vec![]),
+                deliberation_members: ctrl.convert_user_ids_to_members(vec![]),
+                discussion_members: ctrl.convert_user_ids_to_members(vec![]),
+                final_survey_members: ctrl.convert_user_ids_to_members(vec![]),
             }
             div { class: "flex flex-row w-full justify-end items-end mt-20 mb-50",
                 button {

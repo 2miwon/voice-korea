@@ -62,13 +62,13 @@ pub fn DeliberationDiscussionSettingPage(lang: Language) -> Element {
 
                     Member {
                         lang,
-                        total_committees: ctrl.get_committees(),
+                        total_committees: ctrl.committee_members(),
                         selected_committees: ctrl.get_selected_committee(),
-                        add_committee: move |id: i64| {
-                            ctrl.add_committee(id);
+                        add_committee: move |email: String| {
+                            ctrl.add_committee(email);
                         },
-                        remove_committee: move |id: i64| {
-                            ctrl.remove_committee(id);
+                        remove_committee: move |email: String| {
+                            ctrl.remove_committee(email);
                         },
                         clear_committee: move |_| {
                             ctrl.clear_committee();

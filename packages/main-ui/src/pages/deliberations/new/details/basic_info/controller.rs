@@ -1,5 +1,5 @@
 use bdk::prelude::*;
-use models::{deliberation_user::DeliberationUserCreateRequest, *};
+use models::*;
 
 use super::*;
 use crate::{
@@ -10,11 +10,10 @@ use crate::{
 pub struct Controller {
     lang: Language,
 
-    pub members: Resource<Vec<OrganizationMemberSummary>>,
     pub metadatas: Resource<Vec<ResourceFileSummary>>,
     pub surveys: Resource<Vec<SurveyV2Summary>>,
     basic_info: Signal<DeliberationBasicInfoCreateRequest>,
-    pub committee_members: Signal<Vec<DeliberationUserCreateRequest>>,
+    pub committee_members: Signal<Vec<String>>,
 
     #[allow(dead_code)]
     pub search_keyword: Signal<String>,
@@ -29,27 +28,6 @@ impl Controller {
         let user: LoginService = use_context();
         let basic_info = use_signal(|| DeliberationBasicInfoCreateRequest::default());
         let search_keyword = use_signal(|| "".to_string());
-
-        let members = use_server_future(move || {
-            let page = 1;
-            let size = 100;
-            async move {
-                let org_id = user.get_selected_org();
-                if org_id.is_none() {
-                    tracing::error!("Organization ID is missing");
-                    return vec![];
-                }
-                let endpoint = crate::config::get().api_url;
-                let res = OrganizationMember::get_client(endpoint)
-                    .query(
-                        org_id.unwrap().id,
-                        OrganizationMemberQuery::new(size).with_page(page),
-                    )
-                    .await;
-
-                res.unwrap_or_default().items
-            }
-        })?;
 
         let metadatas = use_server_future(move || {
             let page = 1;
@@ -108,7 +86,6 @@ impl Controller {
         let mut ctrl = Self {
             lang,
             basic_info,
-            members,
             metadatas,
             surveys,
             parent: use_context(),
@@ -128,9 +105,9 @@ impl Controller {
                 .unwrap_or(&DeliberationBasicInfoCreateRequest::default())
                 .clone();
             let current_timestamp = current_timestamp();
-            let _committees = req.roles.clone();
 
             move || {
+                let committees = req.roles.iter().map(|v| v.email.clone()).collect();
                 let started_at = basic_info.clone().started_at;
                 let ended_at = basic_info.clone().ended_at;
 
@@ -143,7 +120,7 @@ impl Controller {
                 }
 
                 ctrl.basic_info.set(basic_info.clone());
-                ctrl.committee_members.set(vec![]);
+                ctrl.committee_members.set(committees);
             }
         });
 
@@ -190,16 +167,15 @@ impl Controller {
         self.basic_info.with_mut(|req| req.surveys = vec![]);
     }
 
-    pub fn add_committee(&mut self, user_id: i64) {
+    pub fn add_committee(&mut self, email: String) {
         self.basic_info.with_mut(|req| {
-            req.users.push(user_id);
+            req.users.push(email);
         });
     }
 
-    pub fn remove_committee(&mut self, user_id: i64) {
+    pub fn remove_committee(&mut self, email: String) {
         self.basic_info.with_mut(|req| {
-            req.users
-                .retain(|committee_id| !(committee_id.clone() == user_id));
+            req.users.retain(|e| !(e.clone() == email));
         })
     }
 
@@ -230,23 +206,6 @@ impl Controller {
         }
     }
 
-    pub fn get_committees(&self) -> Vec<OrganizationMemberSummary> {
-        let committees = self.committee_members();
-        let members = self.members().unwrap_or_default();
-
-        let d = members
-            .clone()
-            .into_iter()
-            .filter(|member| {
-                committees
-                    .iter()
-                    .any(|committee| committee.user_id == member.user_id)
-            })
-            .collect();
-
-        d
-    }
-
     pub fn get_selected_surveys(&self) -> Vec<SurveyV2Summary> {
         let total_surveys = self.surveys().unwrap_or_default();
         let basic_info = self.get_basic_info();
@@ -259,16 +218,11 @@ impl Controller {
             .collect()
     }
 
-    pub fn get_selected_committee(&self) -> Vec<OrganizationMemberSummary> {
-        let total_committees = self.members().unwrap_or_default();
+    pub fn get_selected_committee(&self) -> Vec<String> {
         let basic_info = self.get_basic_info();
         let roles = basic_info.clone().users;
 
-        total_committees
-            .clone()
-            .into_iter()
-            .filter(|member| roles.iter().any(|id| id.clone() == member.user_id))
-            .collect()
+        roles
     }
 
     pub fn get_selected_resources(&self) -> Vec<ResourceFile> {

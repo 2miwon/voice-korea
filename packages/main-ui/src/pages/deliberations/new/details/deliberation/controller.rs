@@ -1,7 +1,5 @@
 use bdk::prelude::*;
-use models::{
-    deliberation_user::DeliberationUserCreateRequest, elearning::ElearningCreateRequest, *,
-};
+use models::{elearning::ElearningCreateRequest, *};
 
 use crate::{
     config,
@@ -21,8 +19,7 @@ pub struct Controller {
     pub e_learning_tab: Signal<bool>,
 
     pub metadatas: Resource<Vec<ResourceFileSummary>>,
-    pub members: Resource<Vec<OrganizationMemberSummary>>,
-    pub committee_members: Signal<Vec<DeliberationUserCreateRequest>>,
+    pub committee_members: Signal<Vec<String>>,
 
     pub deliberation: Signal<DeliberationContentCreateRequest>,
     // elearnings: Signal<Vec<ElearningCreateRequest>>,
@@ -59,33 +56,11 @@ impl Controller {
             }
         })?;
 
-        let members = use_server_future(move || {
-            let page = 1;
-            let size = 100;
-            async move {
-                let org_id = user.get_selected_org();
-                if org_id.is_none() {
-                    tracing::error!("Organization ID is missing");
-                    return vec![];
-                }
-                let endpoint = crate::config::get().api_url;
-                let res = OrganizationMember::get_client(endpoint)
-                    .query(
-                        org_id.unwrap().id,
-                        OrganizationMemberQuery::new(size).with_page(page),
-                    )
-                    .await;
-
-                res.unwrap_or_default().items
-            }
-        })?;
-
         let mut ctrl = Self {
             lang,
             org_id: user.get_selected_org().unwrap_or_default().id,
             e_learning_tab: use_signal(|| true),
 
-            members,
             metadatas,
             committee_members: use_signal(|| vec![]),
 
@@ -101,9 +76,8 @@ impl Controller {
 
         let current_timestamp = current_timestamp();
 
-        let _committees = req.roles;
-
         use_effect(move || {
+            let committees = req.roles.iter().map(|v| v.email.clone()).collect();
             let mut deliberation = req
                 .contents
                 .get(0)
@@ -118,7 +92,7 @@ impl Controller {
                 deliberation.ended_at = current_timestamp;
             }
             ctrl.deliberation.set(deliberation.clone());
-            ctrl.committee_members.set(vec![]);
+            ctrl.committee_members.set(committees);
             // if deliberation.elearnings.is_empty() {
             //     let mut elearning = ElearningCreateRequest::default();
             //     elearning.resources.push(ResourceFile::default());
@@ -162,16 +136,15 @@ impl Controller {
         });
     }
 
-    pub fn add_committee(&mut self, user_id: i64) {
+    pub fn add_committee(&mut self, email: String) {
         self.deliberation.with_mut(|req| {
-            req.users.push(user_id);
+            req.users.push(email);
         });
     }
 
-    pub fn remove_committee(&mut self, user_id: i64) {
+    pub fn remove_committee(&mut self, email: String) {
         self.deliberation.with_mut(|req| {
-            req.users
-                .retain(|committee_id| !(committee_id.clone() == user_id));
+            req.users.retain(|e| !(e.clone() == email));
         })
     }
 
@@ -179,34 +152,11 @@ impl Controller {
         self.deliberation.with_mut(|req| req.users = vec![]);
     }
 
-    pub fn get_committees(&self) -> Vec<OrganizationMemberSummary> {
-        let committees = self.committee_members();
-        let members = self.members().unwrap_or_default();
-
-        tracing::debug!("members: {:?} committees: {:?}", members, committees);
-
-        let d = members
-            .clone()
-            .into_iter()
-            .filter(|member| {
-                committees
-                    .iter()
-                    .any(|committee| committee.user_id == member.user_id)
-            })
-            .collect();
-
-        d
-    }
-
-    pub fn get_selected_committee(&self) -> Vec<OrganizationMemberSummary> {
-        let total_committees = self.members().unwrap_or_default();
+    pub fn get_selected_committee(&self) -> Vec<String> {
         let deliberation = self.deliberation();
         let roles = deliberation.clone().users;
-        total_committees
-            .clone()
-            .into_iter()
-            .filter(|member| roles.iter().any(|id| id.clone() == member.user_id))
-            .collect()
+
+        roles
     }
 
     pub fn remove_elearning(&mut self, index: usize) {

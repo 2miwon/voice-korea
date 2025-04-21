@@ -10,7 +10,7 @@ use crate::SurveyV2;
 use crate::User;
 
 #[derive(Validate)]
-#[api_model(base = "/v2/deliberations/:deliberation-id/final-surveys", table = deliberation_final_surveys, action = [create(users = Vec<i64>, surveys = Vec<Question>)])]
+#[api_model(base = "/v2/deliberations/:deliberation-id/final-surveys", table = deliberation_final_surveys, action = [create(users = Vec<String>, surveys = Vec<Question>)])]
 pub struct DeliberationFinalSurvey {
     #[api_model(summary, primary_key)]
     pub id: i64,
@@ -65,7 +65,7 @@ pub struct DeliberationFinalSurvey {
 impl Into<DeliberationFinalSurveyCreateRequest> for DeliberationFinalSurvey {
     fn into(self) -> DeliberationFinalSurveyCreateRequest {
         DeliberationFinalSurveyCreateRequest {
-            users: self.members.into_iter().map(|u| u.id).collect(),
+            users: self.roles.into_iter().map(|u| u.email).collect(),
             surveys: self
                 .surveys
                 .into_iter()

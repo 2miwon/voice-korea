@@ -2,10 +2,10 @@ use bdk::prelude::*;
 
 use models::{
     deliberation_sample_surveys::deliberation_sample_survey::DeliberationSampleSurveyCreateRequest,
-    deliberation_user::DeliberationUserCreateRequest, *,
+    *,
 };
 
-use crate::{routes::Route, service::login_service::LoginService, utils::time::current_timestamp};
+use crate::{routes::Route, utils::time::current_timestamp};
 
 use super::DeliberationNewController;
 
@@ -17,35 +17,12 @@ pub struct Controller {
     pub parent: DeliberationNewController,
     pub nav: Navigator,
 
-    pub members: Resource<Vec<OrganizationMemberSummary>>,
-    pub committee_members: Signal<Vec<DeliberationUserCreateRequest>>,
+    pub committee_members: Signal<Vec<String>>,
 }
 
 impl Controller {
     pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
-        let user: LoginService = use_context();
         let sample_survey = use_signal(|| DeliberationSampleSurveyCreateRequest::default());
-
-        let members = use_server_future(move || {
-            let page = 1;
-            let size = 100;
-            async move {
-                let org_id = user.get_selected_org();
-                if org_id.is_none() {
-                    tracing::error!("Organization ID is missing");
-                    return vec![];
-                }
-                let endpoint = crate::config::get().api_url;
-                let res = OrganizationMember::get_client(endpoint)
-                    .query(
-                        org_id.unwrap().id,
-                        OrganizationMemberQuery::new(size).with_page(page),
-                    )
-                    .await;
-
-                res.unwrap_or_default().items
-            }
-        })?;
 
         let mut ctrl = Self {
             lang,
@@ -53,7 +30,6 @@ impl Controller {
             parent: use_context(),
             nav: use_navigator(),
 
-            members,
             committee_members: use_signal(|| vec![]),
         };
 
@@ -65,9 +41,9 @@ impl Controller {
                 .unwrap_or(&DeliberationSampleSurveyCreateRequest::default())
                 .clone();
             let current_timestamp = current_timestamp();
-            let _committees = req.roles.clone();
 
             move || {
+                let committees = req.roles.iter().map(|v| v.email.clone()).collect();
                 let started_at = sample_surveys.clone().started_at;
                 let ended_at = sample_surveys.clone().ended_at;
 
@@ -80,7 +56,7 @@ impl Controller {
                 }
 
                 ctrl.sample_survey.set(sample_surveys.clone());
-                ctrl.committee_members.set(vec![]);
+                ctrl.committee_members.set(committees);
             }
         });
 
@@ -123,16 +99,15 @@ impl Controller {
         });
     }
 
-    pub fn add_committee(&mut self, user_id: i64) {
+    pub fn add_committee(&mut self, email: String) {
         self.sample_survey.with_mut(|req| {
-            req.users.push(user_id);
+            req.users.push(email);
         });
     }
 
-    pub fn remove_committee(&mut self, user_id: i64) {
+    pub fn remove_committee(&mut self, email: String) {
         self.sample_survey.with_mut(|req| {
-            req.users
-                .retain(|committee_id| !(committee_id.clone() == user_id));
+            req.users.retain(|e| !(e.clone() == email));
         })
     }
 
@@ -162,32 +137,11 @@ impl Controller {
         (self.sample_survey)()
     }
 
-    pub fn get_committees(&self) -> Vec<OrganizationMemberSummary> {
-        let committees = self.committee_members();
-        let members = self.members().unwrap_or_default();
-
-        let d = members
-            .clone()
-            .into_iter()
-            .filter(|member| {
-                committees
-                    .iter()
-                    .any(|committee| committee.user_id == member.user_id)
-            })
-            .collect();
-
-        d
-    }
-
-    pub fn get_selected_committee(&self) -> Vec<OrganizationMemberSummary> {
-        let total_committees = self.members().unwrap_or_default();
+    pub fn get_selected_committee(&self) -> Vec<String> {
         let sample_survey = self.get_sample_survey();
         let roles = sample_survey.clone().users;
-        total_committees
-            .clone()
-            .into_iter()
-            .filter(|member| roles.iter().any(|id| id.clone() == member.user_id))
-            .collect()
+
+        roles
     }
 
     pub fn back(&mut self) {
