@@ -1,11 +1,11 @@
+use std::collections::BTreeMap;
+
 use bdk::prelude::*;
 use dioxus_popup::PopupService;
-use indexmap::IndexMap;
 use models::{
-    deliberation_response::{DeliberationResponse, DeliberationType},
-    response::Answer,
-    DeliberationSampleSurvey, DeliberationSampleSurveyQuery, DeliberationSampleSurveySummary,
-    ParsedQuestion, Question,
+    deliberation_response::DeliberationResponse, response::Answer, DeliberationSampleSurvey,
+    DeliberationSampleSurveyQuery, DeliberationSampleSurveySummary, ParsedQuestion, ProjectStatus,
+    Question, SurveyV2,
 };
 
 use crate::{
@@ -13,11 +13,29 @@ use crate::{
     service::user_service::UserService,
 };
 
-use super::{i18n::RemoveSurveyModalTranslate, sample_survey::SurveyStep};
+use super::i18n::RemoveSurveyModalTranslate;
 
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct SampleSurveyResponses {
-    pub answers: IndexMap<i64, (String, ParsedQuestion)>, // question_id, (title, response_count, <panel_id, answer>)
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub enum SurveyStep {
+    NotParticipated,
+    InProgress,
+    Submitted,
+    MyResponse,
+    Statistics,
+}
+
+#[derive(Translate, PartialEq, Eq, Default, Debug, Clone, Copy)]
+pub enum SurveyStatus {
+    #[default]
+    #[translate(ko = "조사가 준비중입니다.", en = "The investigation is underway.")]
+    Ready,
+    #[translate(ko = "조사 참여하기", en = "Take part in the survey")]
+    InProgress,
+    #[translate(
+        ko = "조사가 마감되었습니다.",
+        en = "The investigation has been closed."
+    )]
+    Finish,
 }
 
 #[derive(Debug, Clone, Copy, DioxusController)]
@@ -25,16 +43,12 @@ pub struct Controller {
     #[allow(dead_code)]
     lang: Language,
     deliberation_id: ReadOnlySignal<i64>,
+    pub user: UserService,
+    popup_service: PopupService,
 
     pub sample_survey: Resource<DeliberationSampleSurveySummary>,
-    answers: Signal<Vec<Answer>>,
+    pub answers: Signal<BTreeMap<usize, Answer>>,
 
-    survey_completed: Signal<bool>,
-    response_id: Signal<i64>,
-
-    pub user: UserService,
-    pub survey_responses: Signal<SampleSurveyResponses>,
-    popup_service: PopupService,
     survey_step: Signal<SurveyStep>,
 }
 
@@ -44,7 +58,6 @@ impl Controller {
         deliberation_id: ReadOnlySignal<i64>,
     ) -> std::result::Result<Self, RenderError> {
         let user: UserService = use_context();
-
         let sample_survey = use_server_future(move || {
             let deliberation_id = deliberation_id();
             async move {
@@ -59,114 +72,90 @@ impl Controller {
                 }
             }
         })?;
+        let initial_answers = sample_survey()
+            .and_then(|survey| survey.user_response.get(0).cloned())
+            .map(|response| response.answers.into_iter().enumerate().collect())
+            .unwrap_or_else(BTreeMap::new);
 
-        let mut ctrl = Self {
+        let initial_step = if sample_survey()
+            .is_some_and(|sample_survey| sample_survey.user_response.get(0).is_some())
+        {
+            SurveyStep::Submitted
+        } else {
+            SurveyStep::NotParticipated
+        };
+
+        let ctrl = Self {
             lang,
             deliberation_id,
             sample_survey,
-            answers: use_signal(|| vec![]),
-            survey_completed: use_signal(|| false),
-            response_id: use_signal(|| 0),
-
+            answers: use_signal(|| initial_answers),
             user,
-            survey_responses: use_signal(|| SampleSurveyResponses::default()),
             popup_service: use_context(),
-            survey_step: use_signal(|| SurveyStep::Display),
+            survey_step: use_signal(|| initial_step),
         };
-
-        use_effect(move || {
-            let mut answers = vec![];
-            let mut completed = false;
-            let mut response_id = 0;
-
-            let user_id = (ctrl.user.user_id)();
-
-            let questions = if (ctrl.sample_survey)()
-                .unwrap_or_default()
-                .surveys
-                .is_empty()
-            {
-                vec![]
-            } else {
-                (ctrl.sample_survey)().unwrap_or_default().surveys[0]
-                    .clone()
-                    .questions
-            };
-            let responses = (ctrl.sample_survey)().unwrap_or_default().responses;
-
-            let survey_responses = SampleSurveyResponses {
-                answers: ctrl
-                    .clone()
-                    .parsing_sample_answers(questions.clone(), responses.clone()),
-            };
-
-            for response in (ctrl.sample_survey)().unwrap_or_default().responses {
-                if response.deliberation_type == DeliberationType::Sample
-                    && response.user_id == user_id
-                {
-                    answers = response.answers;
-                    completed = true;
-                    response_id = response.id;
-                }
-            }
-
-            // if answers.len() == 0 {
-            //     answers = survey
-            //         .questions
-            //         .iter()
-            //         .map(|question| match question {
-            //             Question::SingleChoice(_) => Answer::SingleChoice { answer: 0 },
-            //             Question::MultipleChoice(_) => Answer::MultipleChoice { answer: vec![] },
-            //             Question::ShortAnswer(_) => Answer::ShortAnswer {
-            //                 answer: "".to_string(),
-            //             },
-            //             Question::Subjective(_) => Answer::Subjective {
-            //                 answer: "".to_string(),
-            //             },
-            //         })
-            //         .collect::<Vec<_>>();
-            // }
-
-            ctrl.survey_responses.set(survey_responses);
-            ctrl.answers.set(answers);
-            ctrl.survey_completed.set(completed);
-            ctrl.response_id.set(response_id);
-        });
 
         Ok(ctrl)
     }
 
-    pub fn parsing_sample_answers(
-        &self,
-        questions: Vec<Question>,
-        responses: Vec<DeliberationResponse>,
-    ) -> IndexMap<i64, (String, ParsedQuestion)> {
-        let mut survey_maps: IndexMap<i64, (String, ParsedQuestion)> = IndexMap::new();
+    pub fn get_grouped_answers(&self) -> Vec<(String, ParsedQuestion)> {
+        let Some(deliberation_survey) = self.sample_survey().ok() else {
+            return vec![];
+        };
 
-        for response in responses {
-            if response.deliberation_type == DeliberationType::Survey {
-                continue;
-            }
+        let Some(questions) = deliberation_survey.surveys.get(0).map(|s| &s.questions) else {
+            return vec![];
+        };
 
-            for (i, answer) in response.answers.iter().enumerate() {
-                let questions = questions.clone();
-                let question = &questions[i];
-                let title = question.title();
+        let mut parsed_questions: Vec<(String, ParsedQuestion)> = questions
+            .into_iter()
+            .map(|question| match question.clone() {
+                Question::MultipleChoice(inner) => {
+                    let title = inner.title;
+                    let options = inner.options;
+                    let count = vec![0; options.len()];
+                    (
+                        title,
+                        ParsedQuestion::MultipleChoice {
+                            answers: options,
+                            response_count: count,
+                        },
+                    )
+                }
+                Question::SingleChoice(inner) => {
+                    let title = inner.title;
+                    let options = inner.options;
+                    let count = vec![0; options.len()];
+                    (
+                        title,
+                        ParsedQuestion::SingleChoice {
+                            answers: options,
+                            response_count: count,
+                        },
+                    )
+                }
+                Question::ShortAnswer(inner) => {
+                    (inner.title, ParsedQuestion::ShortAnswer { answers: vec![] })
+                }
+                Question::Subjective(inner) => {
+                    (inner.title, ParsedQuestion::Subjective { answers: vec![] })
+                }
+            })
+            .collect();
 
-                let parsed_question: ParsedQuestion = (question, answer).into();
-
-                survey_maps
-                    .entry(i as i64)
-                    .and_modify(|survey_data| match &mut survey_data.1 {
+        for responses in deliberation_survey.responses.into_iter() {
+            for (i, answer) in responses.answers.into_iter().enumerate() {
+                parsed_questions.get_mut(i).map(|(_, parsed_question)| {
+                    match parsed_question {
                         ParsedQuestion::SingleChoice { response_count, .. } => {
                             if let Answer::SingleChoice { answer } = answer {
-                                response_count[(answer - 1) as usize] += 1;
+                                response_count[answer as usize] += 1;
                             }
                         }
                         ParsedQuestion::MultipleChoice { response_count, .. } => {
                             if let Answer::MultipleChoice { answer } = answer {
                                 for ans in answer {
-                                    response_count[(ans - 1) as usize] += 1;
+                                    response_count[ans as usize] += 1;
                                 }
                             }
                         }
@@ -180,46 +169,70 @@ impl Controller {
                                 answers.push(answer.clone());
                             }
                         }
-                    })
-                    .or_insert_with(|| (title, parsed_question.clone()));
+                    };
+                });
             }
         }
-
-        survey_maps
+        parsed_questions
     }
 
+    pub fn survey_status(&self) -> SurveyStatus {
+        self.sample_survey()
+            .ok()
+            .and_then(|deliberation_survey| {
+                deliberation_survey
+                    .surveys
+                    .get(0)
+                    .map(|survey| match survey.status {
+                        ProjectStatus::Ready => SurveyStatus::Ready,
+                        ProjectStatus::InProgress => SurveyStatus::InProgress,
+                        ProjectStatus::Finish => SurveyStatus::Finish,
+                    })
+            })
+            .unwrap_or_default()
+    }
+
+    pub fn get_survey(&self) -> SurveyV2 {
+        if let Ok(survey) = self.sample_survey() {
+            if let Some(survey) = survey.surveys.get(0) {
+                return survey.clone();
+            }
+        }
+        SurveyV2::default()
+    }
     pub fn set_step(&mut self, step: SurveyStep) {
         self.survey_step.set(step);
     }
 
     pub fn change_answer(&mut self, index: usize, answer: Answer) {
-        let mut answers = self.answers();
-        answers[index] = answer;
-        self.answers.set(answers.clone());
+        tracing::debug!("change_answer : {index} {answer:?}");
+        self.answers.with_mut(|v| {
+            v.insert(index, answer);
+        });
     }
 
     pub async fn remove_sample_response(&mut self) {
-        let user_id = (self.user.user_id)();
-        let deliberation_id = (self.deliberation_id)();
-        let response_id = (self.response_id)();
+        // let user_id = (self.user.user_id)();
+        // let deliberation_id = (self.deliberation_id)();
+        // // let response_id = (self.response_id)();
 
-        if user_id == 0 {
-            btracing::error!("login is required");
-            return;
-        }
+        // if user_id == 0 {
+        //     btracing::error!("login is required");
+        //     return;
+        // }
 
-        match DeliberationResponse::get_client(&crate::config::get().api_url)
-            .remove_respond_answer(deliberation_id, response_id)
-            .await
-        {
-            Ok(_) => {
-                self.sample_survey.restart();
-                self.set_step(SurveyStep::Display);
-            }
-            Err(e) => {
-                btracing::error!("update response failed with error: {:?}", e);
-            }
-        }
+        // match DeliberationResponse::get_client(&crate::config::get().api_url)
+        //     .remove_respond_answer(deliberation_id, response_id)
+        //     .await
+        // {
+        //     Ok(_) => {
+        //         self.sample_survey.restart();
+        //         self.set_step(SurveyStep::NotParticipated);
+        //     }
+        //     Err(e) => {
+        //         btracing::error!("update response failed with error: {:?}", e);
+        //     }
+        // }
     }
 
     pub fn open_remove_sample_modal(&mut self) {
@@ -245,32 +258,37 @@ impl Controller {
             .with_title(tr.title);
     }
 
-    pub async fn update_sample_response(&mut self) {
-        let user_id = (self.user.user_id)();
-        let deliberation_id = (self.deliberation_id)();
-        let response_id = (self.response_id)();
+    pub async fn update_survey_answers(&mut self) {
+        // let user_id = (self.user.user_id)();
+        // let deliberation_id = (self.deliberation_id)();
+        // let response_id = (self.sample_survey)()
+        //     .ok()
+        //     .and_then(|survey| survey.responses.get(0).map(|r| r.id))
+        //     .unwrap_or(0);
+        // // let response_id = (self.response_id)();
 
-        if user_id == 0 {
-            btracing::error!("login is required");
-            return;
-        }
+        // if user_id == 0 {
+        //     btracing::error!("login is required");
+        //     return;
+        // }
 
-        let answers = self.answers();
+        // let answers: Vec<Answer> = self.answers();
 
-        match DeliberationResponse::get_client(&crate::config::get().api_url)
-            .update_respond_answer(deliberation_id, response_id, answers)
-            .await
-        {
-            Ok(_) => {
-                self.sample_survey.restart();
-            }
-            Err(e) => {
-                btracing::error!("update response failed with error: {:?}", e);
-            }
-        };
+        // match DeliberationResponse::get_client(&crate::config::get().api_url)
+        //     .update_respond_answer(deliberation_id, response_id, answers)
+        //     .await
+        // {
+        //     Ok(_) => {
+        //         self.sample_survey.restart();
+        //     }
+        //     Err(e) => {
+        //         btracing::error!("update response failed with error: {:?}", e);
+        //     }
+        // };
     }
 
-    pub async fn send_sample_response(&mut self) {
+    pub async fn submit_survey_answers(&mut self) {
+        tracing::debug!("submit_survey_answers : {:?}", self.answers());
         let user_id = (self.user.user_id)();
         let deliberation_id = (self.deliberation_id)();
 
@@ -278,9 +296,11 @@ impl Controller {
             btracing::error!("login is required");
             return;
         }
-
-        let answers = self.answers();
-
+        let answers: Vec<Answer> = self
+            .answers()
+            .iter()
+            .map(|(_, answer)| answer.clone())
+            .collect();
         match DeliberationResponse::get_client(&crate::config::get().api_url)
             .respond_answer(
                 deliberation_id,
@@ -291,6 +311,7 @@ impl Controller {
         {
             Ok(_) => {
                 self.sample_survey.restart();
+                self.set_step(SurveyStep::Submitted);
             }
             Err(e) => {
                 btracing::error!("send response failed with error: {:?}", e);

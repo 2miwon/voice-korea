@@ -277,7 +277,6 @@ pub fn Header(lang: Language, children: Element, expanded: Signal<bool>) -> Elem
                         if ctrl.user.is_login() {
                             Profile { lang, name: ctrl.user.get_nicename() }
                         }
-                    
                     }
                 }
             }

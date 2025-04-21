@@ -5,7 +5,7 @@ translate! {
 
     title: {
         ko: "표본 조사 주제",
-        en: "Sample Survey Title",
+        en: "Sample Survey Subject",
     }
     see_detail: {
         ko: "자세히 보기",
@@ -46,6 +46,11 @@ translate! {
     submit: {
         ko: "제출하기",
         en: "Submit"
+    }
+
+    survey_input_placehoder: {
+        ko: "내용을 입력해주세요",
+        en: "Please Enter Details"
     }
 }
 

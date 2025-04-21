@@ -1,34 +1,17 @@
 use bdk::prelude::*;
+use dioxus_translate::translate;
 use models::SurveyV2;
 
-use super::{
-    controllers::Controller, my_sample_survey::MySampleSurvey, sample_statistics::SampleStatistics,
-    sample_survey_info::SampleSurveyInfo, sample_survey_question::SampleSurveyQuestion,
+use crate::pages::projects::_id::components::sample_survey::{
+    i18n::SampleSurveyTranslate, statistics::Statistics, survey::SurveyComponent,
 };
 
-use crate::utils::time::current_timestamp;
-
-#[derive(Translate, PartialEq, Default, Debug)]
-pub enum SurveyStatus {
-    #[default]
-    #[translate(ko = "조사가 준비중입니다.", en = "The investigation is underway.")]
-    Ready,
-    #[translate(ko = "조사 참여하기", en = "Take part in the survey")]
-    InProgress,
-    #[translate(
-        ko = "조사가 마감되었습니다.",
-        en = "The investigation has been closed."
-    )]
-    Finish,
-}
-
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
-pub enum SurveyStep {
-    Display,
-    WriteSurvey,
-    MySurvey,
-    Statistics,
-}
+use super::{
+    controllers::{Controller, SurveyStep},
+    info::Info,
+    my_response::MyResponse,
+    submitted::Submitted,
+};
 
 #[component]
 pub fn SampleSurvey(
@@ -38,89 +21,82 @@ pub fn SampleSurvey(
 ) -> Element {
     let mut ctrl = Controller::new(lang, project_id)?;
     let survey = ctrl.sample_survey()?;
-
     let step = ctrl.survey_step();
-
+    let tr: SampleSurveyTranslate = translate(&lang);
     rsx! {
         div {
             id: "sample-survey",
-            class: "max-[1000px]:px-30 flex flex-col w-full h-fit justify-center items-center",
+            class: "max-w-desktop:px-30 flex flex-col w-full h-fit justify-center items-center",
             ..attributes,
-
-            if step == SurveyStep::Display {
-                SampleSurveyInfo {
+            if step == SurveyStep::NotParticipated {
+                Info {
                     lang,
+                    is_login: ctrl.user.is_login(),
                     sample_survey: survey.clone(),
                     start_date: survey.started_at,
                     end_date: survey.ended_at,
-                    survey_completed: ctrl.survey_completed(),
-                    onchange: move |step| {
-                        ctrl.set_step(step);
+                    survey_status: ctrl.survey_status(),
+                    on_process_survey: move |_| {
+                        ctrl.set_step(SurveyStep::InProgress);
                     },
                 }
-            } else if step == SurveyStep::WriteSurvey {
-                SampleSurveyQuestion {
+            } else if step == SurveyStep::InProgress {
+                SurveyComponent {
                     lang,
-                    survey: if survey.surveys.len() != 0 { survey.surveys[0].clone() } else { SurveyV2::default() },
+                    survey: ctrl.get_survey(),
                     answers: ctrl.answers(),
                     onprev: move |_| {
-                        ctrl.set_step(SurveyStep::Display);
+                        ctrl.set_step(SurveyStep::NotParticipated);
                     },
                     onsend: move |_| async move {
-                        ctrl.send_sample_response().await;
-                        ctrl.set_step(SurveyStep::Display);
+                        ctrl.submit_survey_answers().await;
                     },
                     onchange: move |(index, answer)| {
                         ctrl.change_answer(index, answer);
                     },
                 }
-            } else if step == SurveyStep::MySurvey {
-                MySampleSurvey {
+            } else if step == SurveyStep::Submitted {
+                Submitted {
                     lang,
                     start_date: survey.started_at,
                     end_date: survey.ended_at,
+                    on_response_click: move |_| {
+                        ctrl.set_step(SurveyStep::MyResponse);
+                    },
+                    on_statistic_click: move |_| {
+                        ctrl.set_step(SurveyStep::Statistics);
+                    },
+                }
+            } else if step == SurveyStep::MyResponse {
+                MyResponse {
+                    lang,
+                    title: tr.my_answer,
+                    start_date: survey.started_at,
+                    end_date: survey.ended_at,
                     survey: if survey.surveys.len() != 0 { survey.surveys[0].clone() } else { SurveyV2::default() },
-                    answers: ctrl.answers(),
+                    answers: ctrl.answers,
                     onprev: move |_| {
-                        ctrl.set_step(SurveyStep::Display);
+                        ctrl.set_step(SurveyStep::Submitted);
                     },
                     onchange: move |(index, answer)| {
                         ctrl.change_answer(index, answer);
                     },
                     onupdate: move |_| async move {
-                        ctrl.update_sample_response().await;
-                        ctrl.set_step(SurveyStep::Display);
+                        ctrl.update_survey_answers().await;
                     },
                     onremove: move |_| async move {
                         ctrl.open_remove_sample_modal();
                     },
                 }
-            } else {
-                SampleStatistics {
+            } else if step == SurveyStep::Statistics {
+                Statistics {
                     lang,
-                    responses: ctrl.survey_responses(),
+                    grouped_answers: ctrl.get_grouped_answers(),
                     onprev: move |_| {
-                        ctrl.set_step(SurveyStep::Display);
+                        ctrl.set_step(SurveyStep::Submitted);
                     },
                 }
             }
         }
-    }
-}
-
-pub fn get_survey_status(started_at: i64, ended_at: i64) -> SurveyStatus {
-    let current = current_timestamp();
-
-    if started_at > 10000000000 {
-        tracing::error!("time parsing failed");
-        return SurveyStatus::default();
-    }
-
-    if started_at > current {
-        SurveyStatus::Ready
-    } else if ended_at < current {
-        SurveyStatus::Finish
-    } else {
-        SurveyStatus::InProgress
     }
 }

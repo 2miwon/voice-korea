@@ -1,5 +1,4 @@
 use dioxus::prelude::*;
-use dioxus_logger::tracing;
 use dioxus_translate::{translate, Language};
 use models::{deliberation_project::DeliberationProject, DeliberationStatus};
 
@@ -24,7 +23,6 @@ pub fn ProjectHeader(
 ) -> Element {
     let tr: HeaderTranslate = translate(&lang);
 
-    tracing::debug!("active_tab_value: {:?}", deliberation);
     let started_at = formatted_timestamp(lang, deliberation.started_at);
     let ended_at = formatted_timestamp(lang, deliberation.ended_at);
 
@@ -95,7 +93,6 @@ pub fn ProjectHeader(
                             }
                         }
                     }
-                
                 }
             }
             //img section
@@ -104,7 +101,6 @@ pub fn ProjectHeader(
                 src: deliberation.thumbnail_image,
                 alt: "Project Thumbnail Image",
             }
-        
         }
         //menu
         div { class: "flex flex-col w-full justify-center items-center bg-box-gray px-20",
