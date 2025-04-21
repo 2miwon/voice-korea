@@ -29,10 +29,10 @@ pub fn ProjectHeader(
     let ended_at = formatted_timestamp(lang, deliberation.ended_at);
 
     rsx! {
-        div { class: "max-w-desktop h-fit mb-40 flex max-[1000px]:flex-col-reverse flex-row w-full justify-center items-center gap-40 px-10",
+        div { class: "max-w-desktop h-fit mb-40 flex max-tablet:flex-col-reverse flex-row w-full justify-center items-center gap-40 px-20 min-h-300",
             // TODO: connect to data and UI
             //data section
-            div { class: "w-full max-w-720 h-260 flex flex-col justify-center",
+            div { class: "w-full flex-1/2 flex flex-col justify-center",
                 div { class: "flex flex-col justify-start",
                     div { class: "w-full flex justify-start items-center font-medium text-lg/24 gap-8 h-fit",
                         div { class: "w-24 h-24",
@@ -52,7 +52,7 @@ pub fn ProjectHeader(
                             }
                         }
 
-                        span { "{started_at} ~ {ended_at}" }
+                        span { class: "whitespace-nowrap", "{started_at} ~ {ended_at}" }
                     }
                     div { class: "w-full flex justify-start items-center font-semibold text-[32px]/60",
                         {deliberation.title}
@@ -95,23 +95,22 @@ pub fn ProjectHeader(
                             }
                         }
                     }
-
+                
                 }
             }
             //img section
-            div { class: "block",
-                img {
-                    class: "w-540 h-300 rounded-xl bg-gray-100 object-cover",
-                    src: deliberation.thumbnail_image,
-                    alt: "Project Thumbnail Image",
-                }
+            img {
+                class: "flex-1/2 max-w-540 max-h-320 rounded-xl bg-gray-100 object-cover",
+                src: deliberation.thumbnail_image,
+                alt: "Project Thumbnail Image",
             }
+        
         }
         //menu
-        div { class: "flex flex-col w-full justify-center items-center bg-box-gray whitespace-nowrap",
-            div { class: "flex flex-col w-full",
+        div { class: "flex flex-col w-full justify-center items-center bg-box-gray px-20",
+            div { class: "flex flex-col w-full max-w-desktop ",
                 // Tab menu
-                div { class: "group w-full flex flex-row justify-between gap-10 items-center overflow-x-auto max-[1300px]:no-scrollbar [&>:last-child]:hidden",
+                div { class: "w-full flex flex-row justify-between gap-10 items-center overflow-x-auto [&>:last-child]:hidden no-scrollbar",
                     for tab in Tab::VARIANTS.iter() {
                         div {
                             class: format!(
@@ -121,9 +120,13 @@ pub fn ProjectHeader(
                             onclick: move |_| {
                                 active_tab.set(*tab);
                             },
-                            p { class: "font-md text-[15px]/22 py-10", {tab.translate(&lang)} }
+                            p { class: "font-md text-[15px]/22 p-10 whitespace-nowrap px-30",
+                                {tab.translate(&lang)}
+                            }
                         }
-                        RightArrow { color: "#B4B4B4" }
+                        div { class: "shrink-0",
+                            RightArrow { color: "#B4B4B4" }
+                        }
                     }
                 }
 

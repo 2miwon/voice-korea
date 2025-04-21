@@ -1,7 +1,7 @@
 pub mod basic_info;
 pub mod comment_item;
 pub mod comments;
-pub mod deliberation;
+pub mod consideration;
 pub mod discussion;
 
 pub mod final_recommendation;

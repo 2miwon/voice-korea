@@ -8,13 +8,13 @@ translate! {
         en: "Introduction"
     }
 
-    public_opinion_committee_title: {
+    committee_title: {
         ko: "공론 위원회",
-        en: "Public opinion committee"
+        en: "Committee"
     }
 
     related_materials_title: {
-        ko: "관련 자료",
-        en: "Related materials"
+        ko: "연관 자료",
+        en: "Resources"
     }
 }

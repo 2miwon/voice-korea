@@ -6,13 +6,7 @@ use models::{
         DeliberationComment, DeliberationCommentQuery, DeliberationCommentSummary,
     },
     deliberation_project::DeliberationProject,
-    ParsedQuestion,
 };
-
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct SurveyResponses {
-    pub answers: IndexMap<i64, (String, ParsedQuestion)>, // question_id, (title, response_count, <panel_id, answer>)
-}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CommentTree {
@@ -26,7 +20,7 @@ pub struct CommentTree {
     pub replies: i64,
     pub likes: i64,
     pub liked: bool,
-
+    pub nickname: Option<String>,
     pub children: Vec<CommentTree>,
 }
 
@@ -72,6 +66,7 @@ impl Controller {
                     .query(
                         id,
                         DeliberationCommentQuery {
+                            //FIXME: use pagination
                             size: 100,
                             bookmark: None,
                             action: None,
@@ -109,6 +104,11 @@ impl Controller {
         let mut roots = Vec::new();
 
         for comment in comments.into_iter() {
+            let nickname = if let Some(user) = comment.user.get(0) {
+                user.nickname.clone()
+            } else {
+                None
+            };
             map.insert(
                 comment.id,
                 CommentTree {
@@ -118,7 +118,7 @@ impl Controller {
 
                     comment: comment.comment,
                     parent_id: comment.parent_id,
-
+                    nickname,
                     replies: comment.replies,
                     likes: comment.likes,
                     liked: comment.liked,

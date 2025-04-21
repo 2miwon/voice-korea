@@ -13,7 +13,7 @@ use crate::{
 };
 
 #[component]
-pub fn Deliberation(
+pub fn ConsiderationTab(
     lang: Language,
     project_id: ReadOnlySignal<i64>,
     #[props(extends = GlobalAttributes)] attributes: Vec<Attribute>,
@@ -28,7 +28,7 @@ pub fn Deliberation(
 
     rsx! {
         div {
-            id: "deliberation",
+            id: "consideration",
             class: "max-[1000px]:px-30 flex flex-col w-full h-fit bg-box-gray gap-20",
             ..attributes,
             // header

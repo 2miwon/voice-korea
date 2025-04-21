@@ -5,10 +5,11 @@ use bdk::prelude::*;
 use by_components::icons::upload_download::Download2;
 
 use crate::{
+    components::AvatarLabel,
     pages::projects::_id::components::{accordion::Accordion, rich_text_viewer::RichTextViewer},
     utils::time::formatted_timestamp,
 };
-use models::tab::Tab;
+use models::{deliberation_role::DeliberationRole, tab::Tab};
 
 use controllers::Controller;
 use i18n::BasicInfoTranslate;
@@ -33,7 +34,7 @@ pub fn BasicInfo(
             ..attributes,
             // header
             div { class: "w-full flex max-[500px]:flex-col max-[500px]:items-start max-[500px]:justify-start max-[500px]:gap-5 flex-row justify-between items-center mt-28",
-                div { class: " font-semibold text-xl", "{tab_title}" }
+                div { class: " font-semibold text-xl", {tab_title} }
                 div { class: "font-medium text-[15px] text-black",
                     {
                         format!(
@@ -47,36 +48,38 @@ pub fn BasicInfo(
             // information section
             div { class: "flex flex-col gap-10",
                 Accordion { title: tr.main_title, default_open: true,
-                    div { class: "w-full justify-start mt-15 mb-20 font-bold text-lg",
-                        "{basic_info.title}"
+                    div { class: "w-full flex flex-col gap-20",
+                        div { class: "font-bold text-lg", {basic_info.title} }
+                        RichTextViewer {
+                            contenteditable: false,
+                            html: basic_info.description,
+                        }
+                        div { class: "w-full flex flex-row justify-start gap-20",
+                            for member in basic_info.members {
+                                AvatarLabel {
+                                    label: member.nickname.unwrap_or(member.email),
+                                    //FIXME: use organization name
+                                    sub: "DAO",
+                                }
+                            }
+                        }
                     }
-                    RichTextViewer {
-                        class: "w-full flex justify-start text-[15px]",
-                        contenteditable: false,
-                        html: basic_info.description,
-                    }
-
-                // FIXME: fix to query by members field
-                // div { class: "w-full mt-20 flex flex-row justify-start gap-40",
-                //     for member in basic_info.members {
-                //         div { class: "flex flex-row justify-start gap-8",
-                //             img { class: "w-40 h-40 bg-profile-gray rounded-full" }
-                //             div { class: "flex flex-col justify-center",
-                //                 p { class: "font-semibold text-[15px] justify-start",
-                //                     {member.role.translate(&lang)}
-                //                 }
-                //             }
-                //         }
-                //     }
-                // }
+                
                 }
 
+                Accordion { title: tr.committee_title,
+                    div { class: "w-full flex flex-col gap-12 [&>:last-child]:hidden",
+                        for (title , members) in ctrl.commitees() {
+                            Committee { lang, title, members }
+                        }
+                    }
+                }
                 //Related Data
                 div { class: "w-full flex flex-col rounded-lg mb-40 bg-white justify-start items-center py-14 px-20",
                     // title and button
                     div { class: "w-full flex justify-start items-center gap-13",
                         div { class: "w-180 flex flex-row items-center text-base font-bold",
-                            span { "{tr.related_materials_title}" }
+                            span { {tr.related_materials_title} }
                         }
                         //file
                         div { class: "flex flex-wrap flex-1 justify-start items-center gap-8",
@@ -101,7 +104,9 @@ pub fn BasicInfo(
                                         height: "18",
                                         class: " [&>path]:fill-white",
                                     }
-                                    div { class: "font-medium text-sm text-white", {resource.title} }
+                                    div { class: "font-medium text-sm text-white line-clamp-1",
+                                        {resource.title}
+                                    }
                                 }
                             }
                         }
@@ -109,5 +114,21 @@ pub fn BasicInfo(
                 }
             }
         }
+    }
+}
+
+#[component]
+fn Committee(lang: Language, title: String, members: Vec<DeliberationRole>) -> Element {
+    rsx! {
+        div { class: "w-full flex flex-col gap-10",
+            h1 { class: "text-18 font-bold w-full", {title} }
+            div { class: "grid grid-cols-5 gap-20 w-full",
+                for member in members {
+
+                    AvatarLabel { label: member.email, sub: "DAO" }
+                }
+            }
+        }
+        hr { class: "w-full border-b-1 border-line-gray" }
     }
 }

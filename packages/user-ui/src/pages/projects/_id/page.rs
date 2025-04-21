@@ -5,8 +5,8 @@ use dioxus_translate::Language;
 
 use crate::pages::projects::_id::{
     components::{
-        basic_info::BasicInfo, comments::Comment, deliberation::Deliberation,
-        discussion::DiscussionComponent, final_recommendation::FinalRecommendation,
+        basic_info::BasicInfo, comments::Comment, consideration::ConsiderationTab,
+        discussion::DiscussionTab, final_recommendation::FinalRecommendation,
         final_survey::FinalSurvey, project_header::ProjectHeader, sample_survey::SampleSurvey,
     },
     controller,
@@ -49,6 +49,7 @@ pub fn ProjectPage(lang: Language, project_id: ReadOnlySignal<i64>) -> Element {
                 send_reply: move |(id, reply): (i64, String)| async move {
                     let _ = ctrl.send_reply(id, reply).await;
                 },
+                is_login: ctrl.user.is_login(),
             }
         }
     }
@@ -79,7 +80,7 @@ pub fn ProjectDetails(
 ) -> Element {
     rsx! {
         div { class: "flex flex-col w-full justify-center items-center bg-box-gray",
-            div { class: "flex flex-col max-w-desktop w-full",
+            div { class: "flex flex-col max-w-desktop w-full max-desktop:px-20",
                 match active_tab() {
                     Tab::BasicInfo => rsx! {
                         BasicInfo { lang, project_id }
@@ -88,10 +89,10 @@ pub fn ProjectDetails(
                         SampleSurvey { lang, project_id }
                     },
                     Tab::Consideration => rsx! {
-                        Deliberation { lang, project_id }
+                        ConsiderationTab { lang, project_id }
                     },
                     Tab::Discussion => rsx! {
-                        DiscussionComponent { lang, project_id }
+                        DiscussionTab { lang, project_id }
                     },
                     Tab::FinalSurvey => rsx! {
                         FinalSurvey { lang, project_id }

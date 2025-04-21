@@ -26,7 +26,7 @@ pub enum DiscussionStatus {
 }
 
 #[component]
-pub fn DiscussionComponent(
+pub fn DiscussionTab(
     lang: Language,
     project_id: ReadOnlySignal<i64>,
     #[props(extends = GlobalAttributes)] attributes: Vec<Attribute>,
