@@ -85,6 +85,8 @@ pub struct Deliberation {
     #[api_model(one_to_many = deliberation_votes, foreign_key = deliberation_id)]
     #[serde(default)]
     pub votes: Vec<DeliberationVote>,
+
+    // FIXME: this field will be deplicated. use the emails field instead.
     #[api_model(summary, many_to_many = panel_deliberations, foreign_table_name = panels, foreign_primary_key = panel_id, foreign_reference_key = deliberation_id,)]
     #[serde(default)]
     pub panels: Vec<PanelV2>,

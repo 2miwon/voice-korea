@@ -8,8 +8,8 @@ translate! {
         en: "Total Panel Settings"
     }
     setting_total_panel_description: {
-        ko: "공론위원회는 다양한 의견을 수렴하고 합의된 결정을 도출하는 역할을 합니다. 각 역할의 담당자를 선정해주세요.",
-        en: "The Deliberation Committee's role is to collect diverse opinions and arrive at a consensus decision. Please select a person in charge of each role."
+        ko: "공론위원회는 다양한 의견을 수렴하고 합의된 결정을 도출하는 역할을 합니다. 공론에 참여하실 이메일을 입력하세요.",
+        en: "The Deliberation Committee collects diverse opinions and reaches a consensus on a decision. Please enter your email address to participate in the deliberation."
     }
     total_panel: {
         ko: "전체 패널",

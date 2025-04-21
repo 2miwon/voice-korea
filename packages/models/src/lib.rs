@@ -15,6 +15,7 @@ mod public_opinion;
 mod resource;
 pub mod tab;
 // mod public_survey;
+pub mod deliberation_panel_emails;
 
 pub mod areas;
 pub mod deliberation_basic_info_members;
@@ -104,6 +105,7 @@ pub mod prelude {
     pub use crate::deliberation_final_survey_members::*;
     pub use crate::deliberation_final_survey_surveys::*;
     pub use crate::deliberation_final_surveys::*;
+    pub use crate::deliberation_panel_emails::*;
     pub use crate::deliberation_reports::*;
     pub use crate::deliberation_resources::*;
     pub use crate::deliberation_responses::*;

@@ -71,6 +71,11 @@ pub fn CompositionPanel(lang: Language) -> Element {
 }
 
 #[component]
+pub fn SettingPanelByEmail(lang: Language) -> Element {
+    rsx! {}
+}
+
+#[component]
 pub fn SettingPanel(
     lang: Language,
 
