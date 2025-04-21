@@ -16,3 +16,5 @@ pub mod subjective;
 
 pub mod accordion;
 pub mod rich_text_viewer;
+
+pub mod skeleton;

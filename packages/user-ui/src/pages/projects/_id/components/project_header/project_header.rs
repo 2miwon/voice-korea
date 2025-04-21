@@ -55,44 +55,47 @@ pub fn ProjectHeader(
                         span { "{started_at} ~ {ended_at}" }
                     }
                     div { class: "w-full flex justify-start items-center font-semibold text-[32px]/60",
-                        "{deliberation.title}"
+                        {deliberation.title}
                     }
-                    div { class: "w-full flex justify-start items-center font-md text-sm gap-4",
-                        for area in deliberation.project_areas.iter() {
-                            Label { name: area.project_area.translate(&lang) }
+
+                    div { class: "flex flex-col gap-20",
+                        div { class: "w-full flex justify-start items-center font-md text-sm gap-4",
+                            for area in deliberation.project_areas.iter() {
+                                Label { name: area.project_area.translate(&lang) }
+                            }
+                        }
+                        // FIXME: add organization
+                        // div { class: "w-full my-20 flex flex-row justify-start items-center gap-8",
+                        //     img {
+                        //         class: "w-50 h-50",
+                        //         src: asset!("/public/images/organization.png"),
+                        //     }
+                        //     div {
+                        //         div { class: "flex justify-start items-center font-normal text-[15px]",
+                        //             "{tr.organization}"
+                        //         }
+                        //     }
+                        // }
+                        div { class: "flex flex-row justify-start items-center gap-60",
+                            div { class: "w-hug h-59 flex flex-col justify-center items-center",
+                                div { class: "justify-center items-center font-semibold text-[24px]",
+                                    "{deliberation.participants}"
+                                }
+                                div { class: "justify-center items-center font-md text-sm",
+                                    {tr.participant}
+                                }
+                            }
+                            div { class: "w-hug h-59 flex flex-col justify-center items-center",
+                                div { class: "justify-center items-center font-semibold text-[24px]",
+                                    "{deliberation.votes}"
+                                }
+                                div { class: "justify-center items-center font-md text-sm",
+                                    {tr.vote}
+                                }
+                            }
                         }
                     }
 
-                    // FIXME: add organization
-                    // div { class: "w-full my-20 flex flex-row justify-start items-center gap-8",
-                    //     img {
-                    //         class: "w-50 h-50",
-                    //         src: asset!("/public/images/organization.png"),
-                    //     }
-                    //     div {
-                    //         div { class: "flex justify-start items-center font-normal text-[15px]",
-                    //             "{tr.organization}"
-                    //         }
-                    //     }
-                    // }
-                    div { class: "flex flex-row justify-start items-center gap-60",
-                        div { class: "w-hug h-59 flex flex-col justify-center items-center",
-                            div { class: "justify-center items-center font-semibold text-[24px]",
-                                "{deliberation.participants}"
-                            }
-                            div { class: "justify-center items-center font-md text-sm",
-                                "{tr.participant}"
-                            }
-                        }
-                        div { class: "w-hug h-59 flex flex-col justify-center items-center",
-                            div { class: "justify-center items-center font-semibold text-[24px]",
-                                "{deliberation.votes}"
-                            }
-                            div { class: "justify-center items-center font-md text-sm",
-                                "{tr.vote}"
-                            }
-                        }
-                    }
                 }
             }
             //img section

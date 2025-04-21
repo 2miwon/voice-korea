@@ -1,6 +1,6 @@
 use bdk::prelude::*;
 
-use crate::by_components::loaders::cube_loader::CubeLoader;
+use crate::pages::projects::_id::components::skeleton::Skeleton;
 use dioxus_translate::Language;
 
 use crate::pages::projects::_id::{
@@ -18,7 +18,6 @@ pub fn ProjectPage(lang: Language, project_id: ReadOnlySignal<i64>) -> Element {
     let comments = ctrl.comment_trees();
     let deliberation = ctrl.summary()?;
     let active_tab = use_signal(|| Tab::BasicInfo);
-    tracing::debug!("deliberation: {:?}", deliberation);
 
     rsx! {
         div { class: "flex flex-col w-full justify-center items-center",
@@ -26,7 +25,7 @@ pub fn ProjectPage(lang: Language, project_id: ReadOnlySignal<i64>) -> Element {
             div { class: "w-full flex flex-col justify-center items-center",
                 SuspenseBoundary {
                     fallback: |_| rsx! {
-                        div { class: "w-full h-fit flex items-center justify-center", CubeLoader {} }
+                        Skeleton {}
                     },
                     div { class: "flex flex-col w-full h-fit",
                         ProjectDetails {
@@ -36,6 +35,7 @@ pub fn ProjectPage(lang: Language, project_id: ReadOnlySignal<i64>) -> Element {
                         }
                     }
                 }
+            
             }
             Comment {
                 lang,
