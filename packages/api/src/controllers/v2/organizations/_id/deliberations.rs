@@ -10,11 +10,11 @@ use by_axum::{
 use by_types::QueryResponse;
 use deliberation_resources::deliberation_resource::*;
 use deliberation_surveys::DeliberationSurvey;
-use deliberation_user::*;
 use discussion_resources::DiscussionResource;
 use discussions::Discussion;
 use models::{
-    deliberation::*, deliberation_areas::deliberation_area::*,
+    deliberation::*,
+    deliberation_areas::deliberation_area::*,
     deliberation_basic_info_members::deliberation_basic_info_member::*,
     deliberation_basic_info_resources::deliberation_basic_info_resource::*,
     deliberation_basic_info_surveys::deliberation_basic_info_survey::*,
@@ -31,10 +31,16 @@ use models::{
     deliberation_final_survey_members::deliberation_final_survey_member::*,
     deliberation_final_survey_surveys::deliberation_final_survey_survey::*,
     deliberation_final_surveys::deliberation_final_survey::*,
+    deliberation_role::{
+        DeliberationRole, DeliberationRoleCreateRequest, DeliberationRoleRepository,
+    },
     deliberation_sample_survey_members::deliberation_sample_survey_member::*,
     deliberation_sample_survey_surveys::deliberation_sample_survey_survey::*,
-    deliberation_sample_surveys::deliberation_sample_survey::*, discussion_groups::DiscussionGroup,
-    elearnings::elearning::*, step::*, *,
+    deliberation_sample_surveys::deliberation_sample_survey::*,
+    discussion_groups::DiscussionGroup,
+    elearnings::elearning::*,
+    step::*,
+    *,
 };
 use panel_deliberations::*;
 use sqlx::postgres::PgRow;
@@ -71,7 +77,7 @@ pub struct DeliberationController {
     repo: DeliberationRepository,
     pool: sqlx::Pool<sqlx::Postgres>,
     step: StepRepository,
-    deliberation_user: DeliberationUserRepository,
+    deliberation_role: DeliberationRoleRepository,
     deliberation_resource: DeliberationResourceRepository,
     deliberation_survey: DeliberationSurveyRepository,
     deliberation_area: DeliberationAreaRepository,
@@ -157,7 +163,7 @@ impl DeliberationController {
         self.insert_deliberation_areas(&mut *tx, deliberation.id, project_areas.clone())
             .await?;
 
-        self.insert_deliberation_users(&mut *tx, org_id, deliberation.id, roles.clone())
+        self.insert_deliberation_users(&mut *tx, deliberation.id, roles.clone())
             .await?;
 
         for resource_id in resource_ids {
@@ -247,7 +253,27 @@ impl DeliberationController {
         Ok(deliberation)
     }
 
-    #[allow(unused_variables)]
+    pub async fn remove_deliberation(&self, id: i64) -> Result<Deliberation> {
+        let deliberation = self.repo.delete(id).await?;
+
+        Ok(deliberation)
+    }
+
+    pub async fn start_deliberation(&self, id: i64) -> Result<Deliberation> {
+        let deliberation = self
+            .repo
+            .update(
+                id,
+                DeliberationRepositoryUpdateRequest {
+                    status: Some(DeliberationStatus::Ready),
+                    ..Default::default()
+                },
+            )
+            .await?;
+
+        Ok(deliberation)
+    }
+
     pub async fn update(
         &self,
         id: i64,
@@ -262,20 +288,16 @@ impl DeliberationController {
             title,
             description,
             panel_ids,
-            resource_ids,
-            survey_ids,
             roles,
-            steps,
-            elearning,
             thumbnail_image,
             basic_infos,
             sample_surveys,
             contents,
             deliberation_discussions,
             final_surveys,
-            drafts,
             status,
             creator_id,
+            ..
         } = param.req;
 
         self.validate_inputs(
@@ -308,7 +330,7 @@ impl DeliberationController {
         self.upsert_deliberation_areas(&mut *tx, id, project_areas.clone())
             .await?;
 
-        self.upsert_deliberation_users(&mut *tx, org_id, id, roles.clone())
+        self.upsert_deliberation_users(&mut *tx, id, roles.clone())
             .await?;
 
         self.upsert_deliberation_panels(&mut *tx, id, panel_ids)
@@ -353,6 +375,7 @@ impl DeliberationController {
         let mut total_count: i64 = 0;
         let items: Vec<DeliberationSummary> = Deliberation::query_builder()
             .org_id_equals(org_id)
+            .order_by_created_at_desc()
             .limit(size as i32)
             .page(bookmark.unwrap_or("1".to_string()).parse::<i32>().unwrap())
             .with_count()
@@ -855,7 +878,13 @@ impl DeliberationController {
         contents: Vec<DeliberationContentCreateRequest>,
     ) -> Result<()> {
         for DeliberationContentCreateRequest {
-            users, elearnings, ..
+            users,
+            elearnings,
+            started_at,
+            ended_at,
+            title,
+            description,
+            questions,
         } in contents.clone()
         {
             let results = DeliberationContent::query_builder()
@@ -874,10 +903,24 @@ impl DeliberationController {
                     .next()
                     .unwrap_or_else(DeliberationContent::default)
             } else {
-                results
-                    .into_iter()
-                    .next()
-                    .unwrap_or_else(DeliberationContent::default)
+                let results = results[0].clone();
+                let v = self
+                    .deliberation_contents
+                    .update_with_tx(
+                        &mut *tx,
+                        results.id,
+                        DeliberationContentRepositoryUpdateRequest {
+                            started_at: Some(started_at),
+                            ended_at: Some(ended_at),
+                            title: Some(title),
+                            description: Some(description),
+                            deliberation_id: Some(results.deliberation_id),
+                            questions: Some(questions),
+                        },
+                    )
+                    .await?;
+
+                v.unwrap_or_default()
             };
 
             // update user
@@ -1495,14 +1538,13 @@ impl DeliberationController {
     async fn insert_deliberation_users(
         &self,
         tx: &mut sqlx::PgConnection,
-        org_id: i64,
         deliberation_id: i64,
-        roles: Vec<DeliberationUserCreateRequest>,
+        roles: Vec<DeliberationRoleCreateRequest>,
     ) -> Result<()> {
-        for DeliberationUserCreateRequest { user_id, role } in roles {
+        for DeliberationRoleCreateRequest { email, role } in roles {
             match self
-                .deliberation_user
-                .insert_with_tx(&mut *tx, user_id, org_id, deliberation_id, role)
+                .deliberation_role
+                .insert_with_tx(&mut *tx, deliberation_id, email, role)
                 .await?
                 .ok_or(ApiError::DeliberationUserException)
             {
@@ -1521,21 +1563,20 @@ impl DeliberationController {
     async fn upsert_deliberation_users(
         &self,
         tx: &mut sqlx::PgConnection,
-        org_id: i64,
         deliberation_id: i64,
-        roles: Vec<DeliberationUserCreateRequest>,
+        roles: Vec<DeliberationRoleCreateRequest>,
     ) -> Result<()> {
-        let remain_users = DeliberationUser::query_builder()
+        let remain_roles = DeliberationRole::query_builder()
             .deliberation_id_equals(deliberation_id)
             .query()
-            .map(DeliberationUser::from)
+            .map(DeliberationRole::from)
             .fetch_all(&self.pool)
             .await?;
 
-        tracing::debug!("remain_users: {:?}", remain_users);
+        tracing::debug!("remain_users: {:?}", remain_roles);
 
-        for remain in remain_users {
-            self.deliberation_user
+        for remain in remain_roles {
+            self.deliberation_role
                 .delete_with_tx(&mut *tx, remain.id)
                 .await?
                 .ok_or(ApiError::DeliberationResourceException)?;
@@ -1543,7 +1584,7 @@ impl DeliberationController {
 
         tracing::debug!("deliberation users: {:?}", roles.clone());
 
-        self.insert_deliberation_users(&mut *tx, org_id, deliberation_id, roles.clone())
+        self.insert_deliberation_users(&mut *tx, deliberation_id, roles.clone())
             .await?;
 
         Ok(())
@@ -1588,7 +1629,7 @@ impl DeliberationController {
     pub fn new(pool: sqlx::Pool<sqlx::Postgres>) -> Self {
         let repo = Deliberation::get_repository(pool.clone());
         let step = Step::get_repository(pool.clone());
-        let deliberation_user = DeliberationUser::get_repository(pool.clone());
+        let deliberation_role = DeliberationRole::get_repository(pool.clone());
         let deliberation_resource = DeliberationResource::get_repository(pool.clone());
         let deliberation_survey = DeliberationSurvey::get_repository(pool.clone());
         let deliberation_area = DeliberationArea::get_repository(pool.clone());
@@ -1621,7 +1662,7 @@ impl DeliberationController {
             pool,
             repo,
             step,
-            deliberation_user,
+            deliberation_role,
             deliberation_resource,
             deliberation_survey,
             deliberation_area,
@@ -1676,6 +1717,7 @@ impl DeliberationController {
 
         let items = DeliberationSummary::query_builder()
             .org_id_equals(org_id)
+            .order_by_created_at_desc()
             .title_contains(q.clone().title.unwrap_or_default())
             .limit(q.size())
             .page(q.page())
@@ -1740,6 +1782,12 @@ impl DeliberationController {
         match body {
             DeliberationByIdAction::Update(param) => {
                 Ok(Json(ctrl.update(id, org_id, param).await?))
+            }
+            DeliberationByIdAction::StartDeliberation(_) => {
+                Ok(Json(ctrl.start_deliberation(id).await?))
+            }
+            DeliberationByIdAction::RemoveDeliberation(_) => {
+                Ok(Json(ctrl.remove_deliberation(id).await?))
             }
         }
     }

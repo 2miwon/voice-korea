@@ -7,19 +7,20 @@ pub fn SelectCategory(
     selected_field: Option<String>,
     placeholder: String,
     onchange: EventHandler<Event<FormData>>,
-    options: Element,
+    options: Vec<String>,
 ) -> Element {
     rsx! {
         select {
             class: "focus:outline-none justify-start items-start p-15 bg-background-gray rounded-[4px] font-medium text-[15px] text-disabled",
             style: "width: {width}px; height: {height}px",
-            value: match selected_field.as_ref() {
-                Some(field) => field.as_str(),
-                None => "",
-            },
             onchange,
-            option { value: "", disabled: true, selected: selected_field == None, {placeholder} }
-            {options}
+            for question_type in options {
+                option {
+                    value: question_type.clone(),
+                    selected: selected_field == Some(question_type),
+                    {question_type.clone()}
+                }
+            }
         }
     }
 }

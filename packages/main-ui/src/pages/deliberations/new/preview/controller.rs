@@ -3,11 +3,11 @@ use models::{
     deliberation_user::DeliberationUserCreateRequest, DeliberationBasicInfoCreateRequest,
     DeliberationContentCreateRequest, DeliberationDiscussionCreateRequest,
     DeliberationFinalSurveyCreateRequest, DeliberationSampleSurveyCreateRequest,
-    DeliberationStatus, OrganizationMember, OrganizationMemberQuery, OrganizationMemberSummary,
-    PanelV2, PanelV2Query, PanelV2Summary, Role, *,
+    OrganizationMember, OrganizationMemberQuery, OrganizationMemberSummary, PanelV2, PanelV2Query,
+    PanelV2Summary, Role,
 };
 
-use crate::{config, routes::Route, service::login_service::LoginService};
+use crate::{routes::Route, service::login_service::LoginService};
 
 use super::ParentController;
 
@@ -114,11 +114,11 @@ impl Controller {
         // committee
         let roles = ctrl.roles();
         let members = members().unwrap_or_default();
-        let committees = req.roles.clone();
-        ctrl.committees.set(committees.clone());
+        let _committees = req.roles.clone();
+        ctrl.committees.set(vec![]);
         let mut committee_roles = vec![];
         for role in roles.clone() {
-            let members = ctrl.get_role_list(members.clone(), committees.clone(), role);
+            let members = ctrl.get_role_list(members.clone(), vec![], role);
 
             committee_roles.push(members);
         }
@@ -174,128 +174,13 @@ impl Controller {
     }
 
     pub async fn temp_save(&mut self) {
-        self.parent.temporary_save().await;
+        self.parent.temporary_save(false).await;
     }
 
     pub async fn start_deliberation(&mut self) {
         tracing::debug!("start button click");
 
-        let cli = Deliberation::get_client(config::get().api_url);
-
-        let org = self.parent.user.get_selected_org();
-        if org.is_none() {
-            btracing::e!(self.lang, ApiError::OrganizationNotFound);
-            return;
-        }
-
-        let org_id = org.unwrap().id;
-        let creator_id = if let Some(user_id) = self.parent.user.get_user_id() {
-            user_id
-        } else {
-            btracing::e!(self.lang, ApiError::Unauthorized);
-            return;
-        };
-
-        let DeliberationCreateRequest {
-            started_at,
-            ended_at,
-            thumbnail_image,
-            title,
-            description,
-            project_area,
-            project_areas,
-            resource_ids,
-            survey_ids,
-            roles,
-            panel_ids,
-            steps,
-            elearning,
-            basic_infos,
-            sample_surveys,
-            contents,
-            deliberation_discussions,
-            final_surveys,
-            drafts,
-            ..
-        } = self.parent.deliberation_requests();
-
-        match cli.get_draft(org_id, creator_id).await {
-            Ok(d) => {
-                match cli
-                    .update(
-                        org_id,
-                        d.id,
-                        DeliberationCreateRequest {
-                            started_at,
-                            ended_at,
-                            thumbnail_image,
-                            title,
-                            description,
-                            project_area,
-                            project_areas,
-                            status: DeliberationStatus::Ready,
-                            creator_id,
-                            resource_ids,
-                            survey_ids,
-                            roles,
-                            panel_ids,
-                            steps,
-                            elearning,
-                            basic_infos,
-                            sample_surveys,
-                            contents,
-                            deliberation_discussions,
-                            final_surveys,
-                            drafts,
-                        },
-                    )
-                    .await
-                {
-                    Ok(_) => {
-                        btracing::i!(self.lang, Info::Save);
-                        self.nav.push(Route::DeliberationPage { lang: self.lang });
-                    }
-                    Err(e) => {
-                        btracing::e!(self.lang, e);
-                    }
-                }
-            }
-            Err(_) => {
-                match cli
-                    .create(
-                        org_id,
-                        started_at,
-                        ended_at,
-                        thumbnail_image,
-                        title,
-                        description,
-                        project_area,
-                        DeliberationStatus::Ready,
-                        creator_id,
-                        project_areas,
-                        resource_ids,
-                        survey_ids,
-                        roles,
-                        panel_ids,
-                        steps,
-                        elearning,
-                        basic_infos,
-                        sample_surveys,
-                        contents,
-                        deliberation_discussions,
-                        final_surveys,
-                        drafts,
-                    )
-                    .await
-                {
-                    Ok(_) => {
-                        btracing::i!(self.lang, Info::Save);
-                        self.nav.push(Route::DeliberationPage { lang: self.lang });
-                    }
-                    Err(e) => btracing::e!(self.lang, e),
-                }
-            }
-        }
+        self.parent.start_deliberation().await;
     }
 
     pub fn convert_user_ids_to_members(
@@ -306,7 +191,7 @@ impl Controller {
         tracing::debug!("user ids: {:?} {:?}", user_ids, members);
         let members = members
             .into_iter()
-            .filter(|member| user_ids.contains(&member.id))
+            .filter(|member| user_ids.contains(&member.user_id))
             .collect();
         members
     }

@@ -52,6 +52,8 @@ pub mod deliberation_reports;
 pub mod deliberation_resources;
 pub mod deliberation_responses;
 
+pub mod deliberation_roles;
+
 pub mod deliberation_surveys;
 pub mod deliberation_users;
 pub mod deliberation_votes;
@@ -100,6 +102,7 @@ pub mod prelude {
     pub use crate::deliberation_reports::*;
     pub use crate::deliberation_resources::*;
     pub use crate::deliberation_responses::*;
+    pub use crate::deliberation_roles::*;
     pub use crate::deliberation_sample_survey_members::*;
     pub use crate::deliberation_sample_survey_surveys::*;
     pub use crate::deliberation_sample_surveys::*;

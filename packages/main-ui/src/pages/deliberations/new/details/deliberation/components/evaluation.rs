@@ -1,62 +1,91 @@
 use crate::{
     components::{
         form_field::{Divide, SelectInputField, UnderlineField},
-        section::MainSection,
+        section::{AddSection, MainSection},
     },
-    pages::deliberations::new::details::deliberation::i18n::DeliberationTranslate,
+    pages::deliberations::new::details::deliberation::{
+        components::objective_options::ObjectiveOptions, i18n::DeliberationTranslate,
+    },
 };
 use bdk::prelude::*;
-// use models::DeliberationContentCreateRequest;
+use models::Question;
 
 #[component]
 pub fn Evaluation(
     lang: Language,
-    evaluations: Vec<String>, // FIXME: This should be a Vec<DeliberationContentCreateRequest> or a more specific type.
+    questions: Vec<Question>,
     set_form: EventHandler<(usize, String)>,
     set_title: EventHandler<(usize, String)>,
-    set_content: EventHandler<(usize, String)>,
-    removing_evaluation: EventHandler<usize>,
+    set_description: EventHandler<(usize, String)>,
+    add_question: EventHandler<MouseEvent>,
+    removing_question: EventHandler<usize>,
+
+    change_option: EventHandler<(usize, usize, String)>,
+    remove_option: EventHandler<(usize, usize)>,
+    add_option: EventHandler<usize>,
 ) -> Element {
     let tr: DeliberationTranslate = translate(&lang);
+
     rsx! {
-        div { class: "flex w-full",
-            for (index , _evaluation) in evaluations.iter().enumerate() {
+        div { class: "flex flex-col gap-20 w-full",
+            for (index , question) in questions.iter().enumerate() {
                 MainSection {
                     lang,
                     header: None,
                     description: None,
                     ondelete: move |_| {
-                        removing_evaluation.call(index);
+                        removing_question.call(index);
                     },
                     SelectInputField {
                         name: format!("evaluation-{index}"),
-                        selected_field: "evaluation".to_string(), // FIXME: this is dummy_data
+                        selected_field: Some(question.to_type(&lang).to_string()),
                         select_placeholder: tr.select_format.to_string(),
                         placeholder: tr.title_placeholder.to_string(),
-                        text_value: "".to_string(), // FIXME: This is a temporary solution. We need to implement a proper translation system.
+                        text_value: question.title(),
                         onchange: move |e: Event<FormData>| {
                             set_form.call((index, e.value()));
                         },
                         oninput: move |e: FormEvent| {
                             set_title.call((index, e.value()));
                         },
-                        options: rsx! {
-                            // FIXME: This is a temporary solution. We need to implement a proper translation system.
-                            option { value: "evaluation".to_string(), {"evaluation".to_string()} }
-                            option { value: "evaluation_2".to_string(), {"evaluation_2".to_string()} }
-                            option { value: "evaluation_3".to_string(), {"evaluation_3".to_string()} }
-                            option { value: "evaluation_4".to_string(), {"evaluation_4".to_string()} }
-                        },
+                        options: Question::types(&lang),
                     }
                     Divide {}
                     UnderlineField {
                         placeholder: tr.content_placeholder.to_string(),
-                        value: "".to_string(), // FIXME: This is a temporary solution. We need to implement a proper translation system.
+                        value: question.description(),
                         oninput: move |e: Event<FormData>| {
-                            set_content.call((index, e.value()));
+                            set_description.call((index, e.value()));
                         },
                     }
+
+                    match question {
+                        Question::SingleChoice(_) | Question::MultipleChoice(_) => {
+                            rsx! {
+                                ObjectiveOptions {
+                                    lang,
+                                    options: question.clone().options(),
+                                    change_option: move |(ind, option): (usize, String)| {
+                                        change_option.call((index, ind, option));
+                                    },
+                                    remove_option: move |ind: usize| {
+                                        remove_option.call((index, ind));
+                                    },
+                                    add_option: move |_| {
+                                        add_option.call(index);
+                                    },
+                                }
+                            }
+                        }
+                        _ => rsx! {},
+                    }
                 }
+            }
+            AddSection {
+                lang,
+                onclick: move |e| {
+                    add_question.call(e);
+                },
             }
         }
     }

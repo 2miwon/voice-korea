@@ -1,3 +1,5 @@
+mod components;
+
 mod controller;
 mod i18n;
 mod layout;

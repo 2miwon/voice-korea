@@ -7,11 +7,12 @@ use crate::{
 };
 
 #[component]
-pub fn SampleSurveyReward(
+pub fn Reward(
     lang: Language,
 
     sample_survey: DeliberationSampleSurveyCreateRequest,
-    set_sample_survey: EventHandler<DeliberationSampleSurveyCreateRequest>,
+    set_estimate_time: EventHandler<i64>,
+    set_point: EventHandler<i64>,
 ) -> Element {
     let tr: SampleSurveyRewardTranslate = translate(&lang);
 
@@ -22,13 +23,9 @@ pub fn SampleSurveyReward(
                     label: tr.expected_time,
                     hint: tr.expected_time_hint,
                     value: sample_survey.estimate_time,
-                    oninput: {
-                        let mut sample = sample_survey.clone();
-                        move |e: Event<FormData>| {
-                            if let Ok(v) = e.value().trim().parse::<i64>() {
-                                sample.estimate_time = v;
-                                set_sample_survey.call(sample.clone());
-                            }
+                    oninput: move |e: Event<FormData>| {
+                        if let Ok(v) = e.value().trim().parse::<i64>() {
+                            set_estimate_time.call(v);
                         }
                     },
                 }
@@ -37,13 +34,9 @@ pub fn SampleSurveyReward(
                     label: tr.expected_point,
                     hint: tr.expected_point_hint,
                     value: sample_survey.point,
-                    oninput: {
-                        let mut sample = sample_survey.clone();
-                        move |e: Event<FormData>| {
-                            if let Ok(v) = e.value().trim().parse::<i64>() {
-                                sample.point = v;
-                                set_sample_survey.call(sample.clone());
-                            }
+                    oninput: move |e: Event<FormData>| {
+                        if let Ok(v) = e.value().trim().parse::<i64>() {
+                            set_point.call(v);
                         }
                     },
                 }

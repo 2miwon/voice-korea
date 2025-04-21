@@ -17,6 +17,7 @@ pub struct SidebarProps {
 
 #[component]
 pub fn SideBar(props: SidebarProps) -> Element {
+    let tr: SideBarTranslate = translate(&props.lang);
     let mut srv: LoginService = use_context();
     tracing::debug!("selected menu: {}", props.selected_menu,);
 
@@ -76,20 +77,20 @@ pub fn SideBar(props: SidebarProps) -> Element {
                         // }
                         SectionMenus {
                             onselected: props.onselected,
-                            title: "조직 관리".to_string(),
+                            title: tr.organization_management,
                             menus: vec![
                                 MenuItem {
                                     id: "".to_string(),
-                                    title: "팀원 관리".to_string(),
-                                    is_selected: props.selected_menu == "팀원 관리",
+                                    title: tr.member_management.to_string(),
+                                    is_selected: props.selected_menu == tr.member_management,
                                     link: Some(Route::MemberPage {
                                         lang: props.lang,
                                     }),
                                 },
                                 MenuItem {
                                     id: "".to_string(),
-                                    title: "그룹 관리".to_string(),
-                                    is_selected: props.selected_menu == "그룹 관리",
+                                    title: tr.group_management.to_string(),
+                                    is_selected: props.selected_menu == tr.group_management,
                                     link: Some(Route::GroupPage {
                                         lang: props.lang,
                                     }),
@@ -98,20 +99,20 @@ pub fn SideBar(props: SidebarProps) -> Element {
                         }
                         SectionMenus {
                             onselected: props.onselected,
-                            title: "조사 관리".to_string(),
+                            title: tr.survey_management,
                             menus: vec![
                                 MenuItem {
                                     id: "".to_string(),
-                                    title: "여론 조사".to_string(),
-                                    is_selected: props.selected_menu == "여론 조사",
+                                    title: tr.survey.to_string(),
+                                    is_selected: props.selected_menu == tr.survey,
                                     link: Some(Route::SurveyPage {
                                         lang: props.lang,
                                     }),
                                 },
                                 MenuItem {
                                     id: "".to_string(),
-                                    title: "공론 조사".to_string(),
-                                    is_selected: props.selected_menu == "공론 조사",
+                                    title: tr.deliberation.to_string(),
+                                    is_selected: props.selected_menu == tr.deliberation,
                                     link: Some(Route::DeliberationPage {
                                         lang: props.lang,
                                     }),
@@ -120,12 +121,12 @@ pub fn SideBar(props: SidebarProps) -> Element {
                         }
                         SectionMenus {
                             onselected: props.onselected,
-                            title: "속성 & 패널 관리".to_string(),
+                            title: tr.panel_management,
                             menus: vec![
                                 MenuItem {
                                     id: "".to_string(),
-                                    title: "속성 & 패널 관리".to_string(),
-                                    is_selected: props.selected_menu == "속성 & 패널 관리",
+                                    title: tr.panel_management.to_string(),
+                                    is_selected: props.selected_menu == tr.panel_management,
                                     link: Some(Route::PanelPage {
                                         lang: props.lang,
                                     }),
@@ -134,12 +135,12 @@ pub fn SideBar(props: SidebarProps) -> Element {
                         }
                         SectionMenus {
                             onselected: props.onselected,
-                            title: "자료 관리".to_string(),
+                            title: tr.resource_management,
                             menus: vec![
                                 MenuItem {
                                     id: "".to_string(),
-                                    title: "자료 관리".to_string(),
-                                    is_selected: props.selected_menu == "자료 관리",
+                                    title: tr.resource_management.to_string(),
+                                    is_selected: props.selected_menu == tr.resource_management,
                                     link: Some(Route::ResourcePage {
                                         lang: props.lang,
                                     }),
@@ -151,7 +152,7 @@ pub fn SideBar(props: SidebarProps) -> Element {
                 div { class: "flex flex-row w-full h-full justify-end items-end p-[10px]",
                     div { class: "flex flex-row w-[110px]",
                         div { class: "text-white text-[14px] font-normal pr-[10px]",
-                            {"사용자 설정"}
+                            {tr.user_setting}
                         }
                         img {
                             src: asset!("/public/images/config.png"),
@@ -248,5 +249,50 @@ pub fn SectionMenus(
                 }
             }
         }
+    }
+}
+
+translate! {
+    SideBarTranslate;
+
+    organization_management: {
+        ko: "조직 관리",
+        en: "Organization Management"
+    }
+    member_management: {
+        ko: "팀원 관리",
+        en: "Member Management"
+    }
+    group_management: {
+        ko: "그룹 관리",
+        en: "Group Management"
+    }
+
+    survey_management: {
+        ko: "조사 관리",
+        en: "Survey Management"
+    }
+    survey: {
+        ko: "여론 조사",
+        en: "Survey"
+    }
+    deliberation: {
+        ko: "공론 조사",
+        en: "Deliberation"
+    }
+
+    panel_management: {
+        ko: "속성 & 패널 관리",
+        en: "Attribute & Panel Management"
+    }
+
+    resource_management: {
+        ko: "자료 관리",
+        en: "Resource Management"
+    }
+
+    user_setting: {
+        ko: "사용자 설정",
+        en: "User Setting"
     }
 }

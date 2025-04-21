@@ -91,7 +91,6 @@ pub fn CalendarDay(
     let mut i = 0;
     let pl = days[0].len();
     let mut rows = vec![Vec::<Element>::new(); 6];
-    tracing::debug!("days: {:?}", days);
     for (n, days) in days.iter().enumerate() {
         for (ind, day) in days.iter().enumerate() {
             rows[i / 7]

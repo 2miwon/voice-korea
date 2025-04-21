@@ -1,23 +1,21 @@
 #![allow(unused_variables)]
-#![allow(unused_mut)]
-use bdk::prelude::*;
-use models::{elearning::ElearningCreateRequest, File};
+#[cfg(feature = "web")]
+use crate::components::drop_zone::handle_file_upload;
 
+#[cfg(feature = "web")]
+use crate::service::metadata_api::MetadataApi;
 use crate::{
     components::{
         form_field::{InputField, UploadField},
-        section::{MainSection, SubSection},
+        section::{AddSection, MainSection, SubSection},
         upload_button::UploadButton,
     },
     pages::deliberations::new::details::deliberation::i18n::DeliberationTranslate,
-    service::metadata_api::MetadataApi,
 };
-
-use super::super::controller::*;
-#[cfg(feature = "web")]
-use crate::components::drop_zone::handle_file_upload;
+use bdk::prelude::*;
 #[cfg(feature = "web")]
 use models::ApiError;
+use models::{elearning::ElearningCreateRequest, File};
 
 #[component]
 pub fn DeliberationElearning(
@@ -28,9 +26,8 @@ pub fn DeliberationElearning(
     set_elearning_metadata: EventHandler<(usize, File)>,
     add_elearning: EventHandler<MouseEvent>,
     remove_elearning: EventHandler<usize>,
+    open_load_from_data_modal: EventHandler<usize>,
 ) -> Element {
-    let mut ctrl = Controller::new(lang)?;
-    let api: MetadataApi = use_context();
     let tr: DeliberationTranslate = translate(&lang);
 
     rsx! {
@@ -67,6 +64,7 @@ pub fn DeliberationElearning(
                                         spawn(async move {
                                             #[cfg(feature = "web")]
                                             if let Some(file_engine) = event.files() {
+                                                let api: MetadataApi = use_context();
                                                 let result = handle_file_upload(file_engine, api).await;
                                                 if !result.is_empty() {
                                                     set_elearning_metadata.call((index, result[0].clone()));
@@ -79,7 +77,9 @@ pub fn DeliberationElearning(
                                 }
                                 button {
                                     class: "flex min-w-[165px] h-[40px] border bg-white border-primary rounded-sm justify-center items-center",
-                                    onclick: move |_| async move {},
+                                    onclick: move |_| {
+                                        open_load_from_data_modal.call(index);
+                                    },
                                     div { class: "text-primary text-center font-semibold text-sm",
                                         {tr.load_from}
                                     }
@@ -88,6 +88,12 @@ pub fn DeliberationElearning(
                         }
                     }
                 }
+            }
+            AddSection {
+                lang,
+                onclick: move |e| {
+                    add_elearning.call(e);
+                },
             }
         }
     }

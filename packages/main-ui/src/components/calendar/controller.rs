@@ -54,12 +54,6 @@ impl Controller {
         for i in 1..(self.last_date_of_month)() + 1 {
             this_month_days.push(i);
         }
-        tracing::debug!(
-            "this month days: {:?} {:?} {:?}",
-            (self.last_weekday_of_month)(),
-            self.translate_num_days((self.last_weekday_of_month)().num_days_from_monday()),
-            this_month_days,
-        );
         let remainder =
             6 - self.translate_num_days((self.last_weekday_of_month)().num_days_from_monday());
         let mut next_month_days = vec![];
@@ -68,7 +62,6 @@ impl Controller {
                 next_month_days.push(i);
             }
         }
-        tracing::debug!("next month days: {:?}", next_month_days);
         let needs = self.translate_num_days((self.weekday_of_month)().num_days_from_monday());
         let mut prev_month_days = vec![];
         let last_of_prev = (self.last_date_of_prev_month)();
@@ -77,7 +70,6 @@ impl Controller {
                 prev_month_days.push(i);
             }
         }
-        tracing::debug!("prev month days: {:?}", prev_month_days);
         vec![prev_month_days, this_month_days, next_month_days]
     }
 

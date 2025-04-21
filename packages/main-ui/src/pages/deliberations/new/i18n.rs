@@ -9,11 +9,11 @@ translate! {
     },
     public_opinion_management: {
         ko: "공론관리",
-        en: "Public Opinion Management"
+        en: "Deliberation Management"
     },
     start_public_opinion: {
         ko: "공론 시작하기",
-        en: "Start Public Opinion"
+        en: "Start Deliberation"
     }
     organization_and_period_title: {
         ko: "공론 절차 구성 및 기간",
@@ -47,7 +47,7 @@ translate! {
 
     organization_of_procedures: {
         ko: "공론 절차 구성",
-        en: "Organization of public opinion procedures"
+        en: "Organization of deliberation procedures"
     }
     organization_of_procedures_description: {
         ko: "공론의 방식과 순서를 정해주세요.",
@@ -63,7 +63,7 @@ translate! {
     }
     to_public_opinion_management_list: {
         ko: "공론관리 목록으로",
-        en: "To public opinion management list"
+        en: "To deliberation management list"
     }
     backward: {
         ko: "뒤로",
@@ -122,11 +122,11 @@ translate! {
 
     setup_deliberation_outline: {
         ko: "공론 개요 설정",
-        en: "Setting up a public opinion outline"
+        en: "Setting up a deliberation outline"
     }
     composition_of_deliberation: {
         ko: "공론 위원회 구성",
-        en: "Composition of a public opinion committee"
+        en: "Composition of a deliberation committee"
     }
     composition_of_panel: {
         ko: "참여자 패널 구성",
@@ -181,7 +181,7 @@ translate! {
 
     essential_information: {
         ko: "공론 필수 정보",
-        en: "Public opinion essential information"
+        en: "Deliberation essential information"
     }
     backward: {
         ko: "뒤로",
@@ -206,7 +206,7 @@ translate! {
     }
     upload_document_description: {
         ko: "해당 공론과 관련된 자료를 업로드해주세요. (예. 공론 소개, 참여 방법, 가이드라인)",
-        en: "Please upload materials related to the public opinion. (e.g. introduction to public opinion, participation methods, guidelines)"
+        en: "Please upload materials related to the deliberation. (e.g. introduction to deliberation, participation methods, guidelines)"
     }
     direct_upload: {
         ko: "직접 업로드하기",
@@ -293,7 +293,7 @@ translate! {
     }
     research_project_linkage_description: {
         ko: "해당 공론과 관련된 조사자료를 불러와주세요. (예. 여론조사, 설문조사, 기타조사 등)",
-        en: "Please retrieve research data related to this public opinion. (e.g. opinion polls, surveys, other surveys, etc.)"
+        en: "Please retrieve research data related to this deliberation. (e.g. opinion polls, surveys, other surveys, etc.)"
     }
     research_selection: {
         ko: "조사 선택",
@@ -538,7 +538,7 @@ translate! {
     }
     start_public_opinion: {
         ko: "공론 시작하기",
-        en: "Start Public Opinion"
+        en: "Start Deliberation"
     }
 }
 
@@ -547,7 +547,7 @@ translate! {
 
     public_opinion_composition_and_period: {
         ko: "공론 구성 및 기간",
-        en: "Public Opinion Composition and Period"
+        en: "Deliberation Composition and Period"
     }
     total_period: {
         ko: "전체 기간",
@@ -581,7 +581,7 @@ translate! {
 
     composition_public_opinion_committee: {
         ko: "공론 위원회 구성",
-        en: "Composition Public Opinion Committee"
+        en: "Composition Deliberation Committee"
     }
     division_of_roles: {
         ko: "역할 분담",
