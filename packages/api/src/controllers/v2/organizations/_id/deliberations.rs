@@ -819,6 +819,24 @@ impl DeliberationController {
                     .unwrap_or_else(DeliberationSampleSurvey::default)
             };
 
+            let _ = self
+                .sample_survey
+                .update_with_tx(
+                    &mut *tx,
+                    sample.id,
+                    DeliberationSampleSurveyRepositoryUpdateRequest {
+                        started_at: Some(started_at),
+                        ended_at: Some(ended_at),
+                        title: Some(title.clone()),
+                        description: Some(description.clone()),
+                        deliberation_id: None,
+                        estimate_time: Some(estimate_time),
+                        point: Some(point),
+                    },
+                )
+                .await?
+                .ok_or(ApiError::DeliberationSampleSurveyException)?;
+
             // update user
             let remain_users = DeliberationSampleSurveyRole::query_builder()
                 .sample_survey_id_equals(sample.id)
@@ -1036,16 +1054,33 @@ impl DeliberationController {
                         DeliberationContentRepositoryUpdateRequest {
                             started_at: Some(started_at),
                             ended_at: Some(ended_at),
-                            title: Some(title),
-                            description: Some(description),
+                            title: Some(title.clone()),
+                            description: Some(description.clone()),
                             deliberation_id: Some(results.deliberation_id),
-                            questions: Some(questions),
+                            questions: Some(questions.clone()),
                         },
                     )
                     .await?;
 
                 v.unwrap_or_default()
             };
+
+            let _ = self
+                .deliberation_contents
+                .update_with_tx(
+                    &mut *tx,
+                    content.id,
+                    DeliberationContentRepositoryUpdateRequest {
+                        started_at: Some(started_at),
+                        ended_at: Some(ended_at),
+                        title: Some(title.clone()),
+                        description: Some(description.clone()),
+                        deliberation_id: None,
+                        questions: Some(questions),
+                    },
+                )
+                .await?
+                .ok_or(ApiError::DeliberationLearningException)?;
 
             // update user
             let remain_users = DeliberationContentRole::query_builder()
@@ -1233,7 +1268,10 @@ impl DeliberationController {
             users,
             resources,
             discussions,
-            ..
+            started_at,
+            ended_at,
+            title,
+            description,
         } in deliberation_discussions.clone()
         {
             let results = DeliberationDiscussion::query_builder()
@@ -1262,6 +1300,22 @@ impl DeliberationController {
                     .next()
                     .unwrap_or_else(DeliberationDiscussion::default)
             };
+
+            let _ = self
+                .discussion_repo
+                .update_with_tx(
+                    &mut *tx,
+                    discussion.id,
+                    DeliberationDiscussionRepositoryUpdateRequest {
+                        started_at: Some(started_at),
+                        ended_at: Some(ended_at),
+                        title: Some(title.clone()),
+                        description: Some(description.clone()),
+                        deliberation_id: None,
+                    },
+                )
+                .await?
+                .ok_or(ApiError::DeliberationDiscussionException)?;
 
             // update user
             let remain_users = DeliberationDiscussionRole::query_builder()
@@ -1545,6 +1599,24 @@ impl DeliberationController {
                     .next()
                     .unwrap_or_else(DeliberationFinalSurvey::default)
             };
+
+            let _ = self
+                .final_repo
+                .update_with_tx(
+                    &mut *tx,
+                    d.id,
+                    DeliberationFinalSurveyRepositoryUpdateRequest {
+                        title: Some(title.clone()),
+                        description: Some(description.clone()),
+                        estimate_time: Some(estimate_time),
+                        point: Some(point),
+                        started_at: Some(started_at),
+                        ended_at: Some(ended_at),
+                        deliberation_id: None,
+                    },
+                )
+                .await?
+                .ok_or(ApiError::DeliberationSampleSurveyException)?;
 
             // update user
             let remain_users = DeliberationFinalSurveyRole::query_builder()
