@@ -15,15 +15,12 @@ pub struct Controller {
     #[allow(dead_code)]
     lang: Language,
     org_id: i64,
-    // pub _parent: super::super::Controller,
     pub e_learning_tab: Signal<bool>,
 
     pub metadatas: Resource<Vec<ResourceFileSummary>>,
     pub committee_members: Signal<Vec<String>>,
 
     pub deliberation: Signal<DeliberationContentCreateRequest>,
-    // elearnings: Signal<Vec<ElearningCreateRequest>>,
-    // questions: Signal<Vec<Option<Question>>>,
     pub parent: DeliberationNewController,
     pub nav: Navigator,
     pub popup_service: PopupService,
@@ -93,18 +90,6 @@ impl Controller {
             }
             ctrl.deliberation.set(deliberation.clone());
             ctrl.committee_members.set(committees);
-            // if deliberation.elearnings.is_empty() {
-            //     let mut elearning = ElearningCreateRequest::default();
-            //     elearning.resources.push(ResourceFile::default());
-            //     deliberation.elearnings.push(elearning);
-            // } else {
-            //     ctrl.elearnings.set(deliberation.elearnings.clone());
-            // }
-            // if deliberation.questions.is_empty() {
-            //     deliberation.questions.push(None);
-            // } else {
-            //     ctrl.questions.set(deliberation.questions.clone());
-            // }
         });
 
         use_context_provider(|| ctrl);
@@ -234,9 +219,11 @@ impl Controller {
     }
 
     pub fn next(&mut self) {
-        self.parent.save_content(self.deliberation());
-        self.nav
-            .push(Route::DeliberationDiscussionSettingPage { lang: self.lang });
+        if self.validation_check() {
+            self.parent.save_content(self.deliberation());
+            self.nav
+                .push(Route::DeliberationDiscussionSettingPage { lang: self.lang });
+        }
     }
 
     pub fn set_selected_field(&mut self, index: usize, field: String) {
@@ -341,4 +328,98 @@ impl Controller {
                 }
             });
     }
+
+    pub fn is_valid(&self) -> bool {
+        let deliberation = self.deliberation();
+
+        let title = deliberation.title;
+        let description = deliberation.description;
+        let started_at = deliberation.started_at;
+        let ended_at = deliberation.ended_at;
+
+        let members = deliberation.users;
+        let elearnings = deliberation.elearnings;
+        let questions = deliberation.questions;
+
+        !(title.is_empty()
+            || description.is_empty()
+            || started_at >= ended_at
+            || members.is_empty()
+            || elearnings.is_empty()
+            || questions.is_empty())
+    }
+
+    pub fn validation_check(&self) -> bool {
+        let deliberation = self.deliberation();
+
+        let title = deliberation.title;
+        let description = deliberation.description;
+        let started_at = deliberation.started_at;
+        let ended_at = deliberation.ended_at;
+
+        let members = deliberation.users;
+        let elearnings = deliberation.elearnings;
+        let questions = deliberation.questions;
+
+        if title.is_empty() {
+            btracing::e!(self.lang, ValidationError::TitleRequired);
+            return false;
+        }
+        if description.is_empty() {
+            btracing::e!(self.lang, ValidationError::DescriptionRequired);
+            return false;
+        }
+        if started_at >= ended_at {
+            btracing::e!(self.lang, ValidationError::TimeValidationFailed);
+            return false;
+        }
+        if members.is_empty() {
+            btracing::e!(self.lang, ValidationError::MemberRequired);
+            return false;
+        }
+        if elearnings.is_empty() {
+            btracing::e!(self.lang, ValidationError::ElearningRequired);
+            return false;
+        }
+        if questions.is_empty() {
+            btracing::e!(self.lang, ValidationError::QuestionRequired);
+            return false;
+        }
+
+        true
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Translate)]
+pub enum ValidationError {
+    #[translate(
+        ko = "숙의 제목을 입력해주세요.",
+        en = "Please enter the deliberation title."
+    )]
+    TitleRequired,
+    #[translate(
+        ko = "숙의 설명을 입력해주세요.",
+        en = "Please enter the deliberation description."
+    )]
+    DescriptionRequired,
+    #[translate(
+        ko = "시작 날짜는 종료 날짜보다 작아야합니다.",
+        en = "The start date must be less than the end date."
+    )]
+    TimeValidationFailed,
+    #[translate(
+        ko = "1명 이상의 담당자를 선택해주세요.",
+        en = "Please select one or more contact persons."
+    )]
+    MemberRequired,
+    #[translate(
+        ko = "하나 이상의 이러닝 자료를 생성해주세요.",
+        en = "Please create one or more eLearning materials."
+    )]
+    ElearningRequired,
+    #[translate(
+        ko = "한 문항 이상의 설문을 입력해주세요.",
+        en = "Please enter one or more questions in the survey."
+    )]
+    QuestionRequired,
 }

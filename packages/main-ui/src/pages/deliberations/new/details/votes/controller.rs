@@ -151,7 +151,91 @@ impl Controller {
     }
 
     pub fn next(&mut self) {
-        self.parent.save_final_survey(self.final_survey());
-        self.nav.push(Route::Preview { lang: self.lang });
+        if self.validation_check() {
+            self.parent.save_final_survey(self.final_survey());
+            self.nav.push(Route::Preview { lang: self.lang });
+        }
     }
+
+    pub fn is_valid(&self) -> bool {
+        let final_survey = self.final_survey();
+
+        let title = final_survey.title;
+        let description = final_survey.description;
+        let started_at = final_survey.started_at;
+        let ended_at = final_survey.ended_at;
+
+        let members = final_survey.users;
+        let surveys = final_survey.surveys;
+
+        !(title.is_empty()
+            || description.is_empty()
+            || started_at >= ended_at
+            || members.is_empty()
+            || surveys.is_empty())
+    }
+
+    pub fn validation_check(&self) -> bool {
+        let final_survey = self.final_survey();
+
+        let title = final_survey.title;
+        let description = final_survey.description;
+        let started_at = final_survey.started_at;
+        let ended_at = final_survey.ended_at;
+
+        let members = final_survey.users;
+        let surveys = final_survey.surveys;
+
+        if title.is_empty() {
+            btracing::e!(self.lang, ValidationError::TitleRequired);
+            return false;
+        }
+        if description.is_empty() {
+            btracing::e!(self.lang, ValidationError::DescriptionRequired);
+            return false;
+        }
+        if started_at >= ended_at {
+            btracing::e!(self.lang, ValidationError::TimeValidationFailed);
+            return false;
+        }
+        if members.is_empty() {
+            btracing::e!(self.lang, ValidationError::MemberRequired);
+            return false;
+        }
+        if surveys.is_empty() {
+            btracing::e!(self.lang, ValidationError::SurveyRequired);
+            return false;
+        }
+
+        true
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Translate)]
+pub enum ValidationError {
+    #[translate(
+        ko = "최종 설문 제목을 입력해주세요.",
+        en = "Please enter the final survey title."
+    )]
+    TitleRequired,
+    #[translate(
+        ko = "최종 설문 설명을 입력해주세요.",
+        en = "Please enter the final survey description."
+    )]
+    DescriptionRequired,
+    #[translate(
+        ko = "시작 날짜는 종료 날짜보다 작아야합니다.",
+        en = "The start date must be less than the end date."
+    )]
+    TimeValidationFailed,
+    #[translate(
+        ko = "1명 이상의 담당자를 선택해주세요.",
+        en = "Please select one or more contact persons."
+    )]
+    MemberRequired,
+    #[translate(
+        ko = "한 문항 이상의 설문을 입력해주세요.",
+        en = "Please enter one or more questions in the survey."
+    )]
+    SurveyRequired,
 }

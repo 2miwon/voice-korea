@@ -93,24 +93,23 @@ pub fn DeliberationSampleSurveySettingPage(lang: Language) -> Element {
             }
             div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
                 button {
-                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20 hover:!bg-primary hover:!text-white",
                     onclick: move |_| {
                         ctrl.back();
                     },
                     {tr.backward}
                 }
                 button {
-                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20 hover:!bg-primary hover:!text-white",
                     onclick: move |_| async move {
                         ctrl.temp_save().await;
                     },
                     {tr.temporary_save}
                 }
                 button {
-                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
-                    onclick: move |_| {
-                        ctrl.next();
-                    },
+                    class: "aria-active:cursor-pointer cursor-not-allowed flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-disabled aria-active:!bg-hover font-semibold text-base text-white",
+                    "aria-active": ctrl.is_valid(),
+                    onclick: move |_| ctrl.next(),
                     {tr.next}
                 }
             }

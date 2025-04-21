@@ -1,24 +1,15 @@
 use bdk::prelude::*;
-use models::{
-    deliberation_role::DeliberationRoleCreateRequest, OrganizationMember, OrganizationMemberQuery,
-    OrganizationMemberSummary, Role,
-};
+use models::{deliberation_role::DeliberationRoleCreateRequest, Role};
 use regex::Regex;
 
 use super::*;
-use crate::{
-    pages::deliberations::new::committees::i18n::CompositionCommitteeTranslate,
-    service::login_service::LoginService,
-};
+use crate::pages::deliberations::new::committees::i18n::CompositionCommitteeTranslate;
 
 #[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     lang: Language,
-    #[allow(dead_code)]
     pub parent_ctrl: ParentController,
     pub roles: Signal<Vec<Role>>,
-
-    pub members: Resource<Vec<OrganizationMemberSummary>>,
 
     pub committees: Signal<Vec<DeliberationRoleCreateRequest>>,
     pub committee_emails: Signal<Vec<String>>,
@@ -27,32 +18,8 @@ pub struct Controller {
 
 impl Controller {
     pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
-        let user: LoginService = use_context();
-
-        let members = use_server_future(move || {
-            let page = 1;
-            let size = 20;
-            async move {
-                let org_id = user.get_selected_org();
-                if org_id.is_none() {
-                    tracing::error!("Organization ID is missing");
-                    return vec![];
-                }
-                let endpoint = crate::config::get().api_url;
-                let res = OrganizationMember::get_client(endpoint)
-                    .query(
-                        org_id.unwrap().id,
-                        OrganizationMemberQuery::new(size).with_page(page),
-                    )
-                    .await;
-
-                res.unwrap_or_default().items
-            }
-        })?;
-
         let mut ctrl = Self {
             lang,
-            members,
             parent_ctrl: use_context(),
             nav: use_navigator(),
 
@@ -96,9 +63,11 @@ impl Controller {
     }
 
     pub fn next(&mut self) {
-        self.save_deliberation();
-        self.nav
-            .push(crate::routes::Route::CompositionPanel { lang: self.lang });
+        if self.validation_check() {
+            self.save_deliberation();
+            self.nav
+                .push(crate::routes::Route::CompositionPanel { lang: self.lang });
+        }
     }
 
     pub fn save_deliberation(&mut self) {
@@ -158,4 +127,26 @@ impl Controller {
             e[index] = "".to_string();
         });
     }
+
+    pub fn is_valid(&self) -> bool {
+        !(self.committees().is_empty())
+    }
+
+    pub fn validation_check(&self) -> bool {
+        if self.committees().is_empty() {
+            btracing::e!(self.lang, ValidationError::CommitteeRequired);
+            return false;
+        }
+
+        true
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Translate)]
+pub enum ValidationError {
+    #[translate(
+        ko = "공론에 참여할 참여자를 1명 이상 입력해주세요.",
+        en = "Please enter at least one participant who will participate in the public discussion."
+    )]
+    CommitteeRequired,
 }

@@ -284,8 +284,80 @@ impl Controller {
     }
 
     pub fn next(&mut self) {
-        self.parent.save_basic_info(self.basic_info());
-        self.nav
-            .push(Route::DeliberationSampleSurveySettingPage { lang: self.lang });
+        if self.validation_check() {
+            self.parent.save_basic_info(self.basic_info());
+            self.nav
+                .push(Route::DeliberationSampleSurveySettingPage { lang: self.lang });
+        }
     }
+
+    pub fn is_valid(&self) -> bool {
+        let basic_info = self.basic_info();
+
+        let title = basic_info.title;
+        let description = basic_info.description;
+        let started_at = basic_info.started_at;
+        let ended_at = basic_info.ended_at;
+
+        let members = basic_info.users;
+
+        !(title.is_empty()
+            || description.is_empty()
+            || started_at >= ended_at
+            || members.is_empty())
+    }
+
+    pub fn validation_check(&self) -> bool {
+        let basic_info = self.basic_info();
+
+        let title = basic_info.title;
+        let description = basic_info.description;
+        let started_at = basic_info.started_at;
+        let ended_at = basic_info.ended_at;
+
+        let members = basic_info.users;
+
+        if title.is_empty() {
+            btracing::e!(self.lang, ValidationError::TitleRequired);
+            return false;
+        }
+        if description.is_empty() {
+            btracing::e!(self.lang, ValidationError::DescriptionRequired);
+            return false;
+        }
+        if started_at >= ended_at {
+            btracing::e!(self.lang, ValidationError::TimeValidationFailed);
+            return false;
+        }
+        if members.is_empty() {
+            btracing::e!(self.lang, ValidationError::MemberRequired);
+            return false;
+        }
+
+        true
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Translate)]
+pub enum ValidationError {
+    #[translate(
+        ko = "기본 정보 제목을 입력해주세요.",
+        en = "Please enter the basic info title."
+    )]
+    TitleRequired,
+    #[translate(
+        ko = "기본 정보 설명을 입력해주세요.",
+        en = "Please enter the basic info description."
+    )]
+    DescriptionRequired,
+    #[translate(
+        ko = "시작 날짜는 종료 날짜보다 작아야합니다.",
+        en = "The start date must be less than the end date."
+    )]
+    TimeValidationFailed,
+    #[translate(
+        ko = "1명 이상의 담당자를 선택해주세요.",
+        en = "Please select one or more contact persons."
+    )]
+    MemberRequired,
 }

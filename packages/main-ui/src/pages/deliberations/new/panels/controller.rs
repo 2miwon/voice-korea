@@ -75,9 +75,11 @@ impl Controller {
     }
 
     pub fn next(&mut self) {
-        self.save_deliberation();
-        self.nav
-            .push(Route::DeliberationBasicInfoSettingPage { lang: self.lang });
+        if self.validation_check() {
+            self.save_deliberation();
+            self.nav
+                .push(Route::DeliberationBasicInfoSettingPage { lang: self.lang });
+        }
     }
 
     pub fn save_deliberation(&mut self) {
@@ -103,4 +105,26 @@ impl Controller {
             panels[index].user_count = value;
         });
     }
+
+    pub fn is_valid(&self) -> bool {
+        !(self.selected_panels().is_empty())
+    }
+
+    pub fn validation_check(&self) -> bool {
+        if self.selected_panels().is_empty() {
+            btracing::e!(self.lang, ValidationError::PanelRequired);
+            return false;
+        }
+
+        true
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Translate)]
+pub enum ValidationError {
+    #[translate(
+        ko = "공론에 참여할 패널을 1개 이상 선택해주세요.",
+        en = "Please select at least one panelist to participate in the discussion."
+    )]
+    PanelRequired,
 }
