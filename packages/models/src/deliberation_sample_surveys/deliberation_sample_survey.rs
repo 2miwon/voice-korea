@@ -48,9 +48,13 @@ pub struct DeliberationSampleSurvey {
     #[serde(default)]
     pub surveys: Vec<SurveyV2>,
 
-    #[api_model(summary, one_to_many = deliberation_responses, foreign_key = deliberation_id)]
+    #[api_model(summary, one_to_many = deliberation_responses, reference_key = deliberation_id,  foreign_key = deliberation_id)]
     #[serde(default)]
     pub responses: Vec<DeliberationResponse>,
+
+    #[api_model(summary, one_to_many = deliberation_responses, reference_key = deliberation_id,  foreign_key = deliberation_id, filter_by = user_id)]
+    #[serde(default)]
+    pub user_response: Vec<DeliberationResponse>,
 }
 
 impl Into<DeliberationSampleSurveyCreateRequest> for DeliberationSampleSurvey {

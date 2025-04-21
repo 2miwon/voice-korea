@@ -1,7 +1,7 @@
 use bdk::prelude::*;
 
 // FIXME: rename to ProjectStatus after finishing migration from public_opinion.
-#[derive(Debug, Clone, Eq, PartialEq, Default, ApiModel, Translate)]
+#[derive(Debug, Clone, Eq, PartialEq, Default, ApiModel, Translate, Copy)]
 #[cfg_attr(feature = "server", derive(schemars::JsonSchema, aide::OperationIo))]
 pub enum ProjectStatus {
     #[default]

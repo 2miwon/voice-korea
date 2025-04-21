@@ -17,6 +17,8 @@ use models::{
 };
 use sqlx::postgres::PgRow;
 
+use crate::utils::app_claims::AppClaims;
+
 #[derive(
     Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema, aide::OperationIo,
 )]
@@ -68,12 +70,16 @@ impl DeliberationSampleSurveyController {
     async fn query(
         &self,
         deliberation_id: i64,
-        _auth: Option<Authorization>,
+        auth: Option<Authorization>,
         param: DeliberationSampleSurveyQuery,
     ) -> Result<QueryResponse<DeliberationSampleSurveySummary>> {
         let mut total_count = 0;
+        let user_id = match auth {
+            Some(Authorization::Bearer { ref claims }) => AppClaims(claims).get_user_id(),
+            _ => 0,
+        };
         let items: Vec<DeliberationSampleSurveySummary> =
-            DeliberationSampleSurveySummary::query_builder()
+            DeliberationSampleSurveySummary::query_builder(user_id)
                 .limit(param.size())
                 .page(param.page())
                 .deliberation_id_equals(deliberation_id)

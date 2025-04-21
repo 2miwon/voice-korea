@@ -46,7 +46,7 @@ use panel_deliberations::*;
 use sqlx::postgres::PgRow;
 use step::StepCreateRequest;
 
-use crate::controllers::v2::organizations::OrganizationPath;
+use crate::{controllers::v2::organizations::OrganizationPath, utils::app_claims::AppClaims};
 
 #[derive(
     Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema, aide::OperationIo,
@@ -705,7 +705,7 @@ impl DeliberationController {
             surveys,
         } in sample_surveys.clone()
         {
-            let results = DeliberationSampleSurvey::query_builder()
+            let results = DeliberationSampleSurvey::query_builder(0)
                 .deliberation_id_equals(deliberation_id)
                 .query()
                 .map(DeliberationSampleSurvey::from)
@@ -1751,17 +1751,21 @@ impl DeliberationController {
 
     pub async fn get_deliberation_by_id(
         State(ctrl): State<DeliberationController>,
-        Extension(_auth): Extension<Option<Authorization>>,
+        Extension(auth): Extension<Option<Authorization>>,
         Path(DeliberationPath { org_id, id }): Path<DeliberationPath>,
     ) -> Result<Json<Deliberation>> {
         tracing::debug!("get_deliberation {} {:?}", org_id, id);
-        // FIXME: {"DatabaseQueryError": "error returned from database: relation \"f\" does not exist"
+        let user_id = match auth {
+            Some(Authorization::Bearer { ref claims }) => AppClaims(claims).get_user_id(),
+            _ => 0,
+        };
+
         Ok(Json(
             Deliberation::query_builder()
                 .id_equals(id)
                 .org_id_equals(org_id)
                 .basic_infos_builder(DeliberationBasicInfo::query_builder())
-                .sample_surveys_builder(DeliberationSampleSurvey::query_builder())
+                .sample_surveys_builder(DeliberationSampleSurvey::query_builder(user_id))
                 .contents_builder(DeliberationContent::query_builder())
                 .deliberation_discussions_builder(DeliberationDiscussion::query_builder())
                 .final_surveys_builder(DeliberationFinalSurvey::query_builder())
@@ -1829,7 +1833,7 @@ impl DeliberationController {
 
         let deliberation = Deliberation::query_builder()
             .basic_infos_builder(DeliberationBasicInfo::query_builder())
-            .sample_surveys_builder(DeliberationSampleSurvey::query_builder())
+            .sample_surveys_builder(DeliberationSampleSurvey::query_builder(0))
             .contents_builder(DeliberationContent::query_builder())
             .deliberation_discussions_builder(DeliberationDiscussion::query_builder())
             .final_surveys_builder(DeliberationFinalSurvey::query_builder())
