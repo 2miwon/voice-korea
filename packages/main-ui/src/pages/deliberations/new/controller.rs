@@ -106,9 +106,9 @@ impl Controller {
         }
     }
 
-    pub fn save_panels(&mut self, panel_ids: Vec<i64>) {
+    pub fn save_panels(&mut self, emails: Vec<String>) {
         self.deliberation_requests.with_mut(|req| {
-            req.panel_ids = panel_ids;
+            req.panel_emails = emails;
         });
     }
 
@@ -248,6 +248,7 @@ impl Controller {
             survey_ids,
             roles,
             panel_ids,
+            panel_emails,
             steps,
             elearning,
             basic_infos,
@@ -320,6 +321,7 @@ impl Controller {
                     resource_ids,
                     survey_ids,
                     roles,
+                    panel_emails,
                     panel_ids,
                     steps,
                     elearning,
@@ -363,6 +365,7 @@ impl Controller {
                         resource_ids,
                         survey_ids,
                         roles,
+                        panel_emails,
                         panel_ids,
                         steps,
                         elearning,

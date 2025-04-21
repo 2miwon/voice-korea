@@ -2,11 +2,10 @@ use bdk::prelude::*;
 use models::{
     deliberation_role::DeliberationRoleCreateRequest, DeliberationBasicInfoCreateRequest,
     DeliberationContentCreateRequest, DeliberationDiscussionCreateRequest,
-    DeliberationFinalSurveyCreateRequest, DeliberationSampleSurveyCreateRequest, PanelV2,
-    PanelV2Query, PanelV2Summary, Role,
+    DeliberationFinalSurveyCreateRequest, DeliberationSampleSurveyCreateRequest, Role,
 };
 
-use crate::{routes::Route, service::login_service::LoginService};
+use crate::routes::Route;
 
 use super::ParentController;
 
@@ -18,9 +17,7 @@ pub struct Controller {
     pub committees: Signal<Vec<DeliberationRoleCreateRequest>>,
     pub roles: Signal<Vec<Role>>,
 
-    #[allow(dead_code)]
-    pub panels: Resource<Vec<PanelV2Summary>>,
-    pub selected_panels: Signal<Vec<PanelV2Summary>>,
+    pub emails: Signal<Vec<String>>,
 
     pub basic_info: Signal<DeliberationBasicInfoCreateRequest>,
     pub sample_survey: Signal<DeliberationSampleSurveyCreateRequest>,
@@ -35,33 +32,12 @@ pub struct Controller {
 
 impl Controller {
     pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
-        let user: LoginService = use_context();
-
-        let panels = use_server_future(move || {
-            let page = 1;
-            let size = 100;
-            let org_id = user.get_selected_org();
-
-            async move {
-                if org_id.is_none() {
-                    tracing::error!("Organization ID is missing");
-                    return vec![];
-                }
-                let endpoint = crate::config::get().api_url;
-                let res = PanelV2::get_client(endpoint)
-                    .query(org_id.unwrap().id, PanelV2Query::new(size).with_page(page))
-                    .await;
-
-                res.unwrap_or_default().items
-            }
-        })?;
-
         let mut ctrl = Self {
             lang,
             parent: use_context(),
             nav: use_navigator(),
 
-            panels,
+            emails: use_signal(|| vec![]),
             committees: use_signal(|| vec![]),
             roles: use_signal(|| {
                 vec![
@@ -72,8 +48,6 @@ impl Controller {
                     Role::Speaker,
                 ]
             }),
-
-            selected_panels: use_signal(|| vec![]),
 
             basic_info: use_signal(|| DeliberationBasicInfoCreateRequest::default()),
             sample_survey: use_signal(|| DeliberationSampleSurveyCreateRequest::default()),
@@ -88,13 +62,7 @@ impl Controller {
         ctrl.committees.set(req.roles.clone());
 
         // panel
-        let panels = panels().unwrap_or_default();
-        let selected_panels: Vec<PanelV2Summary> = panels
-            .iter()
-            .filter(|panel| req.panel_ids.contains(&panel.id))
-            .cloned()
-            .collect();
-        ctrl.selected_panels.set(selected_panels);
+        ctrl.emails.set(req.panel_emails.clone());
 
         // deliberation step
         ctrl.basic_info.set(

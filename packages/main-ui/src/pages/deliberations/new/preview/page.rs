@@ -1,5 +1,7 @@
 use crate::pages::deliberations::new::preview::{
-    components::{committee::Committee, panel::Panel, procedure::Procedure},
+    components::{
+        committee::Committee, panel_summary_table::PanelSummaryTable, procedure::Procedure,
+    },
     controller::Controller,
     i18n::PreviewTranslate,
 };
@@ -13,7 +15,7 @@ pub fn Preview(lang: Language) -> Element {
     let roles = ctrl.roles();
     let committees = ctrl.committees();
 
-    let selected_panels = ctrl.selected_panels();
+    let emails = ctrl.emails();
 
     let basic_info = ctrl.basic_info();
     let sample_survey = ctrl.sample_survey();
@@ -31,7 +33,7 @@ pub fn Preview(lang: Language) -> Element {
         div { class: "flex flex-col w-full justify-start items-start gap-20",
             div { class: "font-medium text-base text-text-black mb-10", {tr.final_review} }
             Committee { lang, roles, committees }
-            Panel { lang, selected_panels }
+            PanelSummaryTable { lang, emails }
             Procedure {
                 lang,
                 basic_info,
