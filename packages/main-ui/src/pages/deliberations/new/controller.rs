@@ -26,7 +26,9 @@ pub enum DeliberationNewStep {
 impl From<Route> for DeliberationNewStep {
     fn from(route: Route) -> Self {
         match route {
-            Route::DeliberationNewPage { .. } => Self::SettingInfo,
+            Route::DeliberationNewPage { .. } | Route::DeliberationEditPage { .. } => {
+                Self::SettingInfo
+            }
             Route::CompositionCommitee { .. } => Self::CompositionCommittee,
             Route::CompositionPanel { .. } => Self::CompositionPanel,
             Route::Preview { .. } => Self::Preview,
