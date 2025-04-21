@@ -23,6 +23,7 @@ impl Controller {
         Ok(ctrl)
     }
 
+    #[allow(dead_code)]
     pub fn goto_step(&self, step: &DeliberationDetailSettingStep) {
         self.nav.push(step.to_route(self.lang));
     }

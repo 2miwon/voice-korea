@@ -183,19 +183,6 @@ impl Controller {
         self.parent.start_deliberation().await;
     }
 
-    pub fn convert_user_ids_to_members(
-        &mut self,
-        user_ids: Vec<i64>,
-    ) -> Vec<OrganizationMemberSummary> {
-        let members = self.members().unwrap_or(vec![]);
-        tracing::debug!("user ids: {:?} {:?}", user_ids, members);
-        let members = members
-            .into_iter()
-            .filter(|member| user_ids.contains(&member.user_id))
-            .collect();
-        members
-    }
-
     pub fn get_role_list(
         &mut self,
         members: Vec<OrganizationMemberSummary>,
