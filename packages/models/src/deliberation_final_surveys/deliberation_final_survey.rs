@@ -3,6 +3,7 @@ use bdk::prelude::*;
 use validator::Validate;
 
 use crate::deliberation_response::DeliberationResponse;
+use crate::deliberation_role::DeliberationRole;
 use crate::deliberation_user::DeliberationUser;
 use crate::Question;
 use crate::SurveyV2;
@@ -40,6 +41,11 @@ pub struct DeliberationFinalSurvey {
     #[serde(default)]
     pub point: i64,
 
+    #[api_model(summary, many_to_many = deliberation_final_survey_roles, foreign_table_name = deliberation_roles, foreign_primary_key = role_id, foreign_reference_key = final_survey_id)]
+    #[serde(default)]
+    pub roles: Vec<DeliberationRole>,
+
+    //FIXME: this field will be deprecated. use roles field instead.
     #[api_model(summary, many_to_many = deliberation_final_survey_members, foreign_table_name = users, foreign_primary_key = user_id, foreign_reference_key = final_survey_id)]
     #[serde(default)]
     pub members: Vec<User>,

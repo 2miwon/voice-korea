@@ -2,6 +2,7 @@
 use bdk::prelude::*;
 use validator::Validate;
 
+use crate::deliberation_role::DeliberationRole;
 use crate::deliberation_user::DeliberationUser;
 use crate::elearnings::elearning::ElearningCreateRequest;
 use crate::elearnings::elearning::{self, Elearning};
@@ -32,6 +33,11 @@ pub struct DeliberationContent {
     #[api_model(summary, many_to_one = deliberations)]
     pub deliberation_id: i64,
 
+    #[api_model(summary, many_to_many = deliberation_content_roles, foreign_table_name = deliberation_roles, foreign_primary_key = role_id, foreign_reference_key = content_id)]
+    #[serde(default)]
+    pub roles: Vec<DeliberationRole>,
+
+    //FIXME: this field will be deprecated. use roles field instead.
     #[api_model(summary, many_to_many = deliberation_content_members, foreign_table_name = users, foreign_primary_key = user_id, foreign_reference_key = content_id)]
     #[serde(default)]
     pub members: Vec<User>,

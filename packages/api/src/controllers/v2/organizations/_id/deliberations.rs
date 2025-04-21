@@ -163,7 +163,8 @@ impl DeliberationController {
         self.insert_deliberation_areas(&mut *tx, deliberation.id, project_areas.clone())
             .await?;
 
-        self.insert_deliberation_users(&mut *tx, deliberation.id, roles.clone())
+        let _deliberation_roles = self
+            .insert_deliberation_users(&mut *tx, deliberation.id, roles.clone())
             .await?;
 
         for resource_id in resource_ids {
@@ -330,7 +331,8 @@ impl DeliberationController {
         self.upsert_deliberation_areas(&mut *tx, id, project_areas.clone())
             .await?;
 
-        self.upsert_deliberation_users(&mut *tx, id, roles.clone())
+        let _deliberation_roles = self
+            .upsert_deliberation_users(&mut *tx, id, roles.clone())
             .await?;
 
         self.upsert_deliberation_panels(&mut *tx, id, panel_ids)
@@ -1540,7 +1542,8 @@ impl DeliberationController {
         tx: &mut sqlx::PgConnection,
         deliberation_id: i64,
         roles: Vec<DeliberationRoleCreateRequest>,
-    ) -> Result<()> {
+    ) -> Result<Vec<DeliberationRole>> {
+        let mut deliberation_roles = vec![];
         for DeliberationRoleCreateRequest { email, role } in roles {
             match self
                 .deliberation_role
@@ -1548,8 +1551,9 @@ impl DeliberationController {
                 .await?
                 .ok_or(ApiError::DeliberationUserException)
             {
-                Ok(_) => {
+                Ok(v) => {
                     tracing::debug!("success to create user");
+                    deliberation_roles.push(v);
                 }
                 Err(e) => {
                     tracing::error!("failed to create user with error: {e}");
@@ -1557,7 +1561,7 @@ impl DeliberationController {
             }
         }
 
-        Ok(())
+        Ok(deliberation_roles)
     }
 
     async fn upsert_deliberation_users(
@@ -1565,7 +1569,7 @@ impl DeliberationController {
         tx: &mut sqlx::PgConnection,
         deliberation_id: i64,
         roles: Vec<DeliberationRoleCreateRequest>,
-    ) -> Result<()> {
+    ) -> Result<Vec<DeliberationRole>> {
         let remain_roles = DeliberationRole::query_builder()
             .deliberation_id_equals(deliberation_id)
             .query()
@@ -1584,10 +1588,11 @@ impl DeliberationController {
 
         tracing::debug!("deliberation users: {:?}", roles.clone());
 
-        self.insert_deliberation_users(&mut *tx, deliberation_id, roles.clone())
+        let deliberation_roles = self
+            .insert_deliberation_users(&mut *tx, deliberation_id, roles.clone())
             .await?;
 
-        Ok(())
+        Ok(deliberation_roles)
     }
 
     async fn upsert_deliberation_panels(
