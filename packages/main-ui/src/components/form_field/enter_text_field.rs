@@ -23,7 +23,9 @@ pub fn EnterTextField(
                     onkeypress: move |e: KeyboardEvent| {
                         let key = e.key();
                         if key == Key::Enter {
-                            onenter.call(e);
+                            onenter.call(e.clone());
+                            e.prevent_default();
+                            e.stop_propagation();
                         }
                     },
                 }
