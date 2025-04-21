@@ -1,7 +1,3 @@
-@utility no-scrollbar {
-  scrollbar-width: none;
-}
-
 @theme static {
   /* App-specific colors */
   --spacing: 1px;
