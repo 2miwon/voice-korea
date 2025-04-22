@@ -37,10 +37,13 @@ pub fn QuestionListView(
                             lang,
                             onchange: {
                                 move |qtype: String| {
-                                    questions()[index].to_type(&lang);
+                                    let question = questions()[index].clone();
                                     questions
                                         .with_mut(move |q| {
-                                            q[index] = Question::new(&qtype);
+                                            let mut new = Question::new(&qtype);
+                                            new.set_title(&question.title());
+                                            new.set_description(&question.description());
+                                            q[index] = new;
                                         });
                                 }
                             },

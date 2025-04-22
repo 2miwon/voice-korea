@@ -232,7 +232,10 @@ impl Controller {
             return;
         }
         self.deliberation.with_mut(|req| {
-            let question_field = Question::new(&field);
+            let question = req.questions[index].clone();
+            let mut question_field = Question::new(&field);
+            question_field.set_title(&question.title());
+            question_field.set_description(&question.description());
             req.questions[index] = question_field;
         });
     }
