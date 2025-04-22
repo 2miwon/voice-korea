@@ -6,6 +6,8 @@ pub enum ProjectType {
     #[default]
     #[translate(ko = "설문조사")]
     Survey = 1,
-    #[translate(ko = "공론조사")]
-    Deliberation = 2,
+    #[translate(ko = "표본조사", en = "Sample Survey")]
+    SampleSurvey = 2,
+    #[translate(ko = "최종설문", en = "Final Survey")]
+    FinalSurvey = 3,
 }
