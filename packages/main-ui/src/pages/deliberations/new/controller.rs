@@ -43,6 +43,7 @@ pub struct Controller {
     lang: Language,
     #[allow(dead_code)]
     popup_service: Signal<PopupService>,
+    current_path: Signal<String>,
     current_step: DeliberationNewStep,
     pub user: LoginService,
     pub nav: Navigator,
@@ -59,10 +60,13 @@ impl Controller {
         let current_step = route.clone().into();
         let deliberation_requests = use_signal(|| DeliberationCreateRequest::default());
 
+        let route: Route = use_route();
+        let current_path = route.to_string();
         let ctrl = Self {
             lang,
             user,
             current_step,
+            current_path: use_signal(|| current_path),
             nav: use_navigator(),
             popup_service: use_signal(|| popup_service),
             deliberation_requests,
@@ -219,8 +223,7 @@ impl Controller {
     }
 
     pub async fn temporary_save(&mut self, is_start: bool) {
-        let route: Route = use_route();
-        let current_path = route.to_string();
+        let current_path = self.current_path();
         tracing::debug!("current path: {}", current_path);
         let cli = Deliberation::get_client(config::get().api_url);
 

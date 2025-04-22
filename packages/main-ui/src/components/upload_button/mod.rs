@@ -20,8 +20,28 @@ pub fn UploadButton(
             r#type: "file",
             accept,
             multiple,
-            onchange: move |ev| {
-                onuploaded.call(ev);
+            onchange: {
+                let id = id.clone();
+                move |ev| {
+                    onuploaded.call(ev);
+                    #[cfg(feature = "web")]
+                    {
+                        let id = id.clone();
+                        spawn(async move {
+                            use gloo_timers::future::TimeoutFuture;
+                            TimeoutFuture::new(0).await;
+                            let input = web_sys::window()
+                                .unwrap()
+                                .document()
+                                .unwrap()
+                                .get_element_by_id(&id.clone())
+                                .unwrap()
+                                .dyn_into::<web_sys::HtmlInputElement>()
+                                .unwrap();
+                            input.set_value("");
+                        });
+                    }
+                }
             },
         }
         button {

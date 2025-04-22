@@ -3578,6 +3578,7 @@ dependencies = [
  "dioxus-translate",
  "dioxus-web",
  "getrandom 0.2.15",
+ "gloo-timers",
  "indexmap",
  "models",
  "num-format",

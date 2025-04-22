@@ -37,6 +37,7 @@ indexmap = "2.7.1"
 bdk = { workspace = true, features = ["fe"] }
 tracing = "0.1.41"
 uuid = { version = "1", features = ["v4"] }
+gloo-timers = { version = "0.3", features = ["futures"] }
 
 [features]
 default = []
