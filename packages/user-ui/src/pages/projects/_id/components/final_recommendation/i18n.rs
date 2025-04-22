@@ -1,7 +1,7 @@
 use bdk::prelude::*;
 
 translate! {
-    FinalDraftTranslate;
+    FinalRecommendationTranslate;
 
     title: {
         ko: "최종 권고안",

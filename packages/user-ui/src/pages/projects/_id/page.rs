@@ -17,7 +17,7 @@ pub fn ProjectPage(lang: Language, project_id: ReadOnlySignal<i64>) -> Element {
     let mut ctrl = controller::Controller::init(lang, project_id)?;
     let comments = ctrl.comment_trees();
     let deliberation = ctrl.summary()?;
-    let active_tab = use_signal(|| Tab::Consideration);
+    let active_tab = use_signal(|| Tab::BasicInfo);
 
     rsx! {
         div { class: "flex flex-col w-full justify-center items-center",

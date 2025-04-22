@@ -18,11 +18,12 @@ pub fn MySurveyResponse(
     start_date: i64,
     end_date: i64,
     survey: SurveyV2,
+    #[props(default = false)] disabled: bool,
     answers: ReadOnlySignal<BTreeMap<usize, Answer>>,
     onprev: EventHandler<MouseEvent>,
     onchange: EventHandler<(usize, Answer)>,
-    onupdate: EventHandler<MouseEvent>,
-    onremove: EventHandler<MouseEvent>,
+    onupdate: Option<EventHandler<MouseEvent>>,
+    onremove: Option<EventHandler<MouseEvent>>,
 ) -> Element {
     let tr: MyResponseTranslate = translate(&lang);
     let mut editable = use_signal(|| false);
@@ -32,14 +33,16 @@ pub fn MySurveyResponse(
             onprev: move |e: Event<MouseData>| {
                 onprev.call(e);
             },
-            if survey.status == ProjectStatus::InProgress {
+            if survey.status == ProjectStatus::InProgress && !disabled {
                 div { class: "flex flex-row gap-20",
                     if editable() {
                         Button {
                             class: "text-white py-8 px-10 rounded-lg",
                             onclick: move |v| {
                                 editable.set(false);
-                                onupdate.call(v)
+                                if let Some(onupdate) = onupdate {
+                                    onupdate.call(v);
+                                }
                             },
                             {tr.save}
                         }
@@ -62,7 +65,9 @@ pub fn MySurveyResponse(
                                     li {
                                         class: "px-20 py-15 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer",
                                         onclick: move |e: Event<MouseData>| {
-                                            onremove.call(e);
+                                            if let Some(onremove) = onremove {
+                                                onremove.call(e);
+                                            }
                                         },
                                         {tr.remove}
                                     }

@@ -22,7 +22,13 @@ pub fn SurveyStatistics(
                 onprev.call(e);
             },
         }
+        Statistics { lang, grouped_answers }
+    }
+}
 
+#[component]
+pub fn Statistics(lang: Language, grouped_answers: Vec<(String, ParsedQuestion)>) -> Element {
+    rsx! {
         for (i , (title , parsed_question)) in grouped_answers.iter().enumerate() {
             match parsed_question {
                 ParsedQuestion::SingleChoice { answers, response_count } => {
@@ -70,7 +76,6 @@ pub fn SurveyStatistics(
         }
     }
 }
-
 #[component]
 pub fn ObjectiveBox(
     lang: Language,

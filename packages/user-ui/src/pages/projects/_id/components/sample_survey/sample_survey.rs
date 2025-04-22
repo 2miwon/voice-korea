@@ -79,7 +79,7 @@ pub fn SampleSurvey(lang: Language, project_id: ReadOnlySignal<i64>) -> Element 
             } else if step == SurveyStep::Statistics {
                 SurveyStatistics {
                     lang,
-                    grouped_answers: ctrl.get_grouped_answers(),
+                    grouped_answers: ctrl.get_grouped_responses(),
                     onprev: move |_| {
                         ctrl.set_step(SurveyStep::Submitted);
                     },

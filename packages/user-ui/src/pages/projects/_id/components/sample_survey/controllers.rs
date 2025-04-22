@@ -4,13 +4,15 @@ use bdk::prelude::*;
 use dioxus_popup::PopupService;
 use models::{
     deliberation_response::DeliberationResponse, response::Answer, DeliberationSampleSurvey,
-    DeliberationSampleSurveyQuery, DeliberationSampleSurveySummary, ParsedQuestion, ProjectStatus,
-    Question, SurveyV2,
+    ParsedQuestion, ProjectStatus, SurveyV2,
 };
 
 use crate::{
-    pages::projects::_id::components::{
-        sample_survey::remove_survey_modal::RemoveSurveyModal, survey::SurveyData,
+    pages::projects::{
+        _id::components::{
+            sample_survey::remove_survey_modal::RemoveSurveyModal, survey::SurveyData,
+        },
+        utils::group_responses_by_question,
     },
     service::user_service::UserService,
 };
@@ -26,8 +28,8 @@ pub enum SurveyStep {
     Statistics,
 }
 
-impl From<DeliberationSampleSurveySummary> for SurveyData {
-    fn from(survey: DeliberationSampleSurveySummary) -> Self {
+impl From<DeliberationSampleSurvey> for SurveyData {
+    fn from(survey: DeliberationSampleSurvey) -> Self {
         Self {
             title: survey.title,
             description: survey.description,
@@ -50,7 +52,7 @@ pub struct Controller {
 
     popup_service: PopupService,
 
-    pub sample_survey: Resource<DeliberationSampleSurveySummary>,
+    pub sample_survey: Resource<DeliberationSampleSurvey>,
     pub answers: Signal<BTreeMap<usize, Answer>>,
 
     survey_step: Signal<SurveyStep>,
@@ -65,15 +67,10 @@ impl Controller {
         let sample_survey = use_server_future(move || {
             let deliberation_id = deliberation_id();
             async move {
-                let v = DeliberationSampleSurvey::get_client(&crate::config::get().api_url)
-                    .query(deliberation_id, DeliberationSampleSurveyQuery::new(1))
+                DeliberationSampleSurvey::get_client(&crate::config::get().api_url)
+                    .get_by_id(deliberation_id)
                     .await
-                    .unwrap_or_default();
-                if v.total_count == 1 {
-                    v.items[0].clone()
-                } else {
-                    DeliberationSampleSurveySummary::default()
-                }
+                    .unwrap_or_default()
             }
         })?;
 
@@ -101,7 +98,7 @@ impl Controller {
         Ok(ctrl)
     }
 
-    pub fn get_grouped_answers(&self) -> Vec<(String, ParsedQuestion)> {
+    pub fn get_grouped_responses(&self) -> Vec<(String, ParsedQuestion)> {
         let Some(deliberation_survey) = self.sample_survey().ok() else {
             return vec![];
         };
@@ -110,73 +107,7 @@ impl Controller {
             return vec![];
         };
 
-        let mut parsed_questions: Vec<(String, ParsedQuestion)> = questions
-            .into_iter()
-            .map(|question| match question.clone() {
-                Question::MultipleChoice(inner) => {
-                    let title = inner.title;
-                    let options = inner.options;
-                    let count = vec![0; options.len()];
-                    (
-                        title,
-                        ParsedQuestion::MultipleChoice {
-                            answers: options,
-                            response_count: count,
-                        },
-                    )
-                }
-                Question::SingleChoice(inner) => {
-                    let title = inner.title;
-                    let options = inner.options;
-                    let count = vec![0; options.len()];
-                    (
-                        title,
-                        ParsedQuestion::SingleChoice {
-                            answers: options,
-                            response_count: count,
-                        },
-                    )
-                }
-                Question::ShortAnswer(inner) => {
-                    (inner.title, ParsedQuestion::ShortAnswer { answers: vec![] })
-                }
-                Question::Subjective(inner) => {
-                    (inner.title, ParsedQuestion::Subjective { answers: vec![] })
-                }
-            })
-            .collect();
-
-        for responses in deliberation_survey.responses.into_iter() {
-            for (i, answer) in responses.answers.into_iter().enumerate() {
-                parsed_questions.get_mut(i).map(|(_, parsed_question)| {
-                    match parsed_question {
-                        ParsedQuestion::SingleChoice { response_count, .. } => {
-                            if let Answer::SingleChoice { answer } = answer {
-                                response_count[answer as usize] += 1;
-                            }
-                        }
-                        ParsedQuestion::MultipleChoice { response_count, .. } => {
-                            if let Answer::MultipleChoice { answer } = answer {
-                                for ans in answer {
-                                    response_count[ans as usize] += 1;
-                                }
-                            }
-                        }
-                        ParsedQuestion::ShortAnswer { answers } => {
-                            if let Answer::ShortAnswer { answer } = answer {
-                                answers.push(answer.clone());
-                            }
-                        }
-                        ParsedQuestion::Subjective { answers } => {
-                            if let Answer::Subjective { answer } = answer {
-                                answers.push(answer.clone());
-                            }
-                        }
-                    };
-                });
-            }
-        }
-        parsed_questions
+        group_responses_by_question(&questions, &deliberation_survey.responses)
     }
 
     pub fn get_survey(&self) -> SurveyV2 {
