@@ -1,22 +1,23 @@
 use bdk::prelude::*;
 
-use crate::components::icons::triangle::TriangleUp;
+use crate::pages::projects::_id::components::{
+    accordion::Accordion, section::Section, tab_title::TabTitle,
+};
 
 #[component]
 pub fn Skeleton() -> Element {
     rsx! {
-        div { class: "rounded-xl shadow animate-pulse space-y-6 w-full p-20",
-            //  title
-            div { class: "w-full flex flex-coljustify-start items-center py-14",
-                div { class: "w-full flex justify-between items-center gap-10",
-                    div { class: "h-30 flex-1 max-w-180 rounded-md bg-gray-300" }
-                    TriangleUp {}
-                }
+        Section { id: "skeleton", class: "shadow animate-pulse w-full",
+            TabTitle {
+                title: "",
+                class: "[&>span]:h-24 [&>span]:w-200 [&>span]:rounded-md [&>span]:bg-gray-300",
+                p { class: "h-20 max-w-100 flex-1 rounded-sm bg-gray-200" }
             }
-            hr { class: "w-full h-1 mt-12 mb-12 border-line-gray" }
-
-            div { class: "w-full flex flex-col gap-50",
-                div { class: "w-full flex flex-col gap-20",
+            Accordion {
+                title: "",
+                class: "w-full flex-1 [&>div>span]:h-24 [&>div>span]:w-200 [&>div>span]:rounded-md [&>div>span]:bg-gray-300",
+                default_open: true,
+                div { class: "w-full flex flex-col gap-20 ",
                     div { class: "h-24 max-w-100 rounded-sm bg-gray-300" }
                     div { class: "flex flex-col gap-5 [&>div]:h-20",
                         div { class: "rounded-sm bg-gray-200 w-11/12" }
@@ -24,16 +25,15 @@ pub fn Skeleton() -> Element {
                         div { class: "rounded-sm bg-gray-200 w-10/12" }
                         div { class: "rounded-sm bg-gray-200 w-7/12" }
                     }
-                
                 }
-                div { class: "flex gap-10",
+            }
+            div { class: "p-20",
+                div { class: "grid grid-cols-6 gap-10 w-full",
                     Committee {}
                     Committee {}
                     Committee {}
                 }
             }
-        
-
         }
     }
 }

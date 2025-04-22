@@ -2,46 +2,34 @@ use bdk::prelude::*;
 use dioxus_translate::translate;
 use models::SurveyV2;
 
-use crate::pages::projects::_id::components::sample_survey::{
-    i18n::SampleSurveyTranslate, statistics::Statistics, survey::SurveyComponent,
+use crate::pages::projects::_id::components::{
+    sample_survey::i18n::SampleSurveyTranslate,
+    section::Section,
+    survey::{MySurveyResponse, SurveyInfo, SurveyProgress, SurveyResult, SurveyStatistics},
 };
 
-use super::{
-    controllers::{Controller, SurveyStep},
-    info::Info,
-    my_response::MyResponse,
-    submitted::Submitted,
-};
+use super::controllers::{Controller, SurveyStep};
 
 #[component]
-pub fn SampleSurvey(
-    lang: Language,
-    project_id: ReadOnlySignal<i64>,
-    #[props(extends = GlobalAttributes)] attributes: Vec<Attribute>,
-) -> Element {
+pub fn SampleSurvey(lang: Language, project_id: ReadOnlySignal<i64>) -> Element {
     let mut ctrl = Controller::new(lang, project_id)?;
     let survey = ctrl.sample_survey()?;
     let step = ctrl.survey_step();
     let tr: SampleSurveyTranslate = translate(&lang);
     rsx! {
-        div {
-            id: "sample-survey",
-            class: "max-w-desktop:px-30 flex flex-col w-full h-fit justify-center items-center",
-            ..attributes,
+        Section { id: "sample-survey",
             if step == SurveyStep::NotParticipated {
-                Info {
+                SurveyInfo {
                     lang,
+                    title: tr.title,
+                    data: survey.clone().into(),
                     is_login: ctrl.user.is_login(),
-                    sample_survey: survey.clone(),
-                    start_date: survey.started_at,
-                    end_date: survey.ended_at,
-                    survey_status: ctrl.survey_status(),
                     on_process_survey: move |_| {
                         ctrl.set_step(SurveyStep::InProgress);
                     },
                 }
             } else if step == SurveyStep::InProgress {
-                SurveyComponent {
+                SurveyProgress {
                     lang,
                     survey: ctrl.get_survey(),
                     answers: ctrl.answers(),
@@ -56,7 +44,7 @@ pub fn SampleSurvey(
                     },
                 }
             } else if step == SurveyStep::Submitted {
-                Submitted {
+                SurveyResult {
                     lang,
                     start_date: survey.started_at,
                     end_date: survey.ended_at,
@@ -68,7 +56,7 @@ pub fn SampleSurvey(
                     },
                 }
             } else if step == SurveyStep::MyResponse {
-                MyResponse {
+                MySurveyResponse {
                     lang,
                     title: tr.my_answer,
                     start_date: survey.started_at,
@@ -89,7 +77,7 @@ pub fn SampleSurvey(
                     },
                 }
             } else if step == SurveyStep::Statistics {
-                Statistics {
+                SurveyStatistics {
                     lang,
                     grouped_answers: ctrl.get_grouped_answers(),
                     onprev: move |_| {

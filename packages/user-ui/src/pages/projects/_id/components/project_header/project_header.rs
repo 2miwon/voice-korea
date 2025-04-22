@@ -30,7 +30,7 @@ pub fn ProjectHeader(
         div { class: "max-w-desktop h-fit mb-40 flex max-tablet:flex-col-reverse flex-row w-full justify-center items-center gap-40 px-20 min-h-300",
             // TODO: connect to data and UI
             //data section
-            div { class: "w-full flex-1/2 flex flex-col justify-center",
+            div { class: "w-full flex-1 flex flex-col justify-center",
                 div { class: "flex flex-col justify-start",
                     div { class: "w-full flex justify-start items-center font-medium text-lg/24 gap-8 h-fit",
                         div { class: "w-24 h-24",
@@ -97,7 +97,7 @@ pub fn ProjectHeader(
             }
             //img section
             img {
-                class: "flex-1/2 max-w-540 max-h-320 rounded-xl bg-gray-100 object-cover",
+                class: "w-full desktop:flex-1 max-w-540 max-h-320 rounded-xl bg-gray-100 object-cover",
                 src: deliberation.thumbnail_image,
                 alt: "Project Thumbnail Image",
             }

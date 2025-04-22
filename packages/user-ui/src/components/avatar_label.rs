@@ -9,7 +9,7 @@ pub fn AvatarLabel(
     #[props(default = None)] img_url: Option<String>,
 ) -> Element {
     rsx! {
-        div { class: "flex flex-row justify-start items-center gap-10",
+        div { class: "flex flex-row justify-start items-center gap-10 {class}",
             div { class: "w-40 h-40 bg-profile-gray rounded-full shrink-0",
                 if let Some(url) = img_url {
                     img { class: "w-full h-full rounded-full", src: "{url}" }

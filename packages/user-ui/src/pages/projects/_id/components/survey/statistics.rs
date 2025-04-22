@@ -1,74 +1,68 @@
+use bdk::prelude::*;
 use by_components::charts::{
     horizontal_bar::HorizontalBar,
     pie_chart::{PieChart, PieChartData},
 };
-use dioxus::prelude::*;
-use dioxus_logger::tracing;
-use dioxus_translate::{translate, Language};
 use models::ParsedQuestion;
 
-use crate::components::icons::left_arrow::LeftArrow;
+use crate::pages::projects::_id::components::tab_title::TabTitleWithPrev;
+
+use super::i18n::SurveyStatisticsTranslate;
 #[component]
-pub fn Statistics(
+pub fn SurveyStatistics(
     lang: Language,
     grouped_answers: Vec<(String, ParsedQuestion)>,
     onprev: EventHandler<MouseEvent>,
 ) -> Element {
-    let tr: StatisticsTranslate = translate(&lang);
-    tracing::debug!("Statistics: {:?}", grouped_answers);
+    let tr: SurveyStatisticsTranslate = translate(&lang);
     rsx! {
-        div { class: "flex flex-col w-full justify-start items-start gap-10 mt-28 mb-40",
-            div { class: "flex flex-row justify-start items-center gap-8",
-                div {
-                    class: "cursor-pointer w-24 h-24",
-                    onclick: move |e: Event<MouseData>| {
-                        onprev.call(e);
-                    },
-                    LeftArrow { stroke: "black" }
+        TabTitleWithPrev {
+            title: tr.response_per_question,
+            onprev: move |e: Event<MouseData>| {
+                onprev.call(e);
+            },
+        }
+
+        for (i , (title , parsed_question)) in grouped_answers.iter().enumerate() {
+            match parsed_question {
+                ParsedQuestion::SingleChoice { answers, response_count } => {
+                    rsx! {
+                        div { class: "flex flex-col w-full",
+                            ObjectiveBox {
+                                lang,
+                                title,
+                                answers: answers.clone(),
+                                answer_count: response_count.clone(),
+                                index: i,
+                                is_single: true,
+                            }
+                        }
+                    }
                 }
-                div { class: "font-semibold text-text-black text-xl", {tr.response_per_question} }
-            }
-            for (i , (title , parsed_question)) in grouped_answers.iter().enumerate() {
-                match parsed_question {
-                    ParsedQuestion::SingleChoice { answers, response_count } => {
-                        rsx! {
-                            div { class: "flex flex-col w-full",
-                                ObjectiveBox {
-                                    lang,
-                                    title,
-                                    answers: answers.clone(),
-                                    answer_count: response_count.clone(),
-                                    index: i,
-                                    is_single: true,
-                                }
+                ParsedQuestion::MultipleChoice { answers, response_count } => {
+                    rsx! {
+                        div { class: "flex flex-col w-full",
+                            ObjectiveBox {
+                                lang,
+                                title,
+                                answers: answers.clone(),
+                                answer_count: response_count.clone(),
+                                index: i,
                             }
                         }
                     }
-                    ParsedQuestion::MultipleChoice { answers, response_count } => {
-                        rsx! {
-                            div { class: "flex flex-col w-full",
-                                ObjectiveBox {
-                                    lang,
-                                    title,
-                                    answers: answers.clone(),
-                                    answer_count: response_count.clone(),
-                                    index: i,
-                                }
-                            }
+                }
+                ParsedQuestion::ShortAnswer { answers } => {
+                    rsx! {
+                        div { class: "flex flex-col w-full",
+                            SubjectiveBox { lang, title, answers: answers.clone() }
                         }
                     }
-                    ParsedQuestion::ShortAnswer { answers } => {
-                        rsx! {
-                            div { class: "flex flex-col w-full",
-                                SubjectiveBox { lang, title, answers: answers.clone() }
-                            }
-                        }
-                    }
-                    ParsedQuestion::Subjective { answers } => {
-                        rsx! {
-                            div { class: "flex flex-col w-full",
-                                SubjectiveBox { lang, title, answers: answers.clone() }
-                            }
+                }
+                ParsedQuestion::Subjective { answers } => {
+                    rsx! {
+                        div { class: "flex flex-col w-full",
+                            SubjectiveBox { lang, title, answers: answers.clone() }
                         }
                     }
                 }
@@ -86,7 +80,7 @@ pub fn ObjectiveBox(
     answer_count: Vec<i64>,
     #[props(default = false)] is_single: bool,
 ) -> Element {
-    let tr: StatisticsTranslate = translate(&lang);
+    let tr: SurveyStatisticsTranslate = translate(&lang);
     let mut pie_charts: Signal<Vec<PieChartData>> = use_signal(|| vec![]);
     let mut total_answers: Signal<i32> = use_signal(|| 0);
 
@@ -181,7 +175,7 @@ pub fn ObjectiveBox(
 
 #[component]
 pub fn SubjectiveBox(lang: Language, title: String, answers: Vec<String>) -> Element {
-    let tr: StatisticsTranslate = translate(&lang);
+    let tr: SurveyStatisticsTranslate = translate(&lang);
 
     rsx! {
         div { class: "flex flex-col w-full  bg-white px-40 py-20 rounded-lg gap-20",
@@ -210,30 +204,5 @@ pub fn SubjectiveBox(lang: Language, title: String, answers: Vec<String>) -> Ele
                 }
             }
         }
-    }
-}
-
-translate! {
-    StatisticsTranslate;
-
-    response_per_question: {
-        ko: "질문별 응답",
-        en: "Responses to each question"
-    }
-    necessary: {
-        ko: "[필수]",
-        en: "[Necessary]"
-    }
-    plural: {
-        ko: "[복수]",
-        en: "[Plural]"
-    }
-    unit: {
-        ko: "명",
-        en: "Unit"
-    }
-    subjective_answer: {
-        ko: "주관식 답변",
-        en: "Subjective Answer"
     }
 }

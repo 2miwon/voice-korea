@@ -18,3 +18,6 @@ pub mod skeleton;
 pub mod tab_title;
 
 pub mod question;
+
+pub mod section;
+pub mod survey;

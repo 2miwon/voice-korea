@@ -34,7 +34,7 @@ pub fn SingleObjective(
                                 }
                             }
                         },
-                        Checkbox { checked: (i + 1) as i32 == answer }
+                        Checkbox { checked: (i + 1) as i32 == answer, disabled }
                         div { class: "flex flex-row gap-[10px]",
                             div { class: "font-semibold text-[#2D2D2D] text-[15px]",
                                 {option}
