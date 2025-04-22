@@ -1,13 +1,11 @@
 use bdk::prelude::*;
 use models::{
-    deliberation_user::DeliberationUserCreateRequest, DeliberationBasicInfoCreateRequest,
+    deliberation_role::DeliberationRoleCreateRequest, DeliberationBasicInfoCreateRequest,
     DeliberationContentCreateRequest, DeliberationDiscussionCreateRequest,
-    DeliberationFinalSurveyCreateRequest, DeliberationSampleSurveyCreateRequest,
-    OrganizationMember, OrganizationMemberQuery, OrganizationMemberSummary, PanelV2, PanelV2Query,
-    PanelV2Summary, Role,
+    DeliberationFinalSurveyCreateRequest, DeliberationSampleSurveyCreateRequest, Role,
 };
 
-use crate::{routes::Route, service::login_service::LoginService};
+use crate::routes::Route;
 
 use super::ParentController;
 
@@ -16,15 +14,10 @@ pub struct Controller {
     #[allow(dead_code)]
     lang: Language,
 
-    #[allow(dead_code)]
-    pub members: Resource<Vec<OrganizationMemberSummary>>,
-    pub committees: Signal<Vec<DeliberationUserCreateRequest>>,
-    pub committee_roles: Signal<Vec<Vec<OrganizationMemberSummary>>>,
+    pub committees: Signal<Vec<DeliberationRoleCreateRequest>>,
     pub roles: Signal<Vec<Role>>,
 
-    #[allow(dead_code)]
-    pub panels: Resource<Vec<PanelV2Summary>>,
-    pub selected_panels: Signal<Vec<PanelV2Summary>>,
+    pub emails: Signal<Vec<String>>,
 
     pub basic_info: Signal<DeliberationBasicInfoCreateRequest>,
     pub sample_survey: Signal<DeliberationSampleSurveyCreateRequest>,
@@ -39,56 +32,12 @@ pub struct Controller {
 
 impl Controller {
     pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
-        let user: LoginService = use_context();
-
-        let members = use_server_future(move || {
-            let page = 1;
-            let size = 20;
-            async move {
-                let org_id = user.get_selected_org();
-                if org_id.is_none() {
-                    tracing::error!("Organization ID is missing");
-                    return vec![];
-                }
-                let endpoint = crate::config::get().api_url;
-                let res = OrganizationMember::get_client(endpoint)
-                    .query(
-                        org_id.unwrap().id,
-                        OrganizationMemberQuery::new(size).with_page(page),
-                    )
-                    .await;
-
-                res.unwrap_or_default().items
-            }
-        })?;
-
-        let panels = use_server_future(move || {
-            let page = 1;
-            let size = 100;
-            let org_id = user.get_selected_org();
-
-            async move {
-                if org_id.is_none() {
-                    tracing::error!("Organization ID is missing");
-                    return vec![];
-                }
-                let endpoint = crate::config::get().api_url;
-                let res = PanelV2::get_client(endpoint)
-                    .query(org_id.unwrap().id, PanelV2Query::new(size).with_page(page))
-                    .await;
-
-                res.unwrap_or_default().items
-            }
-        })?;
-
         let mut ctrl = Self {
             lang,
             parent: use_context(),
             nav: use_navigator(),
 
-            members,
-            panels,
-            committee_roles: use_signal(|| vec![]),
+            emails: use_signal(|| vec![]),
             committees: use_signal(|| vec![]),
             roles: use_signal(|| {
                 vec![
@@ -100,8 +49,6 @@ impl Controller {
                 ]
             }),
 
-            selected_panels: use_signal(|| vec![]),
-
             basic_info: use_signal(|| DeliberationBasicInfoCreateRequest::default()),
             sample_survey: use_signal(|| DeliberationSampleSurveyCreateRequest::default()),
             deliberation: use_signal(|| DeliberationContentCreateRequest::default()),
@@ -112,26 +59,10 @@ impl Controller {
         let req = ctrl.parent.deliberation_requests();
 
         // committee
-        let roles = ctrl.roles();
-        let members = members().unwrap_or_default();
-        let _committees = req.roles.clone();
-        ctrl.committees.set(vec![]);
-        let mut committee_roles = vec![];
-        for role in roles.clone() {
-            let members = ctrl.get_role_list(members.clone(), vec![], role);
-
-            committee_roles.push(members);
-        }
-        ctrl.committee_roles.set(committee_roles);
+        ctrl.committees.set(req.roles.clone());
 
         // panel
-        let panels = panels().unwrap_or_default();
-        let selected_panels: Vec<PanelV2Summary> = panels
-            .iter()
-            .filter(|panel| req.panel_ids.contains(&panel.id))
-            .cloned()
-            .collect();
-        ctrl.selected_panels.set(selected_panels);
+        ctrl.emails.set(req.panel_emails.clone());
 
         // deliberation step
         ctrl.basic_info.set(
@@ -181,38 +112,5 @@ impl Controller {
         tracing::debug!("start button click");
 
         self.parent.start_deliberation().await;
-    }
-
-    pub fn convert_user_ids_to_members(
-        &mut self,
-        user_ids: Vec<i64>,
-    ) -> Vec<OrganizationMemberSummary> {
-        let members = self.members().unwrap_or(vec![]);
-        tracing::debug!("user ids: {:?} {:?}", user_ids, members);
-        let members = members
-            .into_iter()
-            .filter(|member| user_ids.contains(&member.user_id))
-            .collect();
-        members
-    }
-
-    pub fn get_role_list(
-        &mut self,
-        members: Vec<OrganizationMemberSummary>,
-        committees: Vec<DeliberationUserCreateRequest>,
-        role: Role,
-    ) -> Vec<OrganizationMemberSummary> {
-        let user_ids: Vec<i64> = committees
-            .iter()
-            .filter(|committee| committee.role == role)
-            .map(|committee| committee.user_id)
-            .collect();
-
-        let members = members
-            .into_iter()
-            .filter(|member| user_ids.contains(&member.user_id))
-            .collect();
-
-        members
     }
 }

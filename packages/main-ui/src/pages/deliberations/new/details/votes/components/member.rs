@@ -1,11 +1,9 @@
 use bdk::prelude::*;
-use models::OrganizationMemberSummary;
 
 use crate::{
     components::expandable_card::ExpandableCard,
     pages::deliberations::new::{
-        components::committee_dropdown::CommitteeDropdown,
-        details::votes::i18n::FinalSurveyMemberTranslate,
+        components::email_dropdown::EmailDropdown, details::votes::i18n::FinalSurveyMemberTranslate,
     },
 };
 
@@ -13,29 +11,30 @@ use crate::{
 pub fn Member(
     lang: Language,
 
-    total_committees: Vec<OrganizationMemberSummary>,
-    selected_committees: Vec<OrganizationMemberSummary>,
+    total_committees: Vec<String>,
+    selected_committees: Vec<String>,
 
-    add_committee: EventHandler<i64>,
-    remove_committee: EventHandler<i64>,
+    add_committee: EventHandler<String>,
+    remove_committee: EventHandler<String>,
     clear_committee: EventHandler<MouseEvent>,
 ) -> Element {
     let tr: FinalSurveyMemberTranslate = translate(&lang);
 
     rsx! {
         ExpandableCard { required: false, header: tr.title, description: tr.description,
-            CommitteeDropdown {
+            EmailDropdown {
+                lang,
                 id: "final-committee",
                 hint: tr.search_committee,
 
                 selected_committees,
                 committees: total_committees,
 
-                add_committee: move |member: OrganizationMemberSummary| {
-                    add_committee.call(member.user_id);
+                add_committee: move |email: String| {
+                    add_committee.call(email);
                 },
-                remove_committee: move |id: i64| {
-                    remove_committee.call(id);
+                remove_committee: move |email: String| {
+                    remove_committee.call(email);
                 },
                 clear_committee: move |e| {
                     clear_committee.call(e);

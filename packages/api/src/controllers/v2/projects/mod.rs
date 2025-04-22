@@ -284,6 +284,7 @@ mod tests {
                 vec![],
                 vec![],
                 vec![],
+                vec![],
             )
             .await;
         assert!(res.is_ok());
@@ -324,6 +325,7 @@ mod tests {
                 ProjectArea::City,
                 DeliberationStatus::Ready,
                 user.id,
+                vec![],
                 vec![],
                 vec![],
                 vec![],
@@ -401,6 +403,7 @@ mod tests {
                 ProjectArea::City,
                 DeliberationStatus::Ready,
                 user.id,
+                vec![],
                 vec![],
                 vec![],
                 vec![],
