@@ -31,7 +31,7 @@ impl Controller {
 
         let metadatas = use_server_future(move || {
             let page = 1;
-            let size = 100;
+            let size = 300;
             let keyword = search_keyword().clone();
             async move {
                 let client = ResourceFile::get_client(&config::get().api_url);
