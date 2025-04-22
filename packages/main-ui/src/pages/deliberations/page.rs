@@ -11,7 +11,7 @@ use super::controller::Controller;
 use super::i18n::OpinionTranslate;
 use dioxus::prelude::*;
 use dioxus_translate::{translate, Language};
-use models::DeliberationStatus;
+use models::{deliberation_response::DeliberationType, DeliberationStatus};
 
 #[component]
 pub fn DeliberationPage(lang: Language) -> Element {
@@ -46,29 +46,23 @@ pub fn DeliberationPage(lang: Language) -> Element {
             onclick: move |_| {
                 ctrl.context_menu.set(false);
             },
-            div { class: "text-[#9b9b9b] font-medium text-[14px] mb-[10px]",
+            div { class: "text-header-gray font-medium text-sm mb-10",
                 "{translates.organization_management} / {translates.public_opinion_management}"
             }
-            div { class: "text-[#3a3a3a] font-semibold text-[28px] mb-[25px]",
+            div { class: "text-header-black font-semibold text-[28px] mb-25",
                 "{translates.public_opinion_management}"
             }
-            div { class: "text-[#35343f] font-normal text-[14px] mb-[40px]",
+            div { class: "text-label-black font-normal text-sm mb-40",
                 "{translates.public_opinion_info}"
             }
 
             div {
-                class: "flex flex-col w-full justify-start items-start bg-white rounded-lg shadow-lg p-[20px]",
+                class: "flex flex-col w-full justify-start items-start bg-white rounded-lg shadow-lg p-20",
                 style: "box-shadow: 0 4px 6px rgba(53, 70, 177, 0.05);",
                 div { class: "flex flex-row w-full justify-between items-center pb-[20px]",
                     div {
-                        class: format!(
-                            "flex flex-row w-[590px] h-[45px] justify-between items-center rounded-lg  {} px-[11px] py-[13px]",
-                            if (is_focused)() {
-                                "bg-[#ffffff] border border-[#2a60d3]"
-                            } else {
-                                "bg-[#f7f7f7] border border-[#7c8292]"
-                            },
-                        ),
+                        class: "flex flex-row w-590 h-45 justify-between items-center rounded-lg bg-background-gray border border-third aria-active:!bg-white aria-active:border-hover px-11 py-13",
+                        "aria-active": (is_focused)(),
                         input {
                             class: "flex flex-row w-full h-full bg-transparent focus:outline-none",
                             r#type: "text",
@@ -99,11 +93,11 @@ pub fn DeliberationPage(lang: Language) -> Element {
                         }
                         Search { width: "18", height: "18", color: "#7c8292" }
                     }
-                    div { class: "flex flex-row gap-[10px]",
+                    div { class: "flex flex-row gap-10",
                         Link { to: Route::DeliberationNewPage { lang },
-                            div { class: "flex flex-row w-[130px] h-[40px] justify-center items-center bg-[#2a60d3] rounded-md gap-[5px]",
+                            div { class: "flex flex-row w-130 h-40 justify-center items-center bg-hover rounded-md gap-5",
                                 div {
-                                    class: "text-white font-semibold text-[16px]",
+                                    class: "text-white font-semibold text-base",
                                     onclick: move |_| {},
                                     {translates.start_public_opinion}
                                 }
@@ -112,116 +106,128 @@ pub fn DeliberationPage(lang: Language) -> Element {
                     }
                 }
                 //table section
-                div { class: "flex flex-col w-full justify-start items-start bg-white border rounded-lg border-[#bfc8d9] mb-[30px]",
+                div { class: "flex flex-col w-full justify-start items-start bg-white border rounded-lg border-label-border-gray mb-30",
                     //header
-                    div { class: "flex flex-row w-full h-[55px] justify-start items-center",
-                        div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
-                            div { class: "!text-davy-gray font-semibold text-[14px]",
-                                {translates.field}
-                            }
+                    div { class: "flex flex-row w-full h-55 justify-start items-center",
+                        div { class: "flex flex-row w-120 max-w-[120px] h-full justify-center items-center gap-10",
+                            div { class: "!text-davy-gray font-semibold text-sm", {translates.field} }
                             Switch { width: "19", height: "19" }
                         }
-                        div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "!text-davy-gray font-semibold text-[14px]",
+                        div { class: "flex flex-row flex-1 h-full justify-center items-center gap-10",
+                            div { class: "!text-davy-gray font-semibold text-sm",
                                 {translates.project}
                             }
                             Switch { width: "19", height: "19" }
                         }
-                        div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "!text-davy-gray font-semibold text-[14px]",
+                        div { class: "flex flex-row flex-1 h-full justify-center items-center gap-10",
+                            div { class: "!text-davy-gray font-semibold text-sm",
                                 {translates.response_rate}
                             }
                             Switch { width: "19", height: "19" }
                         }
-                        div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "!text-davy-gray font-semibold text-[14px]",
-                                {translates.panel}
-                            }
+                        div { class: "flex flex-row flex-1 h-full justify-center items-center gap-10",
+                            div { class: "!text-davy-gray font-semibold text-sm", {translates.panel} }
                             Switch { width: "19", height: "19" }
                         }
-                        div { class: "flex flex-row flex-1 h-full justify-center items-center gap-[10px]",
-                            div { class: "!text-davy-gray font-semibold text-[14px]",
-                                {translates.period}
-                            }
+                        div { class: "flex flex-row flex-1 h-full justify-center items-center gap-10",
+                            div { class: "!text-davy-gray font-semibold text-sm", {translates.period} }
                             Switch { width: "19", height: "19" }
                         }
-                        div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
-                            div { class: "!text-davy-gray font-semibold text-[14px]",
-                                {translates.status}
-                            }
+                        div { class: "flex flex-row w-120 max-w-[120px] h-full justify-center items-center gap-10",
+                            div { class: "!text-davy-gray font-semibold text-sm", {translates.status} }
                             Switch { width: "19", height: "19" }
                         }
-                        div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
-                            div { class: "!text-davy-gray font-semibold text-[14px]",
-                                {translates.view}
-                            }
-                        }
-                        div { class: "w-[90px] h-full justify-center items-center gap-[10px]" }
+                        // div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
+                        //     div { class: "!text-davy-gray font-semibold text-[14px]",
+                        //         {translates.view}
+                        //     }
+                        // }
+                        div { class: "w-90 h-full justify-center items-center gap-10" }
                     }
 
                     //data
-                    for deliberation in deliberations {
-                        div { class: "flex flex-row w-full min-h-[55px] justify-start items-center",
-                            div { class: "flex flex-row w-120 min-w-120 h-full justify-center items-center",
-                                div { class: "!text-davy-gray font-semibold text-[14px]",
-                                    {deliberation.project_area.translate(&lang)}
+                    div { class: "flex flex-col w-full gap-5",
+                        for deliberation in deliberations {
+                            div { class: "flex flex-row w-full min-h-[55px] justify-start items-center",
+                                div { class: "flex flex-row w-120 min-w-120 h-full justify-center items-center",
+                                    div { class: "!text-davy-gray font-semibold text-sm",
+                                        {deliberation.project_area.translate(&lang)}
+                                    }
                                 }
-                            }
-                            div { class: "flex flex-row flex-1 h-full justify-center items-center",
-                                div { class: "!text-davy-gray font-semibold text-[14px]",
-                                    {deliberation.title}
+                                div { class: "flex flex-row flex-1 h-full justify-center items-center",
+                                    div { class: "!text-davy-gray font-semibold text-sm",
+                                        {deliberation.title}
+                                    }
                                 }
-                            }
-                            //FIXME: fix to real response data
-                            div { class: "flex flex-row flex-1 h-full justify-center items-center",
-                                div { class: "!text-davy-gray font-semibold text-[14px]",
-                                    "0% (0/0)"
-                                }
-                            }
-                            div { class: "flex flex-wrap flex-1 h-full justify-center items-center gap-[5px]",
-                                for panel in deliberation.panels {
-                                    PanelLabel { label: panel.name.clone() }
-                                }
-                            }
-                            div { class: "flex flex-row flex-1 h-full justify-center items-center",
-                                div { class: "font-semibold text-[14px] text-[#222222] text-center",
-                                    {
-                                        if deliberation.started_at > 0 && deliberation.ended_at > 0 {
+                                div { class: "flex flex-row flex-1 h-full justify-center items-center",
+                                    div { class: "!text-davy-gray font-semibold text-sm",
+                                        {
                                             format!(
-                                                "{} ~ {}",
-                                                convert_timestamp_to_date(deliberation.started_at),
-                                                convert_timestamp_to_date(deliberation.ended_at),
+                                                "{:.0}% ({}/{})",
+                                                if deliberation.emails.len() > 0 {
+                                                    (deliberation
+                                                        .responses
+                                                        .iter()
+                                                        .filter(|v| v.deliberation_type == DeliberationType::Survey)
+                                                        .count() as f64 / deliberation.emails.len() as f64) * 100.0
+                                                } else {
+                                                    0.0
+                                                },
+                                                deliberation
+                                                    .responses
+                                                    .iter()
+                                                    .filter(|v| v.deliberation_type == DeliberationType::Survey)
+                                                    .count(),
+                                                deliberation.emails.len(),
                                             )
-                                        } else {
-                                            "".to_string()
                                         }
                                     }
                                 }
-                            }
-                            div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center",
-                                div { class: "font-semibold text-[14px] text-[#222222] text-center",
-                                    {deliberation.status.translate(&lang)}
+                                div { class: "flex flex-wrap flex-1 h-full justify-center items-center gap-5",
+                                    for email in deliberation.emails.clone() {
+                                        PanelLabel { label: email.email.clone() }
+                                    }
                                 }
-                            }
-                            div { class: "cursor-pointer flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center",
-                                if deliberation.status == DeliberationStatus::Finish {
-                                    div { class: "font-semibold text-[14px] text-[#2A60D3] text-center",
-                                        {translates.view_result}
+                                div { class: "flex flex-row flex-1 h-full justify-center items-center",
+                                    div { class: "font-semibold text-sm text-text-black text-center",
+                                        {
+                                            if deliberation.started_at > 0 && deliberation.ended_at > 0 {
+                                                format!(
+                                                    "{} ~ {}",
+                                                    convert_timestamp_to_date(deliberation.started_at),
+                                                    convert_timestamp_to_date(deliberation.ended_at),
+                                                )
+                                            } else {
+                                                "".to_string()
+                                            }
+                                        }
+                                    }
+                                }
+                                div { class: "flex flex-row w-120 max-w-[120px] h-full justify-center items-center",
+                                    div { class: "font-semibold text-sm text-text-black text-center",
+                                        {deliberation.status.translate(&lang)}
+                                    }
+                                }
+                                // div { class: "cursor-pointer flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center",
+                                //     if deliberation.status == DeliberationStatus::Finish {
+                                //         div { class: "font-semibold text-[14px] text-[#2A60D3] text-center",
+                                //             {translates.view_result}
+                                //         }
+                                //     } else {
+                                //         div { class: "font-semibold text-[14px] text-[#2A60D3] text-center",
+                                //             {translates.view_more}
+                                //         }
+                                //     }
+                                // }
+                                if deliberation.status == DeliberationStatus::Draft {
+                                    div {
+                                        class: "cursor-pointer flex flex-row w-90 h-full justify-center items-center",
+                                        onclick: move |evt| ctrl.handle_click_menu(deliberation.id, evt),
+                                        RowOption { width: "24", height: "24" }
                                     }
                                 } else {
-                                    div { class: "font-semibold text-[14px] text-[#2A60D3] text-center",
-                                        {translates.view_more}
-                                    }
+                                    div { class: "flex flex-row w-90 h-full justify-center items-center" }
                                 }
-                            }
-                            if deliberation.status == DeliberationStatus::Draft {
-                                div {
-                                    class: "cursor-pointer flex flex-row w-90 h-full justify-center items-center",
-                                    onclick: move |evt| ctrl.handle_click_menu(deliberation.id, evt),
-                                    RowOption { width: "24", height: "24" }
-                                }
-                            } else {
-                                div { class: "flex flex-row w-90 h-full justify-center items-center" }
                             }
                         }
                     }
@@ -247,7 +253,7 @@ pub fn DeliberationPage(lang: Language) -> Element {
 #[component]
 pub fn PanelLabel(label: String) -> Element {
     rsx! {
-        div { class: "flex flex-row h-[25px] justify-center items-center px-[8px] py-[3px] bg-[#35343f] rounded-[40px] font-semibold text-[14px] text-white",
+        div { class: "flex flex-row h-25 justify-center items-center px-8 py-3 bg-label-black rounded-[40px] font-semibold text-sm text-white",
             {label}
         }
     }
