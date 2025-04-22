@@ -184,7 +184,7 @@ pub fn DeliberationPage(lang: Language) -> Element {
                                     }
                                 }
                                 div { class: "flex flex-wrap flex-1 h-full justify-center items-center gap-5",
-                                    for email in deliberation.emails.clone() {
+                                    for email in deliberation.emails.clone().into_iter().take(5) {
                                         PanelLabel { label: email.email.clone() }
                                     }
                                 }
