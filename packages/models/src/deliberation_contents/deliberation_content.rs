@@ -42,7 +42,7 @@ pub struct DeliberationContent {
     #[serde(default)]
     pub members: Vec<User>,
 
-    #[api_model(one_to_many = elearnings, foreign_key = content_id)]
+    #[api_model(summary, one_to_many = elearnings, foreign_key = content_id)]
     #[serde(default)]
     pub elearnings: Vec<Elearning>,
 

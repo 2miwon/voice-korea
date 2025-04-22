@@ -48,10 +48,6 @@ pub struct DeliberationBasicInfo {
     #[api_model(summary, many_to_many = deliberation_basic_info_surveys, foreign_table_name = surveys, foreign_primary_key = survey_id, foreign_reference_key = basic_id)]
     #[serde(default)]
     pub surveys: Vec<SurveyV2>,
-
-    #[api_model(summary, one_to_many = deliberation_roles, reference_key = deliberation_id, foreign_key = deliberation_id)]
-    #[serde(default)]
-    pub roles: Vec<DeliberationRole>,
 }
 
 impl Into<DeliberationBasicInfoCreateRequest> for DeliberationBasicInfo {
