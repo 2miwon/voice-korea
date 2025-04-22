@@ -76,25 +76,14 @@ impl Controller {
                 }
             }
         })?;
-        // let initial_answers = sample_survey()
-        //     .and_then(|survey| survey.user_response.get(0).cloned())
-        //     .map(|response| response.answers.into_iter().enumerate().collect())
-        //     .unwrap_or_else(BTreeMap::new);
 
-        // let initial_step = if sample_survey()
-        //     .is_some_and(|sample_survey| sample_survey.user_response.get(0).is_some())
-        // {
-        //     SurveyStep::Submitted
-        // } else {
-        //     SurveyStep::NotParticipated
-        // };
         let prev_answers = sample_survey()
             .and_then(|survey| survey.user_response.get(0).cloned())
             .map(|response| response.answers.into_iter().enumerate().collect())
             .unwrap_or_else(BTreeMap::new);
         tracing::debug!("prev_answers : {prev_answers:?}");
 
-        let _step = if !prev_answers.is_empty() {
+        let step = if !prev_answers.is_empty() {
             SurveyStep::Submitted
         } else {
             SurveyStep::NotParticipated
@@ -106,8 +95,7 @@ impl Controller {
             answers: use_signal(|| prev_answers),
             user,
             popup_service: use_context(),
-            // survey_step: use_signal(|| step),
-            survey_step: use_signal(|| SurveyStep::Statistics),
+            survey_step: use_signal(|| step),
         };
 
         Ok(ctrl)

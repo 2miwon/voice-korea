@@ -19,5 +19,6 @@ pub mod tab_title;
 
 pub mod question;
 
+pub mod response_files;
 pub mod section;
 pub mod survey;

@@ -56,22 +56,22 @@ pub fn SurveyInfo(
         }
         div { class: "w-full flex flex-col justify-center items-center gap-10",
             Accordion { title, default_open: true,
-                div { class: "w-full justify-start mt-15 mb-20 font-bold text-lg", {data.title} }
-                RichTextViewer {
-                    class: "w-full flex justify-start text-[15px]",
-                    contenteditable: false,
-                    html: data.description,
-                }
-                div { class: "w-full flex flex-row justify-start gap-20",
-                    for role in data.roles {
-                        AvatarLabel {
-                            label: role.email,
-                            //FIXME: use organization name
-                            sub: "DAO",
+                div { class: "w-full flex flex-col gap-20",
+                    div { class: "font-bold text-lg", {data.title} }
+                    RichTextViewer { contenteditable: false, html: data.description }
+                    div { class: "w-full flex flex-row justify-start gap-20",
+                        for role in data.roles {
+                            AvatarLabel {
+                                label: role.email,
+                                //FIXME: use organization name
+                                sub: "DAO",
+                            }
                         }
                     }
                 }
             }
+
+
             Button {
                 class: "flex flex-row px-15 py-13 disabled:bg-hint-gray disabled:cursor-not-allowed rounded-lg text-white text-base",
                 disabled: data.status != ProjectStatus::InProgress || !is_login,
