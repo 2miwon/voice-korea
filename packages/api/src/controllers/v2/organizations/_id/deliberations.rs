@@ -797,7 +797,7 @@ impl DeliberationController {
             surveys,
         } in sample_surveys.clone()
         {
-            let results = DeliberationSampleSurvey::query_builder(0)
+            let results = DeliberationSampleSurvey::query_builder()
                 .deliberation_id_equals(deliberation_id)
                 .query()
                 .map(DeliberationSampleSurvey::from)
@@ -2110,7 +2110,7 @@ impl DeliberationController {
                 .id_equals(id)
                 .org_id_equals(org_id)
                 .basic_infos_builder(DeliberationBasicInfo::query_builder())
-                .sample_surveys_builder(DeliberationSampleSurvey::query_builder(user_id))
+                .sample_surveys_builder(DeliberationSampleSurvey::query_builder())
                 .contents_builder(DeliberationContent::query_builder())
                 .deliberation_discussions_builder(DeliberationDiscussion::query_builder())
                 .final_surveys_builder(DeliberationFinalSurvey::query_builder())
@@ -2178,7 +2178,7 @@ impl DeliberationController {
 
         let deliberation = Deliberation::query_builder()
             .basic_infos_builder(DeliberationBasicInfo::query_builder())
-            .sample_surveys_builder(DeliberationSampleSurvey::query_builder(0))
+            .sample_surveys_builder(DeliberationSampleSurvey::query_builder())
             .contents_builder(DeliberationContent::query_builder())
             .deliberation_discussions_builder(DeliberationDiscussion::query_builder())
             .final_surveys_builder(DeliberationFinalSurvey::query_builder())

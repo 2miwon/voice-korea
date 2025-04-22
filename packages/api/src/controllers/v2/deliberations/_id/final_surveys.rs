@@ -13,9 +13,12 @@ use models::{
         DeliberationFinalSurveyGetResponse, DeliberationFinalSurveyParam,
         DeliberationFinalSurveyQuery, DeliberationFinalSurveySummary,
     },
+    deliberation_response::{DeliberationResponse, DeliberationType},
     *,
 };
 use sqlx::postgres::PgRow;
+
+use crate::utils::app_claims::AppClaims;
 
 #[derive(
     Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema, aide::OperationIo,
@@ -58,6 +61,12 @@ impl DeliberationFinalSurveyController {
                 };
                 DeliberationFinalSurveyGetResponse::Query(res)
             }
+            DeliberationFinalSurveyParam::Read(action) => match action.action {
+                Some(DeliberationFinalSurveyReadActionType::GetById) => {
+                    ctrl.read(deliberation_id, auth).await?
+                }
+                _ => return Err(ApiError::InvalidAction),
+            },
         };
 
         Ok(Json(res))
@@ -68,10 +77,21 @@ impl DeliberationFinalSurveyController {
     async fn query(
         &self,
         deliberation_id: i64,
-        _auth: Option<Authorization>,
+        auth: Option<Authorization>,
         param: DeliberationFinalSurveyQuery,
     ) -> Result<QueryResponse<DeliberationFinalSurveySummary>> {
         let mut total_count = 0;
+        let user_id = match auth {
+            Some(Authorization::Bearer { ref claims }) => AppClaims(claims).get_user_id(),
+            _ => 0,
+        };
+        let v: Vec<DeliberationResponse> = DeliberationResponse::query_builder()
+            .deliberation_id_equals(deliberation_id)
+            .query()
+            .map(Into::into)
+            .fetch_all(&self.pool)
+            .await?;
+        tracing::debug!("v: {:?}", v);
         let items: Vec<DeliberationFinalSurveySummary> =
             DeliberationFinalSurveySummary::query_builder()
                 .limit(param.size())
@@ -79,6 +99,7 @@ impl DeliberationFinalSurveyController {
                 .deliberation_id_equals(deliberation_id)
                 .query()
                 .map(|row: PgRow| {
+                    tracing::debug!("row: {:?}", row);
                     use sqlx::Row;
 
                     total_count = row.try_get("total_count").unwrap_or_default();
@@ -88,5 +109,46 @@ impl DeliberationFinalSurveyController {
                 .await?;
 
         Ok(QueryResponse { total_count, items })
+    }
+
+    async fn read(
+        &self,
+        deliberation_id: i64,
+        auth: Option<Authorization>,
+    ) -> Result<DeliberationFinalSurveyGetResponse> {
+        let user_id = match auth {
+            Some(Authorization::Bearer { ref claims }) => AppClaims(claims).get_user_id(),
+            _ => 0,
+        };
+        let responses = DeliberationResponse::query_builder()
+            .deliberation_id_equals(deliberation_id)
+            .deliberation_type_equals(DeliberationType::Survey)
+            .query()
+            .map(Into::into)
+            .fetch_all(&self.pool)
+            .await?;
+
+        let user_response = if user_id != 0 {
+            DeliberationResponse::query_builder()
+                .deliberation_id_equals(deliberation_id)
+                .user_id_equals(user_id)
+                .deliberation_type_equals(DeliberationType::Survey)
+                .query()
+                .map(Into::into)
+                .fetch_all(&self.pool)
+                .await?
+        } else {
+            vec![]
+        };
+
+        let mut res: DeliberationFinalSurvey = DeliberationFinalSurvey::query_builder()
+            .deliberation_id_equals(deliberation_id)
+            .query()
+            .map(Into::into)
+            .fetch_one(&self.pool)
+            .await?;
+        res.user_response = user_response;
+        res.responses = responses;
+        Ok(DeliberationFinalSurveyGetResponse::Read(res))
     }
 }
