@@ -7,6 +7,7 @@ pub struct Config {
     pub commit: &'static str,
     pub log_level: Level,
     pub api_url: &'static str,
+    pub user_url: &'static str,
 }
 
 impl Default for Config {
@@ -24,6 +25,7 @@ impl Default for Config {
             },
             api_url: option_env!("API_URL")
                 .unwrap_or("https://voice-korea-api.dev.voice-korea.com"),
+            user_url: option_env!("USER_URL").unwrap_or("https://dev.voice-korea.com"),
         }
     }
 }

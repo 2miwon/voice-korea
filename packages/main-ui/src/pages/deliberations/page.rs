@@ -137,11 +137,11 @@ pub fn DeliberationPage(lang: Language) -> Element {
                             div { class: "!text-davy-gray font-semibold text-sm", {translates.status} }
                             Switch { width: "19", height: "19" }
                         }
-                        // div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
-                        //     div { class: "!text-davy-gray font-semibold text-[14px]",
-                        //         {translates.view}
-                        //     }
-                        // }
+                        div { class: "flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center gap-[10px]",
+                            div { class: "!text-davy-gray font-semibold text-[14px]",
+                                {translates.view}
+                            }
+                        }
                         div { class: "w-90 h-full justify-center items-center gap-10" }
                     }
 
@@ -156,7 +156,7 @@ pub fn DeliberationPage(lang: Language) -> Element {
                                 }
                                 div { class: "flex flex-row flex-1 h-full justify-center items-center",
                                     div { class: "!text-davy-gray font-semibold text-sm",
-                                        {deliberation.title}
+                                        {deliberation.title.clone()}
                                     }
                                 }
                                 div { class: "flex flex-row flex-1 h-full justify-center items-center",
@@ -205,20 +205,22 @@ pub fn DeliberationPage(lang: Language) -> Element {
                                 }
                                 div { class: "flex flex-row w-120 max-w-[120px] h-full justify-center items-center",
                                     div { class: "font-semibold text-sm text-text-black text-center",
-                                        {deliberation.status.translate(&lang)}
+                                        {deliberation.deliberation_status().translate(&lang)}
                                     }
                                 }
-                                // div { class: "cursor-pointer flex flex-row w-[120px] min-w-[120px] h-full justify-center items-center",
-                                //     if deliberation.status == DeliberationStatus::Finish {
-                                //         div { class: "font-semibold text-[14px] text-[#2A60D3] text-center",
-                                //             {translates.view_result}
-                                //         }
-                                //     } else {
-                                //         div { class: "font-semibold text-[14px] text-[#2A60D3] text-center",
-                                //             {translates.view_more}
-                                //         }
-                                //     }
-                                // }
+                                button {
+                                    class: "cursor-pointer flex flex-row w-120 max-w-[120px] h-full justify-center items-center",
+                                    onclick: move |_| {
+                                        if deliberation.status != DeliberationStatus::Draft {
+                                            ctrl.move_user_page(deliberation.id);
+                                        }
+                                    },
+                                    if deliberation.status != DeliberationStatus::Draft {
+                                        div { class: "font-semibold text-sm text-active text-center",
+                                            {translates.move_to_user_page}
+                                        }
+                                    }
+                                }
                                 if deliberation.status == DeliberationStatus::Draft {
                                     div {
                                         class: "cursor-pointer flex flex-row w-90 h-full justify-center items-center",
