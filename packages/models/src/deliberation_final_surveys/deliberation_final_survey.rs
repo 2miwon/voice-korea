@@ -3,13 +3,14 @@ use bdk::prelude::*;
 use validator::Validate;
 
 use crate::deliberation_response::DeliberationResponse;
+use crate::deliberation_role::DeliberationRole;
 use crate::deliberation_user::DeliberationUser;
 use crate::Question;
 use crate::SurveyV2;
 use crate::User;
 
 #[derive(Validate)]
-#[api_model(base = "/v2/deliberations/:deliberation-id/final-surveys", table = deliberation_final_surveys, action = [create(users = Vec<i64>, surveys = Vec<Question>)])]
+#[api_model(base = "/v2/deliberations/:deliberation-id/final-surveys", table = deliberation_final_surveys, action = [create(users = Vec<String>, surveys = Vec<Question>)])]
 pub struct DeliberationFinalSurvey {
     #[api_model(summary, primary_key)]
     pub id: i64,
@@ -40,6 +41,11 @@ pub struct DeliberationFinalSurvey {
     #[serde(default)]
     pub point: i64,
 
+    #[api_model(summary, many_to_many = deliberation_final_survey_roles, foreign_table_name = deliberation_roles, foreign_primary_key = role_id, foreign_reference_key = final_survey_id)]
+    #[serde(default)]
+    pub roles: Vec<DeliberationRole>,
+
+    //FIXME: this field will be deprecated. use roles field instead.
     #[api_model(summary, many_to_many = deliberation_final_survey_members, foreign_table_name = users, foreign_primary_key = user_id, foreign_reference_key = final_survey_id)]
     #[serde(default)]
     pub members: Vec<User>,
@@ -59,7 +65,7 @@ pub struct DeliberationFinalSurvey {
 impl Into<DeliberationFinalSurveyCreateRequest> for DeliberationFinalSurvey {
     fn into(self) -> DeliberationFinalSurveyCreateRequest {
         DeliberationFinalSurveyCreateRequest {
-            users: self.members.into_iter().map(|u| u.id).collect(),
+            users: self.roles.into_iter().map(|u| u.email).collect(),
             surveys: self
                 .surveys
                 .into_iter()

@@ -7,7 +7,7 @@ use by_components::icons::edit::Edit1;
 use models::{
     DeliberationBasicInfoCreateRequest, DeliberationContentCreateRequest,
     DeliberationDiscussionCreateRequest, DeliberationFinalSurveyCreateRequest,
-    DeliberationSampleSurveyCreateRequest, OrganizationMemberSummary,
+    DeliberationSampleSurveyCreateRequest,
 };
 
 use crate::utils::time::format_range_from_timestamp;
@@ -21,11 +21,11 @@ pub fn Procedure(
     discussion: DeliberationDiscussionCreateRequest,
     final_survey: DeliberationFinalSurveyCreateRequest,
 
-    basic_info_members: Vec<OrganizationMemberSummary>,
-    sample_survey_members: Vec<OrganizationMemberSummary>,
-    deliberation_members: Vec<OrganizationMemberSummary>,
-    discussion_members: Vec<OrganizationMemberSummary>,
-    final_survey_members: Vec<OrganizationMemberSummary>,
+    basic_info_members: Vec<String>,
+    sample_survey_members: Vec<String>,
+    deliberation_members: Vec<String>,
+    discussion_members: Vec<String>,
+    final_survey_members: Vec<String>,
 ) -> Element {
     let tr: PreviewTranslate = translate(&lang);
     rsx! {
@@ -98,7 +98,7 @@ pub fn DeliberationDetailComponent(
     title: String,
     start_date: i64,
     end_date: i64,
-    members: Vec<OrganizationMemberSummary>,
+    members: Vec<String>,
     route: Route,
 ) -> Element {
     let tr: PreviewTranslate = translate(&lang);
@@ -125,7 +125,7 @@ pub fn DeliberationDetailComponent(
                         div { class: "flex flex-row w-fit justify-start items-center gap-4",
                             div { class: "w-15 h-15 rounded-full bg-[#d9d9d9]" }
                             div { class: "font-semibold text-xs text-[#6d6d6d] leading-16",
-                                {member.name}
+                                {member}
                             }
                         }
                     }

@@ -1,5 +1,7 @@
 use crate::pages::deliberations::new::preview::{
-    components::{committee::Committee, panel::Panel, procedure::Procedure},
+    components::{
+        committee::Committee, panel_summary_table::PanelSummaryTable, procedure::Procedure,
+    },
     controller::Controller,
     i18n::PreviewTranslate,
 };
@@ -11,9 +13,9 @@ pub fn Preview(lang: Language) -> Element {
     let mut ctrl = Controller::new(lang)?;
 
     let roles = ctrl.roles();
-    let committees = ctrl.committee_roles();
+    let committees = ctrl.committees();
 
-    let selected_panels = ctrl.selected_panels();
+    let emails = ctrl.emails();
 
     let basic_info = ctrl.basic_info();
     let sample_survey = ctrl.sample_survey();
@@ -31,7 +33,7 @@ pub fn Preview(lang: Language) -> Element {
         div { class: "flex flex-col w-full justify-start items-start gap-20",
             div { class: "font-medium text-base text-text-black mb-10", {tr.final_review} }
             Committee { lang, roles, committees }
-            Panel { lang, selected_panels }
+            PanelSummaryTable { lang, emails }
             Procedure {
                 lang,
                 basic_info,
@@ -40,22 +42,22 @@ pub fn Preview(lang: Language) -> Element {
                 discussion,
                 final_survey,
 
-                basic_info_members: ctrl.convert_user_ids_to_members(basic_info_members),
-                sample_survey_members: ctrl.convert_user_ids_to_members(sample_survey_members),
-                deliberation_members: ctrl.convert_user_ids_to_members(deliberation_members),
-                discussion_members: ctrl.convert_user_ids_to_members(discussion_members),
-                final_survey_members: ctrl.convert_user_ids_to_members(final_survey_members),
+                basic_info_members,
+                sample_survey_members,
+                deliberation_members,
+                discussion_members,
+                final_survey_members,
             }
             div { class: "flex flex-row w-full justify-end items-end mt-20 mb-50",
                 button {
-                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20 hover:!bg-primary hover:!text-white",
                     onclick: move |_| {
                         ctrl.go_list();
                     },
                     {tr.go_to_list}
                 }
                 button {
-                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                    class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20 hover:!bg-primary hover:!text-white",
                     onclick: move |_| async move {
                         ctrl.temp_save().await;
                     },

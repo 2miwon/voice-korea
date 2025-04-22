@@ -15,26 +15,27 @@ use discussions::Discussion;
 use models::{
     deliberation::*,
     deliberation_areas::deliberation_area::*,
-    deliberation_basic_info_members::deliberation_basic_info_member::*,
     deliberation_basic_info_resources::deliberation_basic_info_resource::*,
+    deliberation_basic_info_roles::deliberation_basic_info_role::*,
     deliberation_basic_info_surveys::deliberation_basic_info_survey::*,
     deliberation_basic_infos::deliberation_basic_info::*,
-    deliberation_content_members::deliberation_content_member::*,
+    deliberation_content_roles::deliberation_content_role::*,
     deliberation_contents::deliberation_content::*,
-    deliberation_discussion_members::deliberation_discussion_member::*,
     deliberation_discussion_resources::deliberation_discussion_resource::*,
+    deliberation_discussion_roles::deliberation_discussion_role::*,
     deliberation_discussions::deliberation_discussion::*,
     deliberation_draft_members::deliberation_draft_member::*,
     deliberation_draft_resources::deliberation_draft_resource::*,
     deliberation_draft_surveys::deliberation_draft_survey::*,
     deliberation_drafts::deliberation_draft::*,
-    deliberation_final_survey_members::deliberation_final_survey_member::*,
+    deliberation_final_survey_roles::deliberation_final_survey_role::*,
     deliberation_final_survey_surveys::deliberation_final_survey_survey::*,
     deliberation_final_surveys::deliberation_final_survey::*,
+    deliberation_panel_email::{DeliberationPanelEmail, DeliberationPanelEmailRepository},
     deliberation_role::{
         DeliberationRole, DeliberationRoleCreateRequest, DeliberationRoleRepository,
     },
-    deliberation_sample_survey_members::deliberation_sample_survey_member::*,
+    deliberation_sample_survey_roles::deliberation_sample_survey_role::*,
     deliberation_sample_survey_surveys::deliberation_sample_survey_survey::*,
     deliberation_sample_surveys::deliberation_sample_survey::*,
     discussion_groups::DiscussionGroup,
@@ -42,7 +43,6 @@ use models::{
     step::*,
     *,
 };
-use panel_deliberations::*;
 use sqlx::postgres::PgRow;
 use step::StepCreateRequest;
 
@@ -81,31 +81,31 @@ pub struct DeliberationController {
     deliberation_resource: DeliberationResourceRepository,
     deliberation_survey: DeliberationSurveyRepository,
     deliberation_area: DeliberationAreaRepository,
-    panel_deliberation: PanelDeliberationRepository,
     survey: SurveyV2Repository,
     basic_info: DeliberationBasicInfoRepository,
-    basic_info_member: DeliberationBasicInfoMemberRepository,
+    basic_info_role: DeliberationBasicInfoRoleRepository,
     basic_info_resource: DeliberationBasicInfoResourceRepository,
     basic_info_survey: DeliberationBasicInfoSurveyRepository,
     sample_survey: DeliberationSampleSurveyRepository,
-    sample_survey_member: DeliberationSampleSurveyMemberRepository,
+    sample_survey_role: DeliberationSampleSurveyRoleRepository,
     sample_survey_survey: DeliberationSampleSurveySurveyRepository,
     deliberation_contents: DeliberationContentRepository,
-    deliberation_contents_member: DeliberationContentMemberRepository,
+    deliberation_contents_role: DeliberationContentRoleRepository,
     elearning_repo: ElearningRepository,
     discussion_repo: DeliberationDiscussionRepository,
-    discussion_member: DeliberationDiscussionMemberRepository,
+    discussion_role: DeliberationDiscussionRoleRepository,
     discussion_resource: DeliberationDiscussionResourceRepository,
     disc_repo: DiscussionRepository,
     disc_group: DiscussionGroupRepository,
     disc_res: DiscussionResourceRepository,
     final_repo: DeliberationFinalSurveyRepository,
-    final_member: DeliberationFinalSurveyMemberRepository,
+    final_role: DeliberationFinalSurveyRoleRepository,
     final_survey: DeliberationFinalSurveySurveyRepository,
     draft_repo: DeliberationDraftRepository,
     draft_member: DeliberationDraftMemberRepository,
     draft_survey: DeliberationDraftSurveyRepository,
     draft_resource: DeliberationDraftResourceRepository,
+    panel_emails: DeliberationPanelEmailRepository,
 }
 
 impl DeliberationController {
@@ -119,7 +119,7 @@ impl DeliberationController {
             project_areas,
             title,
             description,
-            panel_ids,
+            panel_emails,
             resource_ids,
             survey_ids,
             roles,
@@ -134,6 +134,7 @@ impl DeliberationController {
             drafts,
             status,
             creator_id,
+            ..
         }: DeliberationCreateRequest,
     ) -> Result<Deliberation> {
         self.validate_inputs(
@@ -160,10 +161,14 @@ impl DeliberationController {
             .await?
             .ok_or(ApiError::DeliberationException)?;
 
+        self.insert_deliberation_panel_with_emails(&mut *tx, deliberation.id, panel_emails.clone())
+            .await?;
+
         self.insert_deliberation_areas(&mut *tx, deliberation.id, project_areas.clone())
             .await?;
 
-        self.insert_deliberation_users(&mut *tx, deliberation.id, roles.clone())
+        let deliberation_roles = self
+            .insert_deliberation_users(&mut *tx, deliberation.id, roles.clone())
             .await?;
 
         for resource_id in resource_ids {
@@ -217,22 +222,39 @@ impl DeliberationController {
                 .ok_or(ApiError::DeliberationStepException)?;
         }
 
-        self.create_basic_info(&mut *tx, deliberation.id, basic_infos)
-            .await?;
+        self.create_basic_info(
+            &mut *tx,
+            deliberation_roles.clone(),
+            deliberation.id,
+            basic_infos,
+        )
+        .await?;
         self.create_sample_survey(
             &mut *tx,
+            deliberation_roles.clone(),
             org_id,
             deliberation.id,
             project_areas.clone(),
             sample_surveys,
         )
         .await?;
-        self.create_content(&mut *tx, deliberation.id, contents)
-            .await?;
-        self.create_disscussion(&mut *tx, deliberation.id, deliberation_discussions)
-            .await?;
+        self.create_content(
+            &mut *tx,
+            deliberation_roles.clone(),
+            deliberation.id,
+            contents,
+        )
+        .await?;
+        self.create_disscussion(
+            &mut *tx,
+            deliberation_roles.clone(),
+            deliberation.id,
+            deliberation_discussions,
+        )
+        .await?;
         self.create_final_survey(
             &mut *tx,
+            deliberation_roles.clone(),
             org_id,
             deliberation.id,
             project_areas.clone(),
@@ -241,12 +263,12 @@ impl DeliberationController {
         .await?;
         self.create_draft(&mut *tx, deliberation.id, drafts).await?;
 
-        for id in panel_ids {
-            self.panel_deliberation
-                .insert_with_tx(&mut *tx, id, deliberation.id)
-                .await?
-                .ok_or(ApiError::DeliberationPanelException)?;
-        }
+        // for id in panel_ids {
+        //     self.panel_deliberation
+        //         .insert_with_tx(&mut *tx, id, deliberation.id)
+        //         .await?
+        //         .ok_or(ApiError::DeliberationPanelException)?;
+        // }
 
         tx.commit().await?;
 
@@ -287,7 +309,7 @@ impl DeliberationController {
             project_areas,
             title,
             description,
-            panel_ids,
+            panel_emails,
             roles,
             thumbnail_image,
             basic_infos,
@@ -330,16 +352,22 @@ impl DeliberationController {
         self.upsert_deliberation_areas(&mut *tx, id, project_areas.clone())
             .await?;
 
-        self.upsert_deliberation_users(&mut *tx, id, roles.clone())
+        let deliberation_roles = self
+            .upsert_deliberation_users(&mut *tx, id, roles.clone())
             .await?;
 
-        self.upsert_deliberation_panels(&mut *tx, id, panel_ids)
+        self.upsert_deliberation_panel_with_emails(&mut *tx, id, panel_emails)
             .await?;
 
-        self.upsert_basic_info(&mut *tx, id, basic_infos).await?;
+        // self.upsert_deliberation_panels(&mut *tx, id, panel_ids)
+        //     .await?;
+
+        self.upsert_basic_info(&mut *tx, deliberation_roles.clone(), id, basic_infos)
+            .await?;
 
         self.upsert_sample_survey(
             &mut *tx,
+            deliberation_roles.clone(),
             org_id,
             deliberation.id,
             project_areas.clone(),
@@ -347,14 +375,25 @@ impl DeliberationController {
         )
         .await?;
 
-        self.upsert_content(&mut *tx, deliberation.id, contents)
-            .await?;
+        self.upsert_content(
+            &mut *tx,
+            deliberation_roles.clone(),
+            deliberation.id,
+            contents,
+        )
+        .await?;
 
-        self.upsert_discussion(&mut *tx, deliberation.id, deliberation_discussions)
-            .await?;
+        self.upsert_discussion(
+            &mut *tx,
+            deliberation_roles.clone(),
+            deliberation.id,
+            deliberation_discussions,
+        )
+        .await?;
 
         self.upsert_final_survey(
             &mut *tx,
+            deliberation_roles,
             org_id,
             deliberation.id,
             project_areas.clone(),
@@ -415,6 +454,7 @@ impl DeliberationController {
     async fn create_basic_info(
         &self,
         tx: &mut sqlx::PgConnection,
+        deliberation_roles: Vec<DeliberationRole>,
         deliberation_id: i64,
         basic_infos: Vec<DeliberationBasicInfoCreateRequest>,
     ) -> Result<Vec<DeliberationBasicInfo>> {
@@ -442,10 +482,22 @@ impl DeliberationController {
                 .await?
                 .ok_or(ApiError::DeliberationBasicInfoException)?;
 
-            for user_id in users {
+            let mut roles = vec![];
+
+            for email in users {
+                let d = deliberation_roles
+                    .iter()
+                    .find(|v| v.email == email)
+                    .unwrap_or(&DeliberationRole::default())
+                    .clone();
+
+                roles.push(d);
+            }
+
+            for role in roles {
                 let _ = self
-                    .basic_info_member
-                    .insert_with_tx(&mut *tx, user_id, info.id)
+                    .basic_info_role
+                    .insert_with_tx(&mut *tx, role.id, info.id)
                     .await?
                     .ok_or(ApiError::DeliberationBasicInfoException)?;
             }
@@ -474,6 +526,7 @@ impl DeliberationController {
     async fn upsert_basic_info(
         &self,
         tx: &mut sqlx::PgConnection,
+        deliberation_roles: Vec<DeliberationRole>,
         deliberation_id: i64,
         basic_infos: Vec<DeliberationBasicInfoCreateRequest>,
     ) -> Result<()> {
@@ -496,7 +549,12 @@ impl DeliberationController {
 
             let basic = if results.is_empty() {
                 let v = self
-                    .create_basic_info(&mut *tx, deliberation_id, basic_infos.clone())
+                    .create_basic_info(
+                        &mut *tx,
+                        deliberation_roles.clone(),
+                        deliberation_id,
+                        basic_infos.clone(),
+                    )
                     .await?;
 
                 v.into_iter()
@@ -526,29 +584,49 @@ impl DeliberationController {
                 .ok_or(ApiError::DeliberationBasicInfoException)?;
 
             // update user
-            let remain_users = DeliberationBasicInfoMember::query_builder()
+            let remain_users = DeliberationBasicInfoRole::query_builder()
                 .basic_id_equals(basic.id)
                 .query()
-                .map(DeliberationBasicInfoMember::from)
+                .map(DeliberationBasicInfoRole::from)
                 .fetch_all(&self.pool)
                 .await?;
 
             tracing::debug!("remain_users: {:?}", remain_users);
 
             for remain in remain_users {
-                self.basic_info_member
+                match self
+                    .basic_info_role
                     .delete_with_tx(&mut *tx, remain.id)
-                    .await?
-                    .ok_or(ApiError::DeliberationBasicInfoException)?;
+                    .await
+                {
+                    Ok(_) => {}
+                    Err(e) => {
+                        tracing::error!("basic info delete failed with error: {:?}", e);
+                        return Err(ApiError::DeliberationBasicInfoException);
+                    }
+                };
             }
 
-            for user_id in users {
+            let mut roles = vec![];
+
+            for email in users {
+                let d = deliberation_roles
+                    .iter()
+                    .find(|v| v.email == email)
+                    .unwrap_or(&DeliberationRole::default())
+                    .clone();
+
+                roles.push(d);
+            }
+
+            for role in roles {
                 let _ = self
-                    .basic_info_member
-                    .insert_with_tx(&mut *tx, user_id, basic.id)
+                    .basic_info_role
+                    .insert_with_tx(&mut *tx, role.id, basic.id)
                     .await?
                     .ok_or(ApiError::DeliberationBasicInfoException)?;
             }
+            tracing::debug!("88888");
 
             //update resource
             let remain_resources = DeliberationBasicInfoResource::query_builder()
@@ -606,6 +684,7 @@ impl DeliberationController {
     async fn create_sample_survey(
         &self,
         tx: &mut sqlx::PgConnection,
+        deliberation_roles: Vec<DeliberationRole>,
         org_id: i64,
         deliberation_id: i64,
         project_areas: Vec<ProjectArea>,
@@ -639,10 +718,22 @@ impl DeliberationController {
                 .await?
                 .ok_or(ApiError::DeliberationSampleSurveyException)?;
 
-            for user_id in users {
+            let mut roles = vec![];
+
+            for email in users {
+                let d = deliberation_roles
+                    .iter()
+                    .find(|v| v.email == email)
+                    .unwrap_or(&DeliberationRole::default())
+                    .clone();
+
+                roles.push(d);
+            }
+
+            for role in roles {
                 let _ = self
-                    .sample_survey_member
-                    .insert_with_tx(&mut *tx, user_id, sample.id)
+                    .sample_survey_role
+                    .insert_with_tx(&mut *tx, role.id, sample.id)
                     .await?
                     .ok_or(ApiError::DeliberationSampleSurveyException)?;
             }
@@ -689,6 +780,7 @@ impl DeliberationController {
     async fn upsert_sample_survey(
         &self,
         tx: &mut sqlx::PgConnection,
+        deliberation_roles: Vec<DeliberationRole>,
         org_id: i64,
         deliberation_id: i64,
         project_areas: Vec<ProjectArea>,
@@ -716,6 +808,7 @@ impl DeliberationController {
                 let v = self
                     .create_sample_survey(
                         &mut *tx,
+                        deliberation_roles.clone(),
                         org_id,
                         deliberation_id,
                         project_areas.clone(),
@@ -733,27 +826,64 @@ impl DeliberationController {
                     .unwrap_or_else(DeliberationSampleSurvey::default)
             };
 
+            let _ = self
+                .sample_survey
+                .update_with_tx(
+                    &mut *tx,
+                    sample.id,
+                    DeliberationSampleSurveyRepositoryUpdateRequest {
+                        started_at: Some(started_at),
+                        ended_at: Some(ended_at),
+                        title: Some(title.clone()),
+                        description: Some(description.clone()),
+                        deliberation_id: None,
+                        estimate_time: Some(estimate_time),
+                        point: Some(point),
+                    },
+                )
+                .await?
+                .ok_or(ApiError::DeliberationSampleSurveyException)?;
+
             // update user
-            let remain_users = DeliberationSampleSurveyMember::query_builder()
+            let remain_users = DeliberationSampleSurveyRole::query_builder()
                 .sample_survey_id_equals(sample.id)
                 .query()
-                .map(DeliberationSampleSurveyMember::from)
+                .map(DeliberationSampleSurveyRole::from)
                 .fetch_all(&self.pool)
                 .await?;
 
             tracing::debug!("remain_users: {:?}", remain_users);
 
             for remain in remain_users {
-                self.sample_survey_member
+                match self
+                    .sample_survey_role
                     .delete_with_tx(&mut *tx, remain.id)
-                    .await?
-                    .ok_or(ApiError::DeliberationSampleSurveyException)?;
+                    .await
+                {
+                    Ok(_) => {}
+                    Err(e) => {
+                        tracing::error!("sample survey delete failed with error: {:?}", e);
+                        return Err(ApiError::DeliberationSampleSurveyException);
+                    }
+                }
             }
 
-            for user_id in users {
+            let mut roles = vec![];
+
+            for email in users {
+                let d = deliberation_roles
+                    .iter()
+                    .find(|v| v.email == email)
+                    .unwrap_or(&DeliberationRole::default())
+                    .clone();
+
+                roles.push(d);
+            }
+
+            for role in roles {
                 let _ = self
-                    .sample_survey_member
-                    .insert_with_tx(&mut *tx, user_id, sample.id)
+                    .sample_survey_role
+                    .insert_with_tx(&mut *tx, role.id, sample.id)
                     .await?
                     .ok_or(ApiError::DeliberationSampleSurveyException)?;
             }
@@ -816,6 +946,7 @@ impl DeliberationController {
     async fn create_content(
         &self,
         tx: &mut sqlx::PgConnection,
+        deliberation_roles: Vec<DeliberationRole>,
         deliberation_id: i64,
         contents: Vec<DeliberationContentCreateRequest>,
     ) -> Result<Vec<DeliberationContent>> {
@@ -844,10 +975,22 @@ impl DeliberationController {
                 .await?
                 .ok_or(ApiError::DeliberationLearningException)?;
 
-            for user_id in users {
+            let mut roles = vec![];
+
+            for email in users {
+                let d = deliberation_roles
+                    .iter()
+                    .find(|v| v.email == email)
+                    .unwrap_or(&DeliberationRole::default())
+                    .clone();
+
+                roles.push(d);
+            }
+
+            for role in roles {
                 let _ = self
-                    .deliberation_contents_member
-                    .insert_with_tx(&mut *tx, user_id, content.id)
+                    .deliberation_contents_role
+                    .insert_with_tx(&mut *tx, role.id, content.id)
                     .await?
                     .ok_or(ApiError::DeliberationLearningException)?;
             }
@@ -874,6 +1017,7 @@ impl DeliberationController {
     async fn upsert_content(
         &self,
         tx: &mut sqlx::PgConnection,
+        deliberation_roles: Vec<DeliberationRole>,
         deliberation_id: i64,
         contents: Vec<DeliberationContentCreateRequest>,
     ) -> Result<()> {
@@ -896,7 +1040,12 @@ impl DeliberationController {
 
             let content = if results.is_empty() {
                 let v = self
-                    .create_content(&mut *tx, deliberation_id, contents.clone())
+                    .create_content(
+                        &mut *tx,
+                        deliberation_roles.clone(),
+                        deliberation_id,
+                        contents.clone(),
+                    )
                     .await?;
 
                 v.into_iter()
@@ -912,10 +1061,10 @@ impl DeliberationController {
                         DeliberationContentRepositoryUpdateRequest {
                             started_at: Some(started_at),
                             ended_at: Some(ended_at),
-                            title: Some(title),
-                            description: Some(description),
+                            title: Some(title.clone()),
+                            description: Some(description.clone()),
                             deliberation_id: Some(results.deliberation_id),
-                            questions: Some(questions),
+                            questions: Some(questions.clone()),
                         },
                     )
                     .await?;
@@ -923,27 +1072,63 @@ impl DeliberationController {
                 v.unwrap_or_default()
             };
 
+            let _ = self
+                .deliberation_contents
+                .update_with_tx(
+                    &mut *tx,
+                    content.id,
+                    DeliberationContentRepositoryUpdateRequest {
+                        started_at: Some(started_at),
+                        ended_at: Some(ended_at),
+                        title: Some(title.clone()),
+                        description: Some(description.clone()),
+                        deliberation_id: None,
+                        questions: Some(questions),
+                    },
+                )
+                .await?
+                .ok_or(ApiError::DeliberationLearningException)?;
+
             // update user
-            let remain_users = DeliberationContentMember::query_builder()
+            let remain_users = DeliberationContentRole::query_builder()
                 .content_id_equals(content.id)
                 .query()
-                .map(DeliberationContentMember::from)
+                .map(DeliberationContentRole::from)
                 .fetch_all(&self.pool)
                 .await?;
 
             tracing::debug!("remain_users: {:?}", remain_users);
 
             for remain in remain_users {
-                self.deliberation_contents_member
+                match self
+                    .deliberation_contents_role
                     .delete_with_tx(&mut *tx, remain.id)
-                    .await?
-                    .ok_or(ApiError::DeliberationLearningException)?;
+                    .await
+                {
+                    Ok(_) => {}
+                    Err(e) => {
+                        tracing::error!("contents delete failed with error: {:?}", e);
+                        return Err(ApiError::DeliberationLearningException);
+                    }
+                }
             }
 
-            for user_id in users {
+            let mut roles = vec![];
+
+            for email in users {
+                let d = deliberation_roles
+                    .iter()
+                    .find(|v| v.email == email)
+                    .unwrap_or(&DeliberationRole::default())
+                    .clone();
+
+                roles.push(d);
+            }
+
+            for role in roles {
                 let _ = self
-                    .deliberation_contents_member
-                    .insert_with_tx(&mut *tx, user_id, content.id)
+                    .deliberation_contents_role
+                    .insert_with_tx(&mut *tx, role.id, content.id)
                     .await?
                     .ok_or(ApiError::DeliberationLearningException)?;
             }
@@ -985,6 +1170,7 @@ impl DeliberationController {
     async fn create_disscussion(
         &self,
         tx: &mut sqlx::PgConnection,
+        deliberation_roles: Vec<DeliberationRole>,
         deliberation_id: i64,
         discussions: Vec<DeliberationDiscussionCreateRequest>,
     ) -> Result<Vec<DeliberationDiscussion>> {
@@ -1012,10 +1198,22 @@ impl DeliberationController {
                 .await?
                 .ok_or(ApiError::DeliberationDiscussionException)?;
 
-            for user_id in users {
+            let mut roles = vec![];
+
+            for email in users {
+                let d = deliberation_roles
+                    .iter()
+                    .find(|v| v.email == email)
+                    .unwrap_or(&DeliberationRole::default())
+                    .clone();
+
+                roles.push(d);
+            }
+
+            for role in roles {
                 let _ = self
-                    .discussion_member
-                    .insert_with_tx(&mut *tx, user_id, discussion.id)
+                    .discussion_role
+                    .insert_with_tx(&mut *tx, role.id, discussion.id)
                     .await?
                     .ok_or(ApiError::DeliberationDiscussionException)?;
             }
@@ -1069,6 +1267,7 @@ impl DeliberationController {
     async fn upsert_discussion(
         &self,
         tx: &mut sqlx::PgConnection,
+        deliberation_roles: Vec<DeliberationRole>,
         deliberation_id: i64,
         deliberation_discussions: Vec<DeliberationDiscussionCreateRequest>,
     ) -> Result<()> {
@@ -1076,7 +1275,10 @@ impl DeliberationController {
             users,
             resources,
             discussions,
-            ..
+            started_at,
+            ended_at,
+            title,
+            description,
         } in deliberation_discussions.clone()
         {
             let results = DeliberationDiscussion::query_builder()
@@ -1088,7 +1290,12 @@ impl DeliberationController {
 
             let discussion = if results.is_empty() {
                 let v = self
-                    .create_disscussion(&mut *tx, deliberation_id, deliberation_discussions.clone())
+                    .create_disscussion(
+                        &mut *tx,
+                        deliberation_roles.clone(),
+                        deliberation_id,
+                        deliberation_discussions.clone(),
+                    )
                     .await?;
 
                 v.into_iter()
@@ -1101,27 +1308,62 @@ impl DeliberationController {
                     .unwrap_or_else(DeliberationDiscussion::default)
             };
 
+            let _ = self
+                .discussion_repo
+                .update_with_tx(
+                    &mut *tx,
+                    discussion.id,
+                    DeliberationDiscussionRepositoryUpdateRequest {
+                        started_at: Some(started_at),
+                        ended_at: Some(ended_at),
+                        title: Some(title.clone()),
+                        description: Some(description.clone()),
+                        deliberation_id: None,
+                    },
+                )
+                .await?
+                .ok_or(ApiError::DeliberationDiscussionException)?;
+
             // update user
-            let remain_users = DeliberationDiscussionMember::query_builder()
+            let remain_users = DeliberationDiscussionRole::query_builder()
                 .discussion_id_equals(discussion.id)
                 .query()
-                .map(DeliberationDiscussionMember::from)
+                .map(DeliberationDiscussionRole::from)
                 .fetch_all(&self.pool)
                 .await?;
 
             tracing::debug!("remain_users: {:?}", remain_users);
 
             for remain in remain_users {
-                self.discussion_member
+                match self
+                    .discussion_role
                     .delete_with_tx(&mut *tx, remain.id)
-                    .await?
-                    .ok_or(ApiError::DeliberationDiscussionException)?;
+                    .await
+                {
+                    Ok(_) => {}
+                    Err(e) => {
+                        tracing::error!("discussion delete failed with error: {:?}", e);
+                        return Err(ApiError::DeliberationDiscussionException);
+                    }
+                }
             }
 
-            for user_id in users {
+            let mut roles = vec![];
+
+            for email in users {
+                let d = deliberation_roles
+                    .iter()
+                    .find(|v| v.email == email)
+                    .unwrap_or(&DeliberationRole::default())
+                    .clone();
+
+                roles.push(d);
+            }
+
+            for role in roles {
                 let _ = self
-                    .discussion_member
-                    .insert_with_tx(&mut *tx, user_id, discussion.id)
+                    .discussion_role
+                    .insert_with_tx(&mut *tx, role.id, discussion.id)
                     .await?
                     .ok_or(ApiError::DeliberationDiscussionException)?;
             }
@@ -1225,6 +1467,7 @@ impl DeliberationController {
     async fn create_final_survey(
         &self,
         tx: &mut sqlx::PgConnection,
+        deliberation_roles: Vec<DeliberationRole>,
         org_id: i64,
         deliberation_id: i64,
         project_areas: Vec<ProjectArea>,
@@ -1257,10 +1500,22 @@ impl DeliberationController {
                 .await?
                 .ok_or(ApiError::DeliberationFinalSurveyException)?;
 
-            for user_id in users {
+            let mut roles = vec![];
+
+            for email in users {
+                let d = deliberation_roles
+                    .iter()
+                    .find(|v| v.email == email)
+                    .unwrap_or(&DeliberationRole::default())
+                    .clone();
+
+                roles.push(d);
+            }
+
+            for role in roles {
                 let _ = self
-                    .final_member
-                    .insert_with_tx(&mut *tx, user_id, d.id)
+                    .final_role
+                    .insert_with_tx(&mut *tx, role.id, d.id)
                     .await?
                     .ok_or(ApiError::DeliberationFinalSurveyException)?;
             }
@@ -1306,6 +1561,7 @@ impl DeliberationController {
     async fn upsert_final_survey(
         &self,
         tx: &mut sqlx::PgConnection,
+        deliberation_roles: Vec<DeliberationRole>,
         org_id: i64,
         deliberation_id: i64,
         project_areas: Vec<ProjectArea>,
@@ -1333,6 +1589,7 @@ impl DeliberationController {
                 let v = self
                     .create_final_survey(
                         &mut *tx,
+                        deliberation_roles.clone(),
                         org_id,
                         deliberation_id,
                         project_areas.clone(),
@@ -1350,27 +1607,60 @@ impl DeliberationController {
                     .unwrap_or_else(DeliberationFinalSurvey::default)
             };
 
+            let _ = self
+                .final_repo
+                .update_with_tx(
+                    &mut *tx,
+                    d.id,
+                    DeliberationFinalSurveyRepositoryUpdateRequest {
+                        title: Some(title.clone()),
+                        description: Some(description.clone()),
+                        estimate_time: Some(estimate_time),
+                        point: Some(point),
+                        started_at: Some(started_at),
+                        ended_at: Some(ended_at),
+                        deliberation_id: None,
+                    },
+                )
+                .await?
+                .ok_or(ApiError::DeliberationSampleSurveyException)?;
+
             // update user
-            let remain_users = DeliberationFinalSurveyMember::query_builder()
+            let remain_users = DeliberationFinalSurveyRole::query_builder()
                 .final_survey_id_equals(d.id)
                 .query()
-                .map(DeliberationFinalSurveyMember::from)
+                .map(DeliberationFinalSurveyRole::from)
                 .fetch_all(&self.pool)
                 .await?;
 
             tracing::debug!("remain_users: {:?}", remain_users);
 
             for remain in remain_users {
-                self.final_member
-                    .delete_with_tx(&mut *tx, remain.id)
-                    .await?
-                    .ok_or(ApiError::DeliberationFinalSurveyException)?;
+                match self.final_role.delete_with_tx(&mut *tx, remain.id).await {
+                    Ok(_) => {}
+                    Err(e) => {
+                        tracing::error!("final survey delete failed with error: {:?}", e);
+                        return Err(ApiError::DeliberationFinalSurveyException);
+                    }
+                }
             }
 
-            for user_id in users {
+            let mut roles = vec![];
+
+            for email in users {
+                let d = deliberation_roles
+                    .iter()
+                    .find(|v| v.email == email)
+                    .unwrap_or(&DeliberationRole::default())
+                    .clone();
+
+                roles.push(d);
+            }
+
+            for role in roles {
                 let _ = self
-                    .final_member
-                    .insert_with_tx(&mut *tx, user_id, d.id)
+                    .final_role
+                    .insert_with_tx(&mut *tx, role.id, d.id)
                     .await?
                     .ok_or(ApiError::DeliberationFinalSurveyException)?;
             }
@@ -1486,6 +1776,21 @@ impl DeliberationController {
         Ok(())
     }
 
+    async fn insert_deliberation_panel_with_emails(
+        &self,
+        tx: &mut sqlx::PgConnection,
+        deliberation_id: i64,
+        emails: Vec<String>,
+    ) -> Result<()> {
+        for email in emails {
+            self.panel_emails
+                .insert_with_tx(&mut *tx, email, deliberation_id)
+                .await?
+                .ok_or(ApiError::DeliberationPanelException)?;
+        }
+        Ok(())
+    }
+
     async fn insert_deliberation_areas(
         &self,
         tx: &mut sqlx::PgConnection,
@@ -1540,7 +1845,8 @@ impl DeliberationController {
         tx: &mut sqlx::PgConnection,
         deliberation_id: i64,
         roles: Vec<DeliberationRoleCreateRequest>,
-    ) -> Result<()> {
+    ) -> Result<Vec<DeliberationRole>> {
+        let mut deliberation_roles = vec![];
         for DeliberationRoleCreateRequest { email, role } in roles {
             match self
                 .deliberation_role
@@ -1548,8 +1854,9 @@ impl DeliberationController {
                 .await?
                 .ok_or(ApiError::DeliberationUserException)
             {
-                Ok(_) => {
+                Ok(v) => {
                     tracing::debug!("success to create user");
+                    deliberation_roles.push(v);
                 }
                 Err(e) => {
                     tracing::error!("failed to create user with error: {e}");
@@ -1557,7 +1864,7 @@ impl DeliberationController {
             }
         }
 
-        Ok(())
+        Ok(deliberation_roles)
     }
 
     async fn upsert_deliberation_users(
@@ -1565,7 +1872,7 @@ impl DeliberationController {
         tx: &mut sqlx::PgConnection,
         deliberation_id: i64,
         roles: Vec<DeliberationRoleCreateRequest>,
-    ) -> Result<()> {
+    ) -> Result<Vec<DeliberationRole>> {
         let remain_roles = DeliberationRole::query_builder()
             .deliberation_id_equals(deliberation_id)
             .query()
@@ -1584,45 +1891,81 @@ impl DeliberationController {
 
         tracing::debug!("deliberation users: {:?}", roles.clone());
 
-        self.insert_deliberation_users(&mut *tx, deliberation_id, roles.clone())
+        let deliberation_roles = self
+            .insert_deliberation_users(&mut *tx, deliberation_id, roles.clone())
             .await?;
 
-        Ok(())
+        Ok(deliberation_roles)
     }
 
-    async fn upsert_deliberation_panels(
+    async fn upsert_deliberation_panel_with_emails(
         &self,
         tx: &mut sqlx::PgConnection,
         deliberation_id: i64,
-        panel_ids: Vec<i64>,
+        emails: Vec<String>,
     ) -> Result<()> {
-        let remain_panels = PanelDeliberation::query_builder()
+        let remain_panels = DeliberationPanelEmail::query_builder()
             .deliberation_id_equals(deliberation_id)
             .query()
-            .map(PanelDeliberation::from)
+            .map(DeliberationPanelEmail::from)
             .fetch_all(&self.pool)
             .await?;
 
         tracing::debug!("remain_panels: {:?}", remain_panels);
 
         for remain in remain_panels {
-            self.panel_deliberation
-                .delete_with_tx(&mut *tx, remain.id)
-                .await?
-                .ok_or(ApiError::DeliberationPanelException)?;
+            match self.panel_emails.delete_with_tx(&mut *tx, remain.id).await {
+                Ok(_) => {}
+                Err(e) => {
+                    tracing::error!("panel remove failed with error: {:?}", e);
+                    return Err(ApiError::DeliberationPanelException);
+                }
+            }
         }
 
-        tracing::debug!("deliberation panels: {:?}", panel_ids.clone());
-
-        for id in panel_ids.clone() {
-            self.panel_deliberation
-                .insert_with_tx(&mut *tx, id, deliberation_id)
+        for email in emails.clone() {
+            self.panel_emails
+                .insert_with_tx(&mut *tx, email, deliberation_id)
                 .await?
                 .ok_or(ApiError::DeliberationPanelException)?;
         }
 
         Ok(())
     }
+
+    // async fn upsert_deliberation_panels(
+    //     &self,
+    //     tx: &mut sqlx::PgConnection,
+    //     deliberation_id: i64,
+    //     panel_ids: Vec<i64>,
+    // ) -> Result<()> {
+    //     let remain_panels = PanelDeliberation::query_builder()
+    //         .deliberation_id_equals(deliberation_id)
+    //         .query()
+    //         .map(PanelDeliberation::from)
+    //         .fetch_all(&self.pool)
+    //         .await?;
+
+    //     tracing::debug!("remain_panels: {:?}", remain_panels);
+
+    //     for remain in remain_panels {
+    //         self.panel_deliberation
+    //             .delete_with_tx(&mut *tx, remain.id)
+    //             .await?
+    //             .ok_or(ApiError::DeliberationPanelException)?;
+    //     }
+
+    //     tracing::debug!("deliberation panels: {:?}", panel_ids.clone());
+
+    //     for id in panel_ids.clone() {
+    //         self.panel_deliberation
+    //             .insert_with_tx(&mut *tx, id, deliberation_id)
+    //             .await?
+    //             .ok_or(ApiError::DeliberationPanelException)?;
+    //     }
+
+    //     Ok(())
+    // }
 }
 
 impl DeliberationController {
@@ -1633,31 +1976,33 @@ impl DeliberationController {
         let deliberation_resource = DeliberationResource::get_repository(pool.clone());
         let deliberation_survey = DeliberationSurvey::get_repository(pool.clone());
         let deliberation_area = DeliberationArea::get_repository(pool.clone());
-        let panel_deliberation = PanelDeliberation::get_repository(pool.clone());
+
         let survey = SurveyV2::get_repository(pool.clone());
         let basic_info = DeliberationBasicInfo::get_repository(pool.clone());
-        let basic_info_member = DeliberationBasicInfoMember::get_repository(pool.clone());
+        let basic_info_role = DeliberationBasicInfoRole::get_repository(pool.clone());
         let basic_info_resource = DeliberationBasicInfoResource::get_repository(pool.clone());
         let basic_info_survey = DeliberationBasicInfoSurvey::get_repository(pool.clone());
         let sample_survey = DeliberationSampleSurvey::get_repository(pool.clone());
-        let sample_survey_member = DeliberationSampleSurveyMember::get_repository(pool.clone());
+        let sample_survey_role = DeliberationSampleSurveyRole::get_repository(pool.clone());
         let sample_survey_survey = DeliberationSampleSurveySurvey::get_repository(pool.clone());
         let deliberation_contents = DeliberationContent::get_repository(pool.clone());
-        let deliberation_contents_member = DeliberationContentMember::get_repository(pool.clone());
+        let deliberation_contents_role = DeliberationContentRole::get_repository(pool.clone());
         let elearning_repo = Elearning::get_repository(pool.clone());
         let discussion_repo = DeliberationDiscussion::get_repository(pool.clone());
-        let discussion_member = DeliberationDiscussionMember::get_repository(pool.clone());
+        let discussion_role = DeliberationDiscussionRole::get_repository(pool.clone());
         let discussion_resource = DeliberationDiscussionResource::get_repository(pool.clone());
         let disc_repo = Discussion::get_repository(pool.clone());
         let disc_group = DiscussionGroup::get_repository(pool.clone());
         let disc_res = DiscussionResource::get_repository(pool.clone());
         let final_repo = DeliberationFinalSurvey::get_repository(pool.clone());
-        let final_member = DeliberationFinalSurveyMember::get_repository(pool.clone());
+        let final_role = DeliberationFinalSurveyRole::get_repository(pool.clone());
         let final_survey = DeliberationFinalSurveySurvey::get_repository(pool.clone());
         let draft_repo = DeliberationDraft::get_repository(pool.clone());
         let draft_member = DeliberationDraftMember::get_repository(pool.clone());
         let draft_survey = DeliberationDraftSurvey::get_repository(pool.clone());
         let draft_resource = DeliberationDraftResource::get_repository(pool.clone());
+        let panel_emails = DeliberationPanelEmail::get_repository(pool.clone());
+
         Self {
             pool,
             repo,
@@ -1666,31 +2011,31 @@ impl DeliberationController {
             deliberation_resource,
             deliberation_survey,
             deliberation_area,
-            panel_deliberation,
             survey,
             basic_info,
-            basic_info_member,
+            basic_info_role,
             basic_info_resource,
             basic_info_survey,
             sample_survey,
-            sample_survey_member,
+            sample_survey_role,
             sample_survey_survey,
             deliberation_contents,
-            deliberation_contents_member,
+            deliberation_contents_role,
             elearning_repo,
             discussion_repo,
-            discussion_member,
+            discussion_role,
             discussion_resource,
             disc_repo,
             disc_group,
             disc_res,
             final_repo,
-            final_member,
+            final_role,
             final_survey,
             draft_repo,
             draft_member,
             draft_survey,
             draft_resource,
+            panel_emails,
         }
     }
 
@@ -1876,6 +2221,7 @@ mod tests {
                 ProjectArea::City,
                 DeliberationStatus::Draft,
                 user.id,
+                vec![],
                 vec![],
                 vec![],
                 vec![],

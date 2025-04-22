@@ -425,6 +425,7 @@ mod discussion_tests {
                 vec![],
                 vec![],
                 vec![],
+                vec![],
             )
             .await;
         assert!(res.is_ok());
