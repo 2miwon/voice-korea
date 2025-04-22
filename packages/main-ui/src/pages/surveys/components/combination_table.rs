@@ -93,16 +93,16 @@ pub fn CombinationTable(
                         div { class: "flex flex-row flex-1 h-full justify-center items-center",
                             input {
                                 r#type: "number",
-                                class: "flex flex-row w-50 bg-transparent text-text-black focus:outline-none",
+                                class: "flex flex-row w-full text-center bg-transparent text-text-black focus:outline-none",
                                 value: combination.total_rate,
                                 readonly: true,
                             }
                         }
 
-                        div { class: "flex flex-row flex-1 h-full justify-center items-center",
+                        div { class: "flex flex-row flex-1 h-full justify-center items-center p-5",
                             input {
                                 r#type: "number",
-                                class: "flex flex-row w-50 bg-transparent text-text-black focus:outline-none",
+                                class: "flex flex-row w-full bg-background-gray h-full text-center text-text-black focus:outline-none focus:bg-white focus:border focus:border-hover",
                                 value: combination.total_count,
                                 oninput: move |e: Event<FormData>| {
                                     if let Ok(v) = e.value().parse::<i64>() {
