@@ -77,14 +77,10 @@ impl DeliberationSampleSurveyController {
     async fn query(
         &self,
         deliberation_id: i64,
-        auth: Option<Authorization>,
+        _auth: Option<Authorization>,
         param: DeliberationSampleSurveyQuery,
     ) -> Result<QueryResponse<DeliberationSampleSurveySummary>> {
         let mut total_count = 0;
-        let user_id = match auth {
-            Some(Authorization::Bearer { ref claims }) => AppClaims(claims).get_user_id(),
-            _ => 0,
-        };
         let items: Vec<DeliberationSampleSurveySummary> =
             DeliberationSampleSurveySummary::query_builder()
                 .limit(param.size())
@@ -120,14 +116,15 @@ impl DeliberationSampleSurveyController {
             .await?;
 
         let user_response = if user_id != 0 {
-            DeliberationResponse::query_builder()
+            let res = DeliberationResponse::query_builder()
                 .deliberation_id_equals(deliberation_id)
                 .user_id_equals(user_id)
-                .deliberation_type_equals(DeliberationType::Survey)
+                .deliberation_type_equals(DeliberationType::Sample)
                 .query()
                 .map(Into::into)
-                .fetch_all(&self.pool)
-                .await?
+                .fetch_one(&self.pool)
+                .await?;
+            vec![res]
         } else {
             vec![]
         };

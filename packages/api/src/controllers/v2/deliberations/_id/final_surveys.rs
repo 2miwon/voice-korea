@@ -77,21 +77,10 @@ impl DeliberationFinalSurveyController {
     async fn query(
         &self,
         deliberation_id: i64,
-        auth: Option<Authorization>,
+        _auth: Option<Authorization>,
         param: DeliberationFinalSurveyQuery,
     ) -> Result<QueryResponse<DeliberationFinalSurveySummary>> {
         let mut total_count = 0;
-        let user_id = match auth {
-            Some(Authorization::Bearer { ref claims }) => AppClaims(claims).get_user_id(),
-            _ => 0,
-        };
-        let v: Vec<DeliberationResponse> = DeliberationResponse::query_builder()
-            .deliberation_id_equals(deliberation_id)
-            .query()
-            .map(Into::into)
-            .fetch_all(&self.pool)
-            .await?;
-        tracing::debug!("v: {:?}", v);
         let items: Vec<DeliberationFinalSurveySummary> =
             DeliberationFinalSurveySummary::query_builder()
                 .limit(param.size())
@@ -99,7 +88,6 @@ impl DeliberationFinalSurveyController {
                 .deliberation_id_equals(deliberation_id)
                 .query()
                 .map(|row: PgRow| {
-                    tracing::debug!("row: {:?}", row);
                     use sqlx::Row;
 
                     total_count = row.try_get("total_count").unwrap_or_default();
@@ -129,14 +117,15 @@ impl DeliberationFinalSurveyController {
             .await?;
 
         let user_response = if user_id != 0 {
-            DeliberationResponse::query_builder()
+            let res = DeliberationResponse::query_builder()
                 .deliberation_id_equals(deliberation_id)
                 .user_id_equals(user_id)
                 .deliberation_type_equals(DeliberationType::Survey)
                 .query()
                 .map(Into::into)
-                .fetch_all(&self.pool)
-                .await?
+                .fetch_one(&self.pool)
+                .await?;
+            vec![res]
         } else {
             vec![]
         };
