@@ -2096,15 +2096,10 @@ impl DeliberationController {
 
     pub async fn get_deliberation_by_id(
         State(ctrl): State<DeliberationController>,
-        Extension(auth): Extension<Option<Authorization>>,
+        Extension(_auth): Extension<Option<Authorization>>,
         Path(DeliberationPath { org_id, id }): Path<DeliberationPath>,
     ) -> Result<Json<Deliberation>> {
         tracing::debug!("get_deliberation {} {:?}", org_id, id);
-        let user_id = match auth {
-            Some(Authorization::Bearer { ref claims }) => AppClaims(claims).get_user_id(),
-            _ => 0,
-        };
-
         Ok(Json(
             Deliberation::query_builder()
                 .id_equals(id)
