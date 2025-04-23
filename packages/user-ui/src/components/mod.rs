@@ -12,3 +12,6 @@ pub use footer::Footer;
 pub use header::Header;
 pub mod button;
 pub use popup_zone::PopupZone;
+
+mod avatar_label;
+pub use avatar_label::AvatarLabel;

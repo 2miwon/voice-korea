@@ -1,31 +1,12 @@
-#![allow(unused)]
-use crate::{service::user_service::UserService, utils::time::formatted_timestamp_to_sec};
+use crate::service::user_service::UserService;
 use bdk::prelude::*;
-use dioxus_popup::PopupService;
 use indexmap::IndexMap;
 use models::{
-    deliberation::Deliberation,
     deliberation_comment::{
         DeliberationComment, DeliberationCommentQuery, DeliberationCommentSummary,
     },
     deliberation_project::DeliberationProject,
-    deliberation_response::{DeliberationResponse, DeliberationType},
-    deliberation_user::DeliberationUser,
-    deliberation_vote::DeliberationVote,
-    response::Answer,
-    step::Step,
-    step_type::StepType,
-    ChoiceQuestion, PanelCountsV2, PanelV2, ParsedQuestion, Question, ResourceFile, ResourceType,
-    SubjectiveQuestion, SurveyV2,
 };
-use std::collections::HashMap;
-
-use super::i18n::ProjectTranslate;
-
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct SurveyResponses {
-    pub answers: IndexMap<i64, (String, ParsedQuestion)>, // question_id, (title, response_count, <panel_id, answer>)
-}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CommentTree {
@@ -39,7 +20,7 @@ pub struct CommentTree {
     pub replies: i64,
     pub likes: i64,
     pub liked: bool,
-
+    pub nickname: Option<String>,
     pub children: Vec<CommentTree>,
 }
 
@@ -52,12 +33,6 @@ pub struct Controller {
 
     #[allow(dead_code)]
     summary: Resource<DeliberationProject>,
-
-    answers: Signal<Vec<Answer>>,
-    // NOTE: Whether I have ever filled out a survey
-    // NOTE: In the future, it will be linked to the API and the relevant part should be checked.
-    check_edit: Signal<bool>,
-    pub survey_responses: Signal<SurveyResponses>,
 
     pub comments: Resource<Vec<DeliberationCommentSummary>>,
 
@@ -91,6 +66,7 @@ impl Controller {
                     .query(
                         id,
                         DeliberationCommentQuery {
+                            //FIXME: use pagination
                             size: 100,
                             bookmark: None,
                             action: None,
@@ -104,10 +80,6 @@ impl Controller {
         })?;
 
         let mut ctrl = Self {
-            answers: use_signal(|| vec![]),
-            check_edit: use_signal(|| false),
-            survey_responses: use_signal(|| SurveyResponses::default()),
-
             lang,
             id,
             summary,
@@ -132,6 +104,11 @@ impl Controller {
         let mut roots = Vec::new();
 
         for comment in comments.into_iter() {
+            let nickname = if let Some(user) = comment.user.get(0) {
+                user.nickname.clone()
+            } else {
+                None
+            };
             map.insert(
                 comment.id,
                 CommentTree {
@@ -141,7 +118,7 @@ impl Controller {
 
                     comment: comment.comment,
                     parent_id: comment.parent_id,
-
+                    nickname,
                     replies: comment.replies,
                     likes: comment.likes,
                     liked: comment.liked,
@@ -178,54 +155,6 @@ impl Controller {
         roots.extend(orphan_children);
 
         roots
-    }
-
-    pub fn parsing_answers(
-        &self,
-        questions: Vec<Question>,
-        responses: Vec<DeliberationResponse>,
-    ) -> IndexMap<i64, (String, ParsedQuestion)> {
-        let mut survey_maps: IndexMap<i64, (String, ParsedQuestion)> = IndexMap::new();
-
-        for response in responses {
-            for (i, answer) in response.answers.iter().enumerate() {
-                let questions = questions.clone();
-                let question = &questions[i];
-                let title = question.title();
-
-                let parsed_question: ParsedQuestion = (question, answer).into();
-
-                survey_maps
-                    .entry(i as i64)
-                    .and_modify(|survey_data| match &mut survey_data.1 {
-                        ParsedQuestion::SingleChoice { response_count, .. } => {
-                            if let Answer::SingleChoice { answer } = answer {
-                                response_count[(answer - 1) as usize] += 1;
-                            }
-                        }
-                        ParsedQuestion::MultipleChoice { response_count, .. } => {
-                            if let Answer::MultipleChoice { answer } = answer {
-                                for ans in answer {
-                                    response_count[(ans - 1) as usize] += 1;
-                                }
-                            }
-                        }
-                        ParsedQuestion::ShortAnswer { answers } => {
-                            if let Answer::ShortAnswer { answer } = answer {
-                                answers.push(answer.clone());
-                            }
-                        }
-                        ParsedQuestion::Subjective { answers } => {
-                            if let Answer::Subjective { answer } = answer {
-                                answers.push(answer.clone());
-                            }
-                        }
-                    })
-                    .or_insert_with(|| (title, parsed_question.clone()));
-            }
-        }
-
-        survey_maps
     }
 
     pub async fn like_comment(&mut self, id: i64) {
@@ -296,80 +225,5 @@ impl Controller {
                 btracing::error!("send reply failed with error: {:?}", e);
             }
         };
-    }
-
-    pub fn change_answer(&mut self, index: usize, answer: Answer) {
-        let mut answers = self.answers();
-        answers[index] = answer;
-        self.answers.set(answers.clone());
-    }
-
-    pub fn sample_survey_modal_description(&self, lang: Language, ended_at: String) -> String {
-        match lang {
-            Language::Ko => format!("모든 질문 항목에 응답하지 않으면, 보상 대상에서 제외됩니다.\n이번 조사는 [{ended_at} (UTC 기준)]까지 다시 참여할 수 있습니다.\n조사를 계속하시겠습니까?"),
-            Language::En => format!("If you do not answer all the questions, you will not be eligible for rewards.\nYou can re-take this survey until [{ended_at} (UTC)].\nDo you want to continue taking the survey?"),
-        }
-    }
-
-    pub fn get_deliberation_responses(&self) -> Vec<DeliberationResponse> {
-        vec![
-            DeliberationResponse {
-                id: 1,
-                created_at: 1741103145,
-                updated_at: 1741103145,
-                deliberation_id: 1,
-                user_id: 1,
-                answers: vec![
-                    Answer::SingleChoice { answer: 1 },
-                    Answer::SingleChoice { answer: 1 },
-                    Answer::MultipleChoice { answer: vec![1, 2] },
-                    Answer::Subjective {
-                        answer: "subjective answer 1".to_string(),
-                    },
-                    Answer::ShortAnswer {
-                        answer: "short answer 1".to_string(),
-                    },
-                ],
-                deliberation_type: DeliberationType::Sample,
-            },
-            DeliberationResponse {
-                id: 2,
-                created_at: 1741103145,
-                updated_at: 1741103145,
-                deliberation_id: 1,
-                user_id: 2,
-                answers: vec![
-                    Answer::SingleChoice { answer: 1 },
-                    Answer::SingleChoice { answer: 1 },
-                    Answer::MultipleChoice { answer: vec![1] },
-                    Answer::Subjective {
-                        answer: "subjective answer 2".to_string(),
-                    },
-                    Answer::ShortAnswer {
-                        answer: "short answer 2".to_string(),
-                    },
-                ],
-                deliberation_type: DeliberationType::Sample,
-            },
-            DeliberationResponse {
-                id: 3,
-                created_at: 1741103145,
-                updated_at: 1741103145,
-                deliberation_id: 1,
-                user_id: 3,
-                answers: vec![
-                    Answer::SingleChoice { answer: 1 },
-                    Answer::SingleChoice { answer: 1 },
-                    Answer::MultipleChoice { answer: vec![1, 3] },
-                    Answer::Subjective {
-                        answer: "subjective answer 3".to_string(),
-                    },
-                    Answer::ShortAnswer {
-                        answer: "short answer 3".to_string(),
-                    },
-                ],
-                deliberation_type: DeliberationType::Sample,
-            },
-        ]
     }
 }

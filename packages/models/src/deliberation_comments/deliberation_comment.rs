@@ -2,6 +2,8 @@
 use bdk::prelude::*;
 use validator::Validate;
 
+use crate::User;
+
 // TODO(web): using comments for all project view
 // NOTE: now replies on a comment is not supported
 #[derive(Validate)]
@@ -35,4 +37,7 @@ pub struct DeliberationComment {
 
     #[api_model(summary, many_to_many = deliberation_comments_likes, table_name = users, foreign_primary_key = user_id, foreign_reference_key = comment_id, aggregator = exist)]
     pub liked: bool,
+
+    #[api_model(summary, one_to_many = users, reference_key = user_id, foreign_key = id)]
+    pub user: Vec<User>,
 }

@@ -1,79 +1,74 @@
+use bdk::prelude::*;
 use by_components::charts::{
     horizontal_bar::HorizontalBar,
     pie_chart::{PieChart, PieChartData},
 };
-use dioxus::prelude::*;
-use dioxus_translate::{translate, Language};
 use models::ParsedQuestion;
 
-use crate::{
-    components::icons::left_arrow::LeftArrow,
-    pages::projects::_id::components::final_survey::i18n::FinalSurveyTranslate,
-};
+use crate::pages::projects::_id::components::tab_title::TabTitleWithPrev;
 
-use super::controllers::FinalSurveyResponses;
-
+use super::i18n::SurveyStatisticsTranslate;
 #[component]
-pub fn FinalStatistics(
+pub fn SurveyStatistics(
     lang: Language,
-    responses: FinalSurveyResponses,
+    grouped_answers: Vec<(String, ParsedQuestion)>,
     onprev: EventHandler<MouseEvent>,
 ) -> Element {
-    let tr: FinalSurveyTranslate = translate(&lang);
-    let answers = responses.answers;
-
+    let tr: SurveyStatisticsTranslate = translate(&lang);
     rsx! {
-        div { class: "max-[1000px]:px-30 flex flex-col w-full justify-start items-start gap-10 mt-28 mb-40",
-            div { class: "flex flex-row justify-start items-center gap-8",
-                div {
-                    class: "cursor-pointer w-24 h-24",
-                    onclick: move |e: Event<MouseData>| {
-                        onprev.call(e);
-                    },
-                    LeftArrow { stroke: "black" }
+        TabTitleWithPrev {
+            title: tr.response_per_question,
+            onprev: move |e: Event<MouseData>| {
+                onprev.call(e);
+            },
+        }
+        Statistics { lang, grouped_answers }
+    }
+}
+
+#[component]
+pub fn Statistics(lang: Language, grouped_answers: Vec<(String, ParsedQuestion)>) -> Element {
+    rsx! {
+        for (i , (title , parsed_question)) in grouped_answers.iter().enumerate() {
+            match parsed_question {
+                ParsedQuestion::SingleChoice { answers, response_count } => {
+                    rsx! {
+                        div { class: "flex flex-col w-full",
+                            ObjectiveBox {
+                                lang,
+                                title,
+                                answers: answers.clone(),
+                                answer_count: response_count.clone(),
+                                index: i,
+                                is_single: true,
+                            }
+                        }
+                    }
                 }
-                div { class: "font-semibold text-text-black text-20", "{tr.response_per_question}" }
-            }
-            for (i , (_key , (title , parsed_question))) in answers.iter().enumerate() {
-                match parsed_question {
-                    ParsedQuestion::SingleChoice { answers, response_count } => {
-                        rsx! {
-                            div { class: "flex flex-col w-full",
-                                ObjectiveBox {
-                                    lang,
-                                    title,
-                                    answers: answers.clone(),
-                                    answer_count: response_count.clone(),
-                                    index: i,
-                                }
+                ParsedQuestion::MultipleChoice { answers, response_count } => {
+                    rsx! {
+                        div { class: "flex flex-col w-full",
+                            ObjectiveBox {
+                                lang,
+                                title,
+                                answers: answers.clone(),
+                                answer_count: response_count.clone(),
+                                index: i,
                             }
                         }
                     }
-                    ParsedQuestion::MultipleChoice { answers, response_count } => {
-                        rsx! {
-                            div { class: "flex flex-col w-full",
-                                ObjectiveBox {
-                                    lang,
-                                    title,
-                                    answers: answers.clone(),
-                                    answer_count: response_count.clone(),
-                                    index: i,
-                                }
-                            }
+                }
+                ParsedQuestion::ShortAnswer { answers } => {
+                    rsx! {
+                        div { class: "flex flex-col w-full",
+                            SubjectiveBox { lang, title, answers: answers.clone() }
                         }
                     }
-                    ParsedQuestion::ShortAnswer { answers } => {
-                        rsx! {
-                            div { class: "flex flex-col w-full",
-                                SubjectiveBox { lang, title, answers: answers.clone() }
-                            }
-                        }
-                    }
-                    ParsedQuestion::Subjective { answers } => {
-                        rsx! {
-                            div { class: "flex flex-col w-full",
-                                SubjectiveBox { lang, title, answers: answers.clone() }
-                            }
+                }
+                ParsedQuestion::Subjective { answers } => {
+                    rsx! {
+                        div { class: "flex flex-col w-full",
+                            SubjectiveBox { lang, title, answers: answers.clone() }
                         }
                     }
                 }
@@ -81,7 +76,6 @@ pub fn FinalStatistics(
         }
     }
 }
-
 #[component]
 pub fn ObjectiveBox(
     lang: Language,
@@ -91,7 +85,7 @@ pub fn ObjectiveBox(
     answer_count: Vec<i64>,
     #[props(default = false)] is_single: bool,
 ) -> Element {
-    let tr: FinalSurveyTranslate = translate(&lang);
+    let tr: SurveyStatisticsTranslate = translate(&lang);
     let mut pie_charts: Signal<Vec<PieChartData>> = use_signal(|| vec![]);
     let mut total_answers: Signal<i32> = use_signal(|| 0);
 
@@ -119,15 +113,15 @@ pub fn ObjectiveBox(
                         div { class: "flex flex-row justify-start items-center gap-5",
                             if is_single {
                                 div { class: "font-semibold text-base text-necessary-red",
-                                    "{tr.necessary}"
+                                    {tr.necessary}
                                 }
                             } else {
                                 div { class: "font-semibold text-base text-optional-blue",
-                                    "{tr.plural}"
+                                    {tr.plural}
                                 }
                             }
-                            div { class: "font-semibold text-text-black text-base leading-22",
-                                "{title}"
+                            div { class: "font-semibold text-text-black text-16 leading-22",
+                                {title}
                             }
                         }
                     }
@@ -135,7 +129,7 @@ pub fn ObjectiveBox(
                 div { class: "flex flex-row w-full h-1 justify-start items-start bg-quiz-border my-7" }
             }
 
-            div { class: "flex flex-row w-full justify-between items-start",
+            div { class: "flex max-[1100px]:flex-col max-[1100px]:gap-20 flex-row w-full justify-between items-start",
                 div { class: "flex flex-col flex-1 justify-start items-start gap-20",
                     for (i , answer) in answers.clone().iter().enumerate() {
                         div { class: "flex flex-col w-full justify-start items-start gap-5",
@@ -150,11 +144,11 @@ pub fn ObjectiveBox(
                                         value: answer_count[i],
                                         height: "23px",
                                         max_value: total_answers() as i64,
-                                        class: "flex flex-row flex-1 bg-line-gray rounded-[6px] overflow-hidden",
+                                        class: "flex flex-row flex-1 bg-line-gray rounded-md",
                                     }
                                 }
 
-                                div { class: "w-[200px] font-medium text-text-quiz-black text-[15px] leading-22",
+                                div { class: "w-200 font-medium text-text-quiz-black text-[15px] leading-22",
                                     {
                                         format!(
                                             "{:?}{} ({:.2}%)",
@@ -176,7 +170,7 @@ pub fn ObjectiveBox(
                     id: format!("pie_chart_{index}"),
                     width: "500px",
                     height: "500px",
-                    class: "w-500 max-[1300px]:w-300 max-[800px]:hidden sm:block",
+                    class: "max-[1300px]:min-w-300 max-[800px]:hidden sm:block",
                     data: pie_charts(),
                 }
             }
@@ -186,7 +180,7 @@ pub fn ObjectiveBox(
 
 #[component]
 pub fn SubjectiveBox(lang: Language, title: String, answers: Vec<String>) -> Element {
-    let tr: FinalSurveyTranslate = translate(&lang);
+    let tr: SurveyStatisticsTranslate = translate(&lang);
 
     rsx! {
         div { class: "flex flex-col w-full  bg-white px-40 py-20 rounded-lg gap-20",
@@ -202,11 +196,11 @@ pub fn SubjectiveBox(lang: Language, title: String, answers: Vec<String>) -> Ele
             }
 
             div { class: "flex flex-col w-full justify-start items-start gap-5",
-                div { class: "font-medium text-text-quiz-black text-[15px]", "{tr.subjective_answer}" }
+                div { class: "font-medium text-text-quiz-black text-15", {tr.subjective_answer} }
 
                 div { class: "flex flex-col w-full justify-start items-start gap-10",
                     for answer in answers.clone() {
-                        div { class: "flex flex-row w-full justify-start items-center px-15 py-10 rounded-sm bg-box-gray",
+                        div { class: "flex flex-row w-full justify-start items-center px-15 py-10 rounded-4 bg-box-gray",
                             div { class: "font-medium text-text-black text-[15px] leading-22",
                                 "{answer}"
                             }

@@ -23,7 +23,7 @@ pub fn ProfilePage(lang: Language) -> Element {
 
     rsx! {
         div { class: "flex flex-col w-full justify-center items-center mt-80",
-            div { class: "flex flex-col max-w-1300 w-full justify-start items-start gap-60",
+            div { class: "flex flex-col max-w-desktop w-full justify-start items-start gap-60",
                 ProfileBanner { lang, profile: project.user }
 
                 div { class: "flex flex-col w-full justify-start items-start gap-40",

@@ -7,8 +7,9 @@ use crate::SurveyV2;
 use bdk::prelude::*;
 use validator::Validate;
 
+//FIXME: ADD ROLES
 #[derive(Validate)]
-#[api_model(base = "/v2/deliberations/:deliberation-id/drafts", table = deliberation_drafts, action = [create(users = Vec<i64>, resources = Vec<i64>, surveys = Vec<i64>)])]
+#[api_model(base = "/v2/deliberations/:deliberation-id/drafts", table = deliberation_drafts, read_action = read, action = [create(users = Vec<i64>, resources = Vec<i64>, surveys = Vec<i64>)])]
 pub struct DeliberationDraft {
     #[api_model(summary, primary_key)]
     pub id: i64,
@@ -44,13 +45,9 @@ pub struct DeliberationDraft {
     #[serde(default)]
     pub surveys: Vec<SurveyV2>,
 
-    // responses is a list of responses of a user(requester) for surveys.
-    #[api_model(summary, one_to_many = deliberation_responses, foreign_key = deliberation_id, reference_key = deliberation_id)]
+    #[api_model(skip)]
     #[serde(default)]
     pub responses: Vec<DeliberationResponse>,
-
-    #[api_model(summary, one_to_many = deliberation_reports, foreign_key = deliberation_id)]
-    pub reports: Vec<DeliberationReport>,
 }
 
 impl Into<DeliberationDraftCreateRequest> for DeliberationDraft {

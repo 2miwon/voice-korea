@@ -2102,7 +2102,6 @@ impl DeliberationController {
         Path(DeliberationPath { org_id, id }): Path<DeliberationPath>,
     ) -> Result<Json<Deliberation>> {
         tracing::debug!("get_deliberation {} {:?}", org_id, id);
-        // FIXME: {"DatabaseQueryError": "error returned from database: relation \"f\" does not exist"
         Ok(Json(
             Deliberation::query_builder()
                 .id_equals(id)

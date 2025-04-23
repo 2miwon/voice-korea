@@ -7,6 +7,7 @@ use dioxus::prelude::*;
 use dioxus_translate::{translate, Language};
 
 use crate::{
+    components::AvatarLabel,
     pages::projects::_id::{components::comments::CommentTranslate, controller::CommentTree},
     utils::time::format_prev_time,
 };
@@ -30,19 +31,10 @@ pub fn CommentItem(
 
             div { class: "flex flex-col w-full justify-start items-start gap-[14px]",
 
-                // Profile Section
-                div { class: "flex flex-row w-full justify-start items-center gap-[8px]",
-                    div { class: "w-[40px] h-[40px] bg-[#D9D9D9] rounded-[100px]" }
-                    div { class: "flex flex-col w-full justify-start items-start gap-[4px]",
-                        div { class: "font-semibold text-[15px] text-[#222222] leading-[19px]",
-                            "{tr.anonymity}"
-                        }
-                        div { class: "font-semibold text-[12px] text-[#6D6D6D] leading-[15px]",
-                            "{prev_time}"
-                        }
-                    }
+                AvatarLabel {
+                    label: if let Some(nickname) = comment.nickname { nickname } else { tr.anonymity.to_string() },
+                    sub: prev_time,
                 }
-
                 // Comment List Section
                 div { class: "flex flex-col w-full justify-start items-start gap-[20px] px-[40px]",
                     div { class: "font-medium text-[16px] text-[#222222]", {comment.comment} }
@@ -76,7 +68,7 @@ pub fn CommentItem(
                                     show_reply.set(!show_reply());
                                 },
                                 div { class: "font-medium text-[16px] text-[#222222] leading-[24px] max-[500px]:text-sm",
-                                    "{tr.reply_comment}"
+                                    {tr.reply_comment}
                                 }
                             }
                         }
@@ -137,19 +129,10 @@ pub fn ReplyCommentList(lang: Language, replies: Vec<CommentTree>) -> Element {
         div { class: "flex flex-col w-full justify-start items-start pl-[14px] gap-[20px]",
             for reply in replies {
                 div { class: "flex flex-col w-full justify-start items-start gap-[10px]",
-                    div { class: "flex flex-row w-full justify-start items-center gap-[20px]",
-                        div { class: "flex flex-row w-fit justify-start items-center gap-[8px]",
-                            div { class: "w-[32px] h-[32px] bg-[#D9D9D9] rounded-full" }
-                            div { class: "font-semibold text-[15px] text-[#222222] leading-[19px]",
-                                "{tr.anonymity}"
-                            }
-                        }
-
-                        div { class: "font-medium text-[12px] text-[#222222]",
-                            {format_prev_time(reply.created_at)}
-                        }
+                    AvatarLabel {
+                        label: if let Some(nickname) = reply.nickname { nickname } else { tr.anonymity.to_string() },
+                        sub: format_prev_time(reply.created_at),
                     }
-
                     div { class: "flex flex-row w-full justify-start items-start pl-[32px]",
                         div { class: "font-medium text-[16px] text-[#222222] leading-[24px]",
                             {reply.comment}

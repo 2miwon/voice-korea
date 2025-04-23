@@ -24,6 +24,9 @@ pub struct Elearning {
     pub resources: Vec<ResourceFile>,
     #[api_model(summary, action = create, action_by_id = update)]
     pub necessary: bool,
+    // TODO: Add Speaker
+    // TODO: Add Thumbnail_image
+    // TOAO: Add User Progress
 }
 
 impl Into<ElearningCreateRequest> for Elearning {

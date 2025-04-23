@@ -1,3 +1,15 @@
 @import "tailwindcss";
 @import "./theme.css";
 
+.no-scrollbar {
+  @apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+}
+
+@layer base {
+  button {
+    @apply cursor-pointer;
+  }
+  button:disabled {
+    @apply cursor-default;
+  }
+}
