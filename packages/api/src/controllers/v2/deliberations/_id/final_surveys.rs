@@ -117,17 +117,17 @@ impl DeliberationFinalSurveyController {
             .await?;
 
         let user_response = if user_id != 0 {
-            let res = DeliberationResponse::query_builder()
+            DeliberationResponse::query_builder()
                 .deliberation_id_equals(deliberation_id)
                 .user_id_equals(user_id)
                 .deliberation_type_equals(DeliberationType::Survey)
                 .query()
                 .map(Into::into)
-                .fetch_one(&self.pool)
-                .await?;
-            vec![res]
+                .fetch_optional(&self.pool)
+                .await?
+                .map_or_else(Vec::new, |res| vec![res])
         } else {
-            vec![]
+            Vec::new()
         };
 
         let mut res: DeliberationFinalSurvey = DeliberationFinalSurvey::query_builder()
