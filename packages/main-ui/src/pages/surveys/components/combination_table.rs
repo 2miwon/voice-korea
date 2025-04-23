@@ -168,12 +168,12 @@ translate! {
     }
 
     error_title: {
-        ko: "조합별 비율 총합 오류",
-        en: "Total error by combination ratio"
+        ko: "조합별 인원 총합 오류",
+        en: "Total number of people by combination error"
     }
 
     error_description: {
-        ko: "조합별 비율 합계는 반드시 100%여야 합니다. 입력값을 다시 확인해주세요.",
-        en: "The sum of the percentages for each combination must be 100%. Please check your input values ​​again."
+        ko: "조합별 인원수의 총 합은 내가 설정한 총 인원과 동일해야 합니다. 입력값을 다시 확인해주세요.",
+        en: "The total number of people in each combination must be the same as the total number of people I set. Please check the input values ​​again."
     }
 }
