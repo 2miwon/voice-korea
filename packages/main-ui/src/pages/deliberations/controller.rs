@@ -128,15 +128,9 @@ impl Controller {
     pub fn move_user_page(&self, project_id: i64) {
         use web_sys::window;
 
-        let lang = self.lang;
         let url = crate::config::get().user_url;
 
-        let user_domain = format!(
-            "{}/{}/projects/{}",
-            url,
-            if lang == Language::Ko { "ko" } else { "en" },
-            project_id
-        );
+        let user_domain = format!("{}/{}/projects/{}", url, self.lang, project_id);
 
         if let Some(w) = window() {
             let _ = w.open_with_url(&user_domain);
