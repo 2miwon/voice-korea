@@ -46,7 +46,7 @@ use models::{
 use sqlx::postgres::PgRow;
 use step::StepCreateRequest;
 
-use crate::{controllers::v2::organizations::OrganizationPath, utils::app_claims::AppClaims};
+use crate::controllers::v2::organizations::OrganizationPath;
 
 #[derive(
     Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema, aide::OperationIo,
