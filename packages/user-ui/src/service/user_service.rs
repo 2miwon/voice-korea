@@ -11,7 +11,7 @@ pub enum UserEvent {
     Logout,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct UserService {
     pub cli: Signal<UserClient>,
     pub firebase: Signal<FirebaseService>,

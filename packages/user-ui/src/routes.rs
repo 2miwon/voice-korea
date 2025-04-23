@@ -3,7 +3,7 @@ use dioxus_translate::Language;
 
 use crate::pages::{layout::MainLayout, *};
 
-#[derive(Clone, Routable)]
+#[derive(Clone, PartialEq, Eq, Routable)]
 #[rustfmt::skip]
 pub enum Route {
     #[nest("/:lang")]
@@ -18,10 +18,13 @@ pub enum Route {
             ProjectListPage { lang: Language },
         #[end_layout]
 
-        #[layout(ProjectLayout)]
-            #[route("/projects/:project_id")]
-            ProjectPage { lang: Language, project_id: i64 },
-        #[end_layout]
+        #[nest("/project")]
+            #[layout(ProjectLayout)]
+                #[route("/:project_id")]
+                ProjectPage { lang: Language, project_id: i64 },
+            #[end_layout]
+        #[end_nest]
+
 
         #[layout(GovernanceLayout)]
             #[route("/governance/:governance_id")]

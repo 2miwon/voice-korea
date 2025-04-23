@@ -13,6 +13,7 @@ use models::{
         DeliberationDraftGetResponse, DeliberationDraftParam, DeliberationDraftQuery,
         DeliberationDraftSummary,
     },
+    deliberation_response::{DeliberationResponse, DeliberationType},
     *,
 };
 use sqlx::postgres::PgRow;
@@ -56,6 +57,10 @@ impl DeliberationDraftController {
                 };
                 DeliberationDraftGetResponse::Query(res)
             }
+            DeliberationDraftParam::Read(action) => match action.action {
+                Some(DeliberationDraftReadActionType::Read) => ctrl.read(deliberation_id).await?,
+                _ => return Err(ApiError::InvalidAction),
+            },
         };
 
         Ok(Json(res))
@@ -85,5 +90,24 @@ impl DeliberationDraftController {
             .await?;
 
         Ok(QueryResponse { total_count, items })
+    }
+
+    async fn read(&self, deliberation_id: i64) -> Result<DeliberationDraftGetResponse> {
+        let responses = DeliberationResponse::query_builder()
+            .deliberation_id_equals(deliberation_id)
+            .deliberation_type_equals(DeliberationType::Survey)
+            .query()
+            .map(Into::into)
+            .fetch_all(&self.pool)
+            .await?;
+
+        let mut res: DeliberationDraft = DeliberationDraft::query_builder()
+            .deliberation_id_equals(deliberation_id)
+            .query()
+            .map(Into::into)
+            .fetch_one(&self.pool)
+            .await?;
+        res.responses = responses;
+        Ok(DeliberationDraftGetResponse::Read(res))
     }
 }

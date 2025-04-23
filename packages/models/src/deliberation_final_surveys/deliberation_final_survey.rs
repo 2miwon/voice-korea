@@ -2,15 +2,16 @@
 use bdk::prelude::*;
 use validator::Validate;
 
-use crate::deliberation_response::DeliberationResponse;
+use crate::deliberation_response::*;
 use crate::deliberation_role::DeliberationRole;
 use crate::deliberation_user::DeliberationUser;
 use crate::Question;
 use crate::SurveyV2;
 use crate::User;
 
+//FIXME: read_action = get_by_id rename action
 #[derive(Validate)]
-#[api_model(base = "/v2/deliberations/:deliberation-id/final-surveys", table = deliberation_final_surveys, action = [create(users = Vec<String>, surveys = Vec<Question>)])]
+#[api_model(base = "/v2/deliberations/:deliberation-id/final-surveys", table = deliberation_final_surveys, read_action = get_by_id , action = [create(users = Vec<String>, surveys = Vec<Question>)])]
 pub struct DeliberationFinalSurvey {
     #[api_model(summary, primary_key)]
     pub id: i64,
@@ -54,12 +55,13 @@ pub struct DeliberationFinalSurvey {
     #[serde(default)]
     pub surveys: Vec<SurveyV2>,
 
-    #[api_model(summary, one_to_many = deliberation_responses, foreign_key = deliberation_id)]
+    #[api_model(skip)]
     #[serde(default)]
     pub responses: Vec<DeliberationResponse>,
-    // NOTE: skipped data for chart, responses per question types
-    #[api_model(summary, one_to_many = deliberation_responses, foreign_key = deliberation_id, aggregator = count)]
-    pub response_count: i64,
+
+    #[api_model(skip)]
+    #[serde(default)]
+    pub user_response: Vec<DeliberationResponse>,
 }
 
 impl Into<DeliberationFinalSurveyCreateRequest> for DeliberationFinalSurvey {

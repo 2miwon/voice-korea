@@ -5,6 +5,8 @@ use crate::{ResourceFile, User};
 
 // TODO(web): using resource for discussion tab on a project
 // TODO(api): implement action_by_id action(start_meeting) of POST /v2/deliberations/:deliberation-id/discussions/:id
+
+// TODO: Add Activities in Discussion.
 #[derive(Validate)]
 #[api_model(base = "/v2/deliberations/:deliberation-id/discussions", table = discussions, action = [create(resources = Vec<i64>, users = Vec<i64>)], action_by_id = [start_meeting, delete])]
 pub struct Discussion {

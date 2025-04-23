@@ -32,7 +32,7 @@ pub fn ReviewSection(
                 div { class: "font-bold text-[28px] leading-32 text-text-gray self-center",
                     "{tr.participation_review}"
                 }
-                div { class: "flex flex-row w-full justify-center items-center gap-20 max-w-1300 self-center",
+                div { class: "flex flex-row w-full justify-center items-center gap-20 max-w-desktop self-center",
                     Button {
                         class: "rounded-lg px-6 py-8",
                         disabled: page == 1,

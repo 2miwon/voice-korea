@@ -46,7 +46,7 @@ use models::{
 use sqlx::postgres::PgRow;
 use step::StepCreateRequest;
 
-use crate::controllers::v2::organizations::OrganizationPath;
+use crate::{controllers::v2::organizations::OrganizationPath, utils::app_claims::AppClaims};
 
 #[derive(
     Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema, aide::OperationIo,
@@ -2096,11 +2096,15 @@ impl DeliberationController {
 
     pub async fn get_deliberation_by_id(
         State(ctrl): State<DeliberationController>,
-        Extension(_auth): Extension<Option<Authorization>>,
+        Extension(auth): Extension<Option<Authorization>>,
         Path(DeliberationPath { org_id, id }): Path<DeliberationPath>,
     ) -> Result<Json<Deliberation>> {
         tracing::debug!("get_deliberation {} {:?}", org_id, id);
-        // FIXME: {"DatabaseQueryError": "error returned from database: relation \"f\" does not exist"
+        let user_id = match auth {
+            Some(Authorization::Bearer { ref claims }) => AppClaims(claims).get_user_id(),
+            _ => 0,
+        };
+
         Ok(Json(
             Deliberation::query_builder()
                 .id_equals(id)

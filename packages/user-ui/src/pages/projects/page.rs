@@ -14,8 +14,8 @@ pub fn ProjectListPage(lang: Language) -> Element {
     let projects = ctrl.projects()?.items;
 
     rsx! {
-        div { class: "flex flex-col w-full justify-center items-center mt-80",
-            div { class: "max-w-1300 mt-60 flex flex-col w-full justify-start items-start gap-20",
+        div { class: "flex flex-col w-full justify-center items-center",
+            div { class: "max-w-desktop flex flex-col w-full justify-start items-start gap-20",
                 div { class: "flex flex-row w-full justify-start items-start gap-15",
                     SearchProject {
                         lang,
@@ -65,7 +65,7 @@ pub fn SearchProject(lang: Language, onsearch: EventHandler<String>) -> Element 
 
     rsx! {
         // text write area
-        div { class: "max-w-1300 min-h-48 w-full relative border-1 border-input-border-gray rounded-lg flex justify-start items-center px-10",
+        div { class: "max-w-desktop min-h-48 w-full relative border-1 border-input-border-gray rounded-lg flex justify-start items-center px-10",
             Search { class: "[&>path]:stroke-icon-gray [&>circle]:stroke-icon-gray" }
             // text input area
             input {

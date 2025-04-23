@@ -18,7 +18,7 @@ pub fn ProjectLayout(lang: Language) -> Element {
                 rsx! { "error : " }
             },
             div { class: "flex flex-col w-screen min-h-screen justify-center items-center bg-white text-black",
-                div { class: "w-full flex flex-col max-w-1300 px-10",
+                div { class: "w-full flex flex-col max-w-desktop px-10",
                     ProjectHeader { lang: lang.clone() }
                 }
                 div { class: "w-full flex flex-col justify-center items-center",
@@ -28,7 +28,9 @@ pub fn ProjectLayout(lang: Language) -> Element {
                                 CubeLoader {}
                             }
                         },
-                        div { class: "flex flex-col w-full min-h-lvh", Outlet::<Route> {} }
+                        div { class: "flex flex-col w-full min-h-lvh pt-(--header-height)",
+                            Outlet::<Route> {}
+                        }
                     }
                 }
                 PopupZone {}
