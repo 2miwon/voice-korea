@@ -328,8 +328,6 @@ impl Controller {
         let v = survey.attribute_quotas;
         let sum: i64 = v.iter().map(|g| g.user_count).sum();
 
-        tracing::debug!("panel sum: {:?} {:?}", sum, survey.quotas);
-
         if survey.name.is_empty() {
             btracing::e!(self.lang, ValidationError::TitleRequired);
             return false;

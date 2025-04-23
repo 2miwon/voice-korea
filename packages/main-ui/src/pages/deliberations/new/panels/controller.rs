@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use bdk::prelude::*;
 use regex::Regex;
 
@@ -108,6 +110,8 @@ impl Controller {
             .map(|v| v.to_string())
             .collect();
 
+        let mut seen = HashSet::new();
+
         for email in emails.clone() {
             let email_regex = Regex::new(r"(?i)^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$").unwrap();
 
@@ -117,6 +121,11 @@ impl Controller {
             }
 
             if self.emails().iter().any(|e| e.clone() == email) {
+                btracing::error!("{}", tr.already_exists_error);
+                return;
+            }
+
+            if !seen.insert(email.clone()) {
                 btracing::error!("{}", tr.already_exists_error);
                 return;
             }

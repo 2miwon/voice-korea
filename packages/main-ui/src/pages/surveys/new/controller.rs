@@ -440,6 +440,10 @@ impl Controller {
         let selected_attributes = self.selected_attributes();
         let mut attribute_options = self.attribute_options();
 
+        if self.attribute_update() {
+            return;
+        }
+
         for key in &selected_attributes {
             if let Some(groups) = attribute_options.get_mut(key) {
                 let len = groups.len();
