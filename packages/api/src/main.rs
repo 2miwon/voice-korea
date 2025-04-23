@@ -19,7 +19,8 @@ use models::{
     deliberation_response::DeliberationResponse, deliberation_role::DeliberationRole,
     deliberation_sample_survey_roles::deliberation_sample_survey_role::DeliberationSampleSurveyRole,
     deliberation_user::DeliberationUser, deliberation_vote::DeliberationVote,
-    invitation::Invitation, response::SurveyResponse, review::Review, v2::Institution,
+    discussion_participants::DiscussionParticipant, invitation::Invitation,
+    response::SurveyResponse, review::Review, v2::Institution,
 };
 use models::{
     deliberation_basic_info_members::deliberation_basic_info_member::DeliberationBasicInfoMember,
@@ -138,6 +139,7 @@ async fn migration(pool: &sqlx::Pool<sqlx::Postgres>) -> Result<()> {
         Invitation,
         Institution,
         DeliberationReport,
+        DiscussionParticipant,
         Review,
         DeliberationResponse,
         DeliberationUser,

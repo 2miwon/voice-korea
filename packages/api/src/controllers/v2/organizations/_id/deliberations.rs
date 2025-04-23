@@ -1238,6 +1238,7 @@ impl DeliberationController {
                         disc.description,
                         disc.maximum_count,
                         None,
+                        "".to_string(),
                     )
                     .await?
                     .ok_or(ApiError::DeliberationDiscussionException)?;
@@ -1440,6 +1441,7 @@ impl DeliberationController {
                         disc.description,
                         disc.maximum_count,
                         None,
+                        "".to_string(),
                     )
                     .await?
                     .ok_or(ApiError::DeliberationDiscussionException)?;

@@ -65,6 +65,7 @@ pub mod deliberation_users;
 pub mod deliberation_votes;
 pub mod deliberations;
 pub mod discussion_groups;
+pub mod discussion_participants;
 pub mod discussion_resources;
 pub mod discussions;
 pub mod dto;

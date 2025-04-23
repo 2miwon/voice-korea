@@ -5,9 +5,11 @@ use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_translate::*;
 use models::{
-    discussions::Discussion, DeliberationDiscussion, DeliberationDiscussionQuery,
-    DeliberationDiscussionSummary, Tab,
+    discussions::Discussion,
+    dto::{AttendeeInfo, MeetingData, MeetingInfo},
+    DeliberationDiscussion, DeliberationDiscussionQuery, DeliberationDiscussionSummary, Tab,
 };
+use web_sys::js_sys::eval;
 
 use crate::{
     pages::projects::_id::components::accordion::Accordion,
@@ -32,7 +34,7 @@ pub fn DiscussionComponent(
     #[props(extends = GlobalAttributes)] attributes: Vec<Attribute>,
     children: Element,
 ) -> Element {
-    let ctrl = Controller::new(lang, project_id)?;
+    let mut ctrl = Controller::new(lang, project_id)?;
     let tr: DiscussionTranslate = translate(&lang);
 
     let deliberation_discussion: DeliberationDiscussionSummary = ctrl.discussion()?;
@@ -72,8 +74,91 @@ pub fn DiscussionComponent(
                 VideoDiscussion {
                     lang,
                     discussions: deliberation_discussion.discussions.clone(),
+                    is_recording: (ctrl.is_recording)(),
                     start_meeting: move |id: i64| async move {
                         let _ = ctrl.start_meeting(id).await;
+                        let meeting_info = (ctrl.meeting_info)();
+                        let attendee_info = (ctrl.attendee_info)();
+                        let js = format!(
+                            r#"
+                                                            setTimeout(async () => {{
+                                                            const logger = new window.chime.ConsoleLogger("log", window.chime.LogLevel.INFO);
+                                                            const deviceController = new window.chime.DefaultDeviceController(logger);
+                                                            const config = new window.chime.MeetingSessionConfiguration({meeting}, {attendee});
+                                                            const session = new window.chime.DefaultMeetingSession(config, logger, deviceController);
+                                                            const audioInputs = await session.audioVideo.listAudioInputDevices();
+                                                            const videoInputs = await session.audioVideo.listVideoInputDevices();
+                                                            await session.audioVideo.startAudioInput(audioInputs[0].deviceId);
+                                                            await session.audioVideo.startVideoInput(videoInputs[0].deviceId);
+                                                            let isVideoOn = true;
+                                                            let isAudioMuted = false;
+                                                            let isShared = false;
+                                                            window._videoOn = true;
+                                                            window._shared = false;
+                                                            window._audioMuted = false;
+                                                            window._toggleVideo = function () {{
+                                                                if (!window._videoOn) {{
+                                                                    session.audioVideo.startLocalVideoTile();
+                                                                    window._videoOn = true;
+                                                                }} else {{
+                                                                    session.audioVideo.stopLocalVideoTile();
+                                                                    window._videoOn = false;
+                                                                }}
+                                                            }};
+                                                            window._toggleAudio = function () {{
+                                                                if (window._audioMuted) {{
+                                                                    session.audioVideo.realtimeUnmuteLocalAudio();
+                                                                    window._audioMuted = false;
+                                                                }} else {{
+                                                                    session.audioVideo.realtimeMuteLocalAudio();
+                                                                    window._audioMuted = true;
+                                                                }}
+                                                            }};
+                                                            window._toggleShared = async function () {{
+                                                                if (window._shared) {{
+                                                                    await session.audioVideo.stopContentShare();
+                                                                    window._shared = false;
+                                                                }} else {{
+                                                                    await session.audioVideo.startContentShareFromScreenCapture();
+                                                                    window._shared = true;
+                                                                }}
+                                                            }};
+                                                            session.audioVideo.addObserver({{
+                                                                videoTileDidUpdate: (tileState) => {{
+                                                                    if (!tileState.tileId || tileState.isContent) return;
+                                                                    let videoElement = document.getElementById("video-tile-" + tileState.tileId);
+                                                                    if (!videoElement) {{
+                                                                        videoElement = document.createElement("video");
+                                                                        videoElement.id = "video-tile-" + tileState.tileId;
+                                                                        videoElement.autoplay = true;
+                                                                        videoElement.playsInline = true;
+                                                                        videoElement.muted = tileState.localTile;
+                                                                        videoElement.className = "w-[240px] h-[180px] rounded shadow-lg m-2";
+                                                                        document.getElementById("video-grid").appendChild(videoElement);
+                                                                    }}
+                                                                    session.audioVideo.bindVideoElement(tileState.tileId, videoElement);
+                                                                }},
+                                                                videoTileWasRemoved: (tileId) => {{
+                                                                    const elem = document.getElementById("video-tile-" + tileId);
+                                                                    if (elem) elem.remove();
+                                                                }}
+                                                            }});
+                                                            session.audioVideo.start();
+                                                            session.audioVideo.startLocalVideoTile();
+                                                            window._chimeSession = session;
+                                                        }}, 500);
+                                                        "#,
+                            meeting = serde_json::to_string(&meeting_info).unwrap(),
+                            attendee = serde_json::to_string(&attendee_info).unwrap(),
+                        );
+                        let _ = eval(&js);
+                    },
+
+                    start_recording: move |discussion_id: i64| async move {
+                        ctrl.start_recording(discussion_id).await;
+                    },
+                    end_recording: move |discussion_id: i64| async move {
+                        ctrl.end_recording(discussion_id).await;
                     },
                 }
 
@@ -123,6 +208,10 @@ pub fn VideoDiscussion(
     lang: Language,
     discussions: Vec<Discussion>,
     start_meeting: EventHandler<i64>,
+    is_recording: bool,
+
+    start_recording: EventHandler<i64>,
+    end_recording: EventHandler<i64>,
 ) -> Element {
     let tr: DiscussionTranslate = translate(&lang);
 
@@ -135,6 +224,71 @@ pub fn VideoDiscussion(
                         discussion: discussion.clone(),
                         start_meeting,
                     }
+
+                    div { class: "flex gap-4 mt-4 mb-4 px-[20px]",
+                        button {
+                            class: "px-4 py-2 bg-blue-500 text-white rounded",
+                            onclick: move |_| {
+                                let _ = eval(
+                                    r#"
+                                                                                        if (window._toggleAudio) {
+                                                                                            window._toggleAudio();
+                                                                                        }
+                                                                                    "#,
+                                );
+                            },
+                            "마이크 On/Off"
+                        }
+                        button {
+                            class: "px-4 py-2 bg-purple-500 text-white rounded",
+                            onclick: move |_| {
+                                let _ = eval(
+                                    r#"
+                                                                                        if (window._toggleVideo) {
+                                                                                            window._toggleVideo();
+                                                                                        }
+                                                                                    "#,
+                                );
+                            },
+                            "비디오 On/Off"
+                        }
+                        button {
+                            class: "px-4 py-2 bg-green-500 text-white rounded",
+                            onclick: move |_| {
+                                let _ = eval(
+                                    r#"
+                                                                                        if (window._toggleShared) {
+                                                                                            window._toggleShared();
+                                                                                        }
+                                                                                    "#,
+                                );
+                            },
+                            "화면 공유 On/Off"
+                        }
+
+                        button {
+                            class: "px-4 py-2 bg-red-500 text-white rounded",
+                            onclick: {
+                                let discussion_id = discussion.id;
+                                move |_| {
+                                    if is_recording {
+                                        end_recording.call(discussion_id);
+                                    } else {
+                                        start_recording.call(discussion_id);
+                                    }
+                                }
+                            },
+                            if is_recording {
+                                "화면 녹화 중지"
+                            } else {
+                                "화면 녹화"
+                            }
+                        }
+                    }
+                }
+                div {
+                    id: "video-grid",
+                    class: "flex flex-wrap justify-start items-start w-full px-[20px]",
                 }
             }
         }
@@ -254,6 +408,11 @@ pub struct Controller {
     project_id: ReadOnlySignal<i64>,
 
     discussion: Resource<DeliberationDiscussionSummary>,
+
+    meeting_info: Signal<MeetingInfo>,
+    attendee_info: Signal<AttendeeInfo>,
+
+    is_recording: Signal<bool>,
 }
 
 impl Controller {
@@ -277,16 +436,74 @@ impl Controller {
             lang,
             project_id,
             discussion,
+
+            meeting_info: use_signal(|| MeetingInfo::default()),
+            attendee_info: use_signal(|| AttendeeInfo::default()),
+
+            is_recording: use_signal(|| false),
         };
 
         Ok(ctrl)
     }
 
-    pub async fn start_meeting(&self, discussion_id: i64) {
+    pub async fn end_recording(&mut self, discussion_id: i64) {
         let project_id = self.project_id();
+
+        let is_recording = self.is_recording();
+
+        if is_recording {
+            let _ = Discussion::get_client(&crate::config::get().api_url)
+                .end_recording(project_id, discussion_id)
+                .await
+                .unwrap_or_default();
+
+            self.is_recording.set(false);
+        }
+    }
+
+    pub async fn start_recording(&mut self, discussion_id: i64) {
+        let project_id = self.project_id();
+
         let _ = Discussion::get_client(&crate::config::get().api_url)
+            .start_recording(project_id, discussion_id)
+            .await
+            .unwrap_or_default();
+
+        self.is_recording.set(true);
+    }
+
+    pub async fn start_meeting(&mut self, discussion_id: i64) {
+        let project_id = self.project_id();
+        let meeting = Discussion::get_client(&crate::config::get().api_url)
             .start_meeting(project_id, discussion_id)
-            .await;
+            .await
+            .unwrap_or_default();
+
+        tracing::debug!("meeting: {:?}", meeting);
+
+        let participant = Discussion::get_client(&crate::config::get().api_url)
+            .participant_meeting(project_id, discussion_id)
+            .await
+            .unwrap_or_default();
+
+        tracing::debug!("discussion participant: {:?}", participant);
+
+        let meeting = match MeetingData::get_client(&crate::config::get().api_url)
+            .find_one(project_id, discussion_id)
+            .await
+        {
+            Ok(v) => {
+                tracing::debug!("meeting data: {:?}", meeting);
+                v
+            }
+            Err(e) => {
+                tracing::debug!("get_meeting data error: {:?}", e);
+                MeetingData::default()
+            }
+        };
+
+        self.meeting_info.set(meeting.meeting);
+        self.attendee_info.set(meeting.attendee);
     }
 
     pub async fn download_file(&self, name: String, url: Option<String>) {
