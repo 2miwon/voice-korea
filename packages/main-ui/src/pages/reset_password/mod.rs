@@ -93,7 +93,7 @@ pub fn ResetPasswordPage(props: ResetPasswordPageProps) -> Element {
     let translates: ResetPasswordTranslate = translate(&props.lang.clone());
 
     rsx! {
-        div { class: "flex flex-col w-full h-full items-start justify-center px-[170px] py-[85px]",
+        div { class: "flex flex-col w-full h-full items-start justify-center px-170 py-85",
             if ctrl.get_step() == 0 {
                 EmailAuthentication {
                     lang: props.lang,
@@ -164,19 +164,19 @@ pub fn ResetPasswordPage(props: ResetPasswordPageProps) -> Element {
 #[component]
 pub fn CompleteResetPassword(props: CompleteResetPasswordProps) -> Element {
     rsx! {
-        div { class: "flex flex-col w-full h-full justify-center items-center pt-[160px]",
+        div { class: "flex flex-col w-full h-full justify-center items-center pt-160",
             img {
-                class: "flex flex-col pb-[30px]",
+                class: "flex flex-col pb-30",
                 src: asset!("/public/images/check_mark.png"),
                 alt: "Checkmark",
             }
-            div { class: "text-[26px] font-bold text-black pb-[30px]",
+            div { class: "text-[26px] font-bold text-black pb-30",
                 "{props.i18n.complete_change_password_title}"
             }
             div { class: "text-[20px] font-normal text-black",
                 "{props.i18n.complete_change_password_description[0]}"
             }
-            div { class: "text-[20px] font-normal text-black mb-[110px]",
+            div { class: "text-[20px] font-normal text-black mb-110",
                 "{props.i18n.complete_change_password_description[1]}"
             }
             div { class: "flex flex-row w-full justify-end items-end",
@@ -184,7 +184,7 @@ pub fn CompleteResetPassword(props: CompleteResetPasswordProps) -> Element {
                     to: Route::LoginPage {
                         lang: props.lang,
                     },
-                    div { class: "flex flex-row w-[300px] h-[60px] bg-[#2168c3] justify-center items-center text-white font-bold text-[24px]",
+                    div { class: "flex flex-row w-300 h-60 bg-blue-button justify-center items-center text-white font-bold text-[24px]",
                         "{props.i18n.go_to_login}"
                     }
                 }
@@ -198,9 +198,9 @@ pub fn ResetNewPassword(props: ResetNewPasswordProps) -> Element {
     let mut ctrl: Controller = use_context();
     rsx! {
         div { class: "flex flex-col w-full h-full",
-            div { class: "text-[32px] font-bold text-black pb-[30px]", "{props.i18n.reset_password}" }
+            div { class: "text-[32px] font-bold text-black pb-30", "{props.i18n.reset_password}" }
             div { class: "flex flex-col w-full h-full",
-                div { class: "flex flex-col w-full h-full items-start justify-center pb-[30px]",
+                div { class: "flex flex-col w-full h-full items-start justify-center pb-30",
                     Row {
                         enable_bottom_border: false,
                         label: props.i18n.input_new_password_label,
@@ -208,7 +208,7 @@ pub fn ResetNewPassword(props: ResetNewPasswordProps) -> Element {
     || ctrl.get_password_unknown_error() { 100 as u64 } else { 70 as u64 },
                         element: rsx! {
                             div { class: "flex flex-row w-full h-full justify-start items-center",
-                                div { class: "flex flex-col w-min justify-start items-start mx-[10px]",
+                                div { class: "flex flex-col w-min justify-start items-start mx-10",
                                     Input {
                                         value: ctrl.get_new_password(),
                                         input_type: "password",
@@ -241,7 +241,7 @@ pub fn ResetNewPassword(props: ResetNewPasswordProps) -> Element {
                         height: if ctrl.get_password_check_error() { 100 as u64 } else { 70 as u64 },
                         element: rsx! {
                             div { class: "flex flex-row w-full h-full justify-start items-center",
-                                div { class: "flex flex-col w-min justify-start items-start mx-[10px]",
+                                div { class: "flex flex-col w-min justify-start items-start mx-10",
                                     Input {
                                         value: ctrl.get_new_password_check(),
                                         input_type: "password",
@@ -262,15 +262,15 @@ pub fn ResetNewPassword(props: ResetNewPasswordProps) -> Element {
                     }
                 }
             }
-            div { class: "flex flex-col w-full h-min min-w-[710px] border-solid border border-[#e0e0e0] px-[20px] py-[30px] mt-[30px] mb-[175px]",
-                div { class: "text-black text-[20px] font-normal pb-[20px]", "{props.i18n.check_title}" }
-                div { class: "text-[#636363] text-[20px] font-normal pb-[5px]",
+            div { class: "flex flex-col w-full h-min min-w-[710px] border-solid border border-gray-border px-20 py-30 mt-30 mb-175",
+                div { class: "text-black text-[20px] font-normal pb-20", "{props.i18n.check_title}" }
+                div { class: "text-[#636363] text-[20px] font-normal pb-5",
                     "{props.i18n.check_new_password_description[0]}"
                 }
             }
             div { class: "flex flex-row w-full justify-end items-end",
                 div {
-                    class: "flex flex-row w-[300px] h-[60px] bg-[#2168c3] justify-center items-center text-white font-bold text-[24px]",
+                    class: "flex flex-row w-300 h-60 bg-blue-button justify-center items-center text-white font-bold text-[24px]",
                     onclick: move |_| async move {
                         ctrl.clicked_reset_new_password().await;
                     },
@@ -286,9 +286,9 @@ pub fn EmailAuthentication(props: EmailAuthenticationProps) -> Element {
     let mut ctrl: Controller = use_context();
     rsx! {
         div { class: "flex flex-col w-full h-full",
-            div { class: "text-[32px] font-bold text-black pb-[30px]", "{props.i18n.reset_password}" }
+            div { class: "text-[32px] font-bold text-black pb-30", "{props.i18n.reset_password}" }
             div { class: "flex flex-col w-full h-full",
-                div { class: "flex flex-col w-full h-full items-start justify-center pb-[30px]",
+                div { class: "flex flex-col w-full h-full items-start justify-center pb-30",
                     Row {
                         enable_bottom_border: false,
                         label: props.i18n.email_address_label,
@@ -304,11 +304,11 @@ pub fn EmailAuthentication(props: EmailAuthenticationProps) -> Element {
                                         border: if ctrl.get_email_address_error() || ctrl.get_not_exists_email_error() { "border-[#ff0000]" } else { "border-[#E0E0E0]" },
                                     }
                                     if ctrl.get_email_address_error() {
-                                        div { class: "mt-[10px] font-normal text-[#ff0000] text-[12px]",
+                                        div { class: "mt-10 font-normal text-[#ff0000] text-[12px]",
                                             {props.i18n.incollect_email_form}
                                         }
                                     } else if ctrl.get_not_exists_email_error() {
-                                        div { class: "mt-[10px] font-normal text-[#ff0000] text-[12px]",
+                                        div { class: "mt-10 font-normal text-[#ff0000] text-[12px]",
                                             {props.i18n.not_exists_email}
                                         }
                                     }
@@ -375,8 +375,8 @@ pub fn EmailAuthentication(props: EmailAuthenticationProps) -> Element {
                         height: if ctrl.get_invalid_authkey_error() { 160 as u64 } else { 135 as u64 },
                         label: props.i18n.authentication_number_label,
                         element: rsx! {
-                            div { class: "flex flex-col w-full h-full justify-start items-start mt-[10px] ml-[10px]",
-                                div { class: "pb-[5px]",
+                            div { class: "flex flex-col w-full h-full justify-start items-start mt-10 ml-10",
+                                div { class: "pb-5",
                                     Input {
                                         value: ctrl.get_authentication_number(),
                                         onchange: move |e| {
@@ -384,18 +384,18 @@ pub fn EmailAuthentication(props: EmailAuthenticationProps) -> Element {
                                         },
                                     }
                                 }
-                                div { class: "text-[16px] font-normal text-[#636363]",
+                                div { class: "text-base font-normal text-[#636363]",
                                     "{props.i18n.authentication_number_description[0]}"
                                 }
-                                div { class: "text-[16px] font-normal text-[#636363]",
+                                div { class: "text-base font-normal text-[#636363]",
                                     "{props.i18n.authentication_number_description[1]}"
                                 }
                                 if ctrl.get_invalid_authkey_error() {
-                                    div { class: "mt-[10px] font-normal text-[#ff0000] text-[12px]",
+                                    div { class: "mt-10 font-normal text-[#ff0000] text-[12px]",
                                         {props.i18n.not_matched_authentication}
                                     }
                                 } else if ctrl.get_unknown_error() {
-                                    div { class: "mt-[10px] font-normal text-[#ff0000] text-[12px]",
+                                    div { class: "mt-10 font-normal text-[#ff0000] text-[12px]",
                                         {props.i18n.retry_send_authentication}
                                     }
                                 }
@@ -404,21 +404,21 @@ pub fn EmailAuthentication(props: EmailAuthenticationProps) -> Element {
                     }
                 }
             }
-            div { class: "flex flex-col w-full h-min min-w-[710px] border-solid border border-[#e0e0e0] px-[20px] py-[30px] my-[30px]",
-                div { class: "text-black text-[20px] font-normal pb-[20px]", "{props.i18n.check_title}" }
-                div { class: "text-[#636363] text-[20px] font-normal pb-[5px]",
+            div { class: "flex flex-col w-full h-min min-w-[710px] border-solid border border-gray-border px-20 py-30 my-30",
+                div { class: "text-black text-[20px] font-normal pb-20", "{props.i18n.check_title}" }
+                div { class: "text-[#636363] text-[20px] font-normal pb-5",
                     "{props.i18n.check_description[0]}"
                 }
-                div { class: "text-[#636363] text-[20px] font-normal pb-[5px]",
+                div { class: "text-[#636363] text-[20px] font-normal pb-5",
                     "{props.i18n.check_description[1]}"
                 }
-                div { class: "text-[#636363] text-[20px] font-normal pb-[5px]",
+                div { class: "text-[#636363] text-[20px] font-normal pb-5",
                     "{props.i18n.check_description[2]}"
                 }
             }
             div { class: "flex flex-row w-full justify-end items-end",
-                div {
-                    class: "flex flex-row w-[300px] h-[60px] bg-[#2168c3] justify-center items-center text-white font-bold text-[24px]",
+                button {
+                    class: "flex flex-row w-300 h-60 bg-blue-button justify-center items-center text-white font-bold text-[24px]",
                     onclick: move |_| async move {
                         ctrl.verify_code().await;
                     },
@@ -435,21 +435,21 @@ pub fn SendAuthenticationButton(props: SendAuthenticationButtonProps) -> Element
         Some(w) => format!("w-[{}px]", w),
         None => {
             if props.lang == Language::En {
-                "w-[270px]".to_string()
+                "w-270".to_string()
             } else {
-                "w-[135px]".to_string()
+                "w-135".to_string()
             }
         }
     };
 
     rsx! {
-        div {
-            class: format!("flex flex-col {} h-[35px] justify-start items-start", width),
+        button {
+            class: format!("flex flex-col {} h-35 justify-start items-start", width),
             onclick: move |evt| {
                 props.onclick.call(evt);
             },
             style: "border: 1px solid; border-color: rgba(33, 104, 195, 0.5); border-radius: 5px; background-clip: padding-box; background-color: rgba(33, 104, 195, 0.04);",
-            div { class: "flex flex-row justify-center items-center w-full h-full text-[#2168c3] font-normal text-[15px]",
+            div { class: "flex flex-row justify-center items-center w-full h-full text-blue-button font-normal text-[15px]",
                 {props.label}
             }
         }
