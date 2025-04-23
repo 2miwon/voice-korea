@@ -40,7 +40,14 @@ pub fn ParticipantDistributeTable(
                 .collect::<Vec<AttributeGroupInfo>>();
 
             attribute_groups.set(new_groups);
-            current_page.set(1);
+        }
+    }));
+
+    use_effect(use_reactive(&(total_page(), current_page()), {
+        move |(total, current)| {
+            if current > total {
+                current_page.set(1);
+            }
         }
     }));
 
