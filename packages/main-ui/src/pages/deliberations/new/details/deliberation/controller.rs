@@ -34,7 +34,7 @@ impl Controller {
 
         let metadatas = use_server_future(move || {
             let page = 1;
-            let size = 100;
+            let size = 300;
             async move {
                 let client = ResourceFile::get_client(&config::get().api_url);
                 let org_id = user.get_selected_org();
@@ -232,7 +232,10 @@ impl Controller {
             return;
         }
         self.deliberation.with_mut(|req| {
-            let question_field = Question::new(&field);
+            let question = req.questions[index].clone();
+            let mut question_field = Question::new(&field);
+            question_field.set_title(&question.title());
+            question_field.set_description(&question.description());
             req.questions[index] = question_field;
         });
     }

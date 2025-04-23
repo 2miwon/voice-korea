@@ -51,6 +51,10 @@ translate! {
         ko: "보기",
         en: "View"
     },
+    move_to_user_page: {
+        ko: "이동하기",
+        en: "Move"
+    }
     view_result: {
         ko: "결과 보기",
         en: "View Result"

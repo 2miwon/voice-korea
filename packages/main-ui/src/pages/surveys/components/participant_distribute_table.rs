@@ -130,7 +130,7 @@ pub fn ParticipantDistributeTable(
                             div { class: "flex flex-row flex-1 h-full justify-center items-center",
                                 input {
                                     r#type: "number",
-                                    class: "flex flex-row w-50 bg-transparent text-text-black focus:outline-none",
+                                    class: "flex flex-row w-full h-full bg-background-gray text-text-black focus:outline-none focus:bg-white focus:border focus:border-hover text-center",
                                     value: group.rate,
                                     oninput: {
                                         let name = group.name.clone();

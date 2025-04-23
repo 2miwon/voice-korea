@@ -23,6 +23,7 @@ use crate::deliberation_user::DeliberationUser;
 // use crate::deliberation_user::DeliberationUserRepositoryQueryBuilder;
 
 use bdk::prelude::*;
+use chrono::Utc;
 use validator::Validate;
 
 use crate::deliberation_report::DeliberationReport;
@@ -151,6 +152,26 @@ pub struct Deliberation {
 
     #[api_model(summary, many_to_one = users, action = create)]
     pub creator_id: i64,
+}
+
+impl DeliberationSummary {
+    pub fn deliberation_status(&self) -> DeliberationStatus {
+        match self.status {
+            DeliberationStatus::Draft => DeliberationStatus::Draft,
+            _ => {
+                let now = Utc::now();
+                let timestamp_millis = now.timestamp();
+
+                if timestamp_millis < self.started_at {
+                    DeliberationStatus::Ready
+                } else if timestamp_millis > self.ended_at {
+                    DeliberationStatus::Finish
+                } else {
+                    DeliberationStatus::InProgress
+                }
+            }
+        }
+    }
 }
 
 #[derive(Clone, Copy, Translate, Eq, PartialEq, Default, Debug, ApiModel)]

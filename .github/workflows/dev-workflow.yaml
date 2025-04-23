@@ -113,6 +113,7 @@ jobs:
           REGION: ap-northeast-2
           ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          USER_URL: https://dev.voice-korea.com
           API_URL: https://voice-korea-api.dev.voice-korea.com
           ENV: dev
           STACK: voice-korea-console-dev-stack

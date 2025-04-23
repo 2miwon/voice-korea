@@ -743,7 +743,7 @@ impl DeliberationController {
                 .insert_with_tx(
                     &mut *tx,
                     title,
-                    ProjectType::Deliberation,
+                    ProjectType::SampleSurvey,
                     project_areas
                         .clone()
                         .get(0)
@@ -910,7 +910,7 @@ impl DeliberationController {
                 .insert_with_tx(
                     &mut *tx,
                     title,
-                    ProjectType::Deliberation,
+                    ProjectType::SampleSurvey,
                     project_areas
                         .clone()
                         .get(0)
@@ -1525,7 +1525,7 @@ impl DeliberationController {
                 .insert_with_tx(
                     &mut *tx,
                     title,
-                    ProjectType::Deliberation,
+                    ProjectType::FinalSurvey,
                     project_areas
                         .clone()
                         .get(0)
@@ -1687,7 +1687,7 @@ impl DeliberationController {
                 .insert_with_tx(
                     &mut *tx,
                     title,
-                    ProjectType::Deliberation,
+                    ProjectType::FinalSurvey,
                     project_areas
                         .clone()
                         .get(0)

@@ -13,13 +13,14 @@ ifneq ("$(PROFILE)","default")
 endif
 
 API_URL ?= https://voice-korea-api.dev.voice-korea.com
+USER_URL ?= https://dev.voice-korea.com
 ACCESS_KEY_ID ?= $(shell aws configure get aws_access_key_id $(AWS_FLAG))
 SECRET_ACCESS_KEY ?= $(shell aws configure get aws_secret_access_key $(AWS_FLAG))
 REGION ?= $(shell aws configure get region)
 RUSTFLAGS ?= -D warnings
 RUST_LOG ?= debug
 
-BUILD_ENV ?= ENV=$(ENV) VERSION=$(VERSION) COMMIT=$(COMMIT) RUST_LOG=$(RUST_LOG) AWS_REGION=${REGION} AWS_ACCESS_KEY_ID=${ACCESS_KEY_ID} AWS_SECRET_ACCESS_KEY=${SECRET_ACCESS_KEY} BASE_URL=$(BASE_URL) API_URL=${API_URL} RUSTFLAGS="${RUSTFLAGS}" CARGO_TARGET_DIR=$(CARGO_TARGET_DIR)
+BUILD_ENV ?= ENV=$(ENV) VERSION=$(VERSION) COMMIT=$(COMMIT) RUST_LOG=$(RUST_LOG) AWS_REGION=${REGION} AWS_ACCESS_KEY_ID=${ACCESS_KEY_ID} AWS_SECRET_ACCESS_KEY=${SECRET_ACCESS_KEY} BASE_URL=$(BASE_URL) API_URL=${API_URL} USER_URL=${USER_URL} RUSTFLAGS="${RUSTFLAGS}" CARGO_TARGET_DIR=$(CARGO_TARGET_DIR)
 
 run: public
 	$(BUILD_ENV) dx serve

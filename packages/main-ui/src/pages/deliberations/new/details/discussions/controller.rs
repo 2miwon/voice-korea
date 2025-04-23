@@ -5,7 +5,10 @@ use models::{
 };
 
 use crate::{
-    config, routes::Route, service::login_service::LoginService, utils::time::current_timestamp,
+    config,
+    routes::Route,
+    service::login_service::LoginService,
+    utils::time::{current_midnight_timestamp, current_timestamp},
 };
 
 use super::DeliberationNewController;
@@ -30,7 +33,7 @@ impl Controller {
 
         let metadatas = use_server_future(move || {
             let page = 1;
-            let size = 100;
+            let size = 300;
             async move {
                 let client = ResourceFile::get_client(&config::get().api_url);
                 let org_id = user.get_selected_org();
@@ -147,8 +150,8 @@ impl Controller {
 
     pub fn add_discussion(&mut self) {
         let mut disc = DiscussionCreateRequest::default();
-        disc.started_at = current_timestamp();
-        disc.ended_at = current_timestamp();
+        disc.started_at = current_midnight_timestamp();
+        disc.ended_at = current_midnight_timestamp();
 
         self.discussion.with_mut(|req| {
             req.discussions.push(disc);

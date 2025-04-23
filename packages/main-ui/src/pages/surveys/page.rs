@@ -188,7 +188,8 @@ pub fn SurveyPage(props: SurveyProps) -> Element {
                                                 rsx! {
                                                     div {
                                                         class: "flex flex-row w-120 min-w-[120px] h-full justify-center items-center cursor-pointer",
-                                                        visibility: if survey.finished() || survey.project_type == ProjectType::Deliberation { "hidden" } else { "" },
+                                                        visibility: if survey.finished() || survey.project_type == ProjectType::SampleSurvey
+                                                        || survey.project_type == ProjectType::FinalSurvey { "hidden" } else { "" },
                                                         onclick: {
                                                             let id = survey.id.clone();
                                                             move |_| async move {
