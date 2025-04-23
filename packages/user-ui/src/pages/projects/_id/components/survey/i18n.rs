@@ -10,7 +10,7 @@ translate! {
 
     status_ready: {
         ko: "조사가 준비중입니다.",
-        en: "The survey is underway."
+        en: "The survey is being prepared."
     }
     status_progress: {
         ko: "조사 참여하기",
@@ -39,7 +39,7 @@ translate! {
     }
     unit: {
         ko: "명",
-        en: "Unit"
+        en: "People"
     }
     subjective_answer: {
         ko: "주관식 답변",
@@ -71,7 +71,7 @@ translate! {
         en: "Submit"
     }
 
-    survey_input_placehoder: {
+    survey_input_placeholder: {
         ko: "내용을 입력해주세요",
         en: "Please Enter Details"
     }
@@ -92,7 +92,7 @@ translate! {
         en: "Remove"
     }
 
-    survey_input_placehoder: {
+    survey_input_placeholder: {
         ko: "내용을 입력해주세요",
         en: "Please Enter Details"
     }

@@ -28,36 +28,8 @@ translate! {
         ko: "최종 투표 주제",
         en: "Final Vote Topic",
     }
-    see_detail: {
-        ko: "자세히 보기",
-        en: "See Detail"
-    }
     my_answer: {
         ko: "내가 작성한 답변",
         en: "My Answer"
-    }
-    response_per_question: {
-        ko: "질문별 응답",
-        en: "Responses to each question"
-    }
-    necessary: {
-        ko: "[필수]",
-        en: "[Necessary]"
-    }
-    plural: {
-        ko: "[복수]",
-        en: "[Plural]"
-    }
-    unit: {
-        ko: "명",
-        en: "Unit"
-    }
-    subjective_answer: {
-        ko: "주관식 답변",
-        en: "Subjective Answer"
-    }
-    submit: {
-        ko: "제출하기",
-        en: "Submit"
     }
 }
