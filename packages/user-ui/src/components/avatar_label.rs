@@ -12,7 +12,11 @@ pub fn AvatarLabel(
         div { class: "flex flex-row justify-start items-center gap-10 {class}",
             div { class: "w-40 h-40 bg-profile-gray rounded-full shrink-0",
                 if let Some(url) = img_url {
-                    img { class: "w-full h-full rounded-full", src: "{url}" }
+                    img {
+                        class: "w-full h-full rounded-full",
+                        alt: "{label} avatar",
+                        src: "{url}",
+                    }
                 }
             }
             div { class: "flex flex-col justify-center flex-1 overflow-hidden",

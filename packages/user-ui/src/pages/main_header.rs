@@ -16,7 +16,7 @@ pub fn MainHeader(lang: Language) -> Element {
             A {
                 lang,
                 href: "#service",
-                selected: SELECTED_MENU == 1,
+                selected: SELECTED_MENU() == 1,
                 onclick: move |_| {
                     expanded.set(false);
                 },
@@ -25,7 +25,7 @@ pub fn MainHeader(lang: Language) -> Element {
             A {
                 lang,
                 href: "#project",
-                selected: SELECTED_MENU == 2,
+                selected: SELECTED_MENU() == 2,
                 onclick: move |_| {
                     expanded.set(false);
                 },
@@ -34,7 +34,7 @@ pub fn MainHeader(lang: Language) -> Element {
             A {
                 lang,
                 href: "#institution",
-                selected: SELECTED_MENU == 3,
+                selected: SELECTED_MENU() == 3,
                 onclick: move |_| {
                     expanded.set(false);
                 },
@@ -43,7 +43,7 @@ pub fn MainHeader(lang: Language) -> Element {
             A {
                 lang,
                 href: "#price",
-                selected: SELECTED_MENU == 4,
+                selected: SELECTED_MENU() == 4,
                 onclick: move |_| {
                     expanded.set(false);
                 },
@@ -52,7 +52,7 @@ pub fn MainHeader(lang: Language) -> Element {
             A {
                 lang,
                 href: "#inquiry",
-                selected: SELECTED_MENU == 5,
+                selected: SELECTED_MENU() == 5,
                 onclick: move |_| {
                     expanded.set(false);
                 },
@@ -61,7 +61,7 @@ pub fn MainHeader(lang: Language) -> Element {
             A {
                 lang,
                 href: "#footer",
-                selected: SELECTED_MENU == 6,
+                selected: SELECTED_MENU() == 6,
                 onclick: move |_| {
                     expanded.set(false);
                 },

@@ -13,7 +13,7 @@ pub struct Controller {
     deliberation_id: ReadOnlySignal<i64>,
 
     basic_info: Resource<DeliberationBasicInfoSummary>,
-    commitees: Memo<IndexMap<String, Vec<DeliberationRole>>>,
+    committees: Memo<IndexMap<String, Vec<DeliberationRole>>>,
 }
 
 impl Controller {
@@ -43,17 +43,17 @@ impl Controller {
             }
         })?;
 
-        let commitees: Memo<IndexMap<String, Vec<DeliberationRole>>> = use_memo(move || {
+        let committees: Memo<IndexMap<String, Vec<DeliberationRole>>> = use_memo(move || {
             if let Some(basic_info) = basic_info() {
-                let mut commitees: IndexMap<String, Vec<DeliberationRole>> = IndexMap::new();
+                let mut committees: IndexMap<String, Vec<DeliberationRole>> = IndexMap::new();
                 for deliberation_role in basic_info.roles.iter() {
                     let role_name = deliberation_role.role.translate(&lang);
-                    commitees
+                    committees
                         .entry(role_name.to_string())
                         .or_insert_with(Vec::new)
                         .push(deliberation_role.clone());
                 }
-                commitees
+                committees
             } else {
                 IndexMap::new()
             }
@@ -62,7 +62,7 @@ impl Controller {
             lang,
             deliberation_id,
             basic_info,
-            commitees,
+            committees,
         };
 
         Ok(ctrl)

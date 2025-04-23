@@ -57,7 +57,7 @@ pub fn BasicInfo(lang: Language, project_id: ReadOnlySignal<i64>, children: Elem
 
                 Accordion { title: tr.committee_title,
                     div { class: "w-full flex flex-col gap-12 [&>:last-child]:hidden",
-                        for (title , members) in ctrl.commitees() {
+                        for (title , members) in ctrl.committees() {
                             Committee { title, members }
                         }
                     }

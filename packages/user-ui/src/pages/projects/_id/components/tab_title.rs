@@ -33,12 +33,12 @@ pub fn TabTitleWithPrev(
     rsx! {
         Wrapper { class,
             div { class: "flex flex-row justify-start items-center gap-8",
-                div {
-                    class: "cursor-pointer w-[24px] h-[24px]",
+                button {
+                    class: "w-[24px] h-[24px]",
                     onclick: move |e: Event<MouseData>| {
                         onprev.call(e);
                     },
-                    ChevronLeft { class: "[&>stroke]:storke-black" }
+                    ChevronLeft { class: "[&>stroke]:stroke-black" }
                 }
                 div { class: "font-semibold text-text-black text-[20px]", {title} }
             }

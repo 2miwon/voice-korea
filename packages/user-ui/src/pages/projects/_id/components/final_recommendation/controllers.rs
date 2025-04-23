@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 
 use models::{deliberation_draft::DeliberationDraft, ParsedQuestion};
 
-use crate::pages::projects::utils::group_responses_by_question;
+use super::super::super::utils::group_responses_by_question;
 
 #[derive(Debug, Clone, Copy, DioxusController)]
 pub struct Controller {

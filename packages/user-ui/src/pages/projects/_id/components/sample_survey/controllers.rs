@@ -7,12 +7,10 @@ use models::{
     ParsedQuestion, ProjectStatus, SurveyV2,
 };
 
+use super::super::super::utils::group_responses_by_question;
 use crate::{
-    pages::projects::{
-        _id::components::{
-            sample_survey::remove_survey_modal::RemoveSurveyModal, survey::SurveyData,
-        },
-        utils::group_responses_by_question,
+    pages::projects::_id::components::{
+        sample_survey::remove_survey_modal::RemoveSurveyModal, survey::SurveyData,
     },
     service::user_service::UserService,
 };
@@ -189,7 +187,7 @@ impl Controller {
             .and_then(|survey| survey.user_response.get(0).map(|r| r.id))
             .unwrap_or(0);
 
-        if user_id == 0 {
+        if user_id == 0 || response_id == 0 {
             btracing::error!("login is required");
             return;
         }

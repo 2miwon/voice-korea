@@ -40,8 +40,12 @@ impl Controller {
 
     pub async fn start_meeting(&self, discussion_id: i64) {
         let project_id = self.project_id();
-        let _ = Discussion::get_client(&crate::config::get().api_url)
+        match Discussion::get_client(&crate::config::get().api_url)
             .start_meeting(project_id, discussion_id)
-            .await;
+            .await
+        {
+            Ok(_) => btracing::info!("Meeting started successfully"),
+            Err(err) => tracing::error!("Failed to start meeting: {:?}", err),
+        }
     }
 }

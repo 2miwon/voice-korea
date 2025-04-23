@@ -7,11 +7,12 @@ use models::{
     ParsedQuestion, ProjectStatus, SurveyV2,
 };
 
+use super::super::super::utils::group_responses_by_question;
 use super::final_vote_modal::FinalVoteModal;
 use crate::{
-    pages::projects::{_id::components::survey::SurveyData, utils::group_responses_by_question},
-    service::user_service::UserService,
+    pages::projects::_id::components::survey::SurveyData, service::user_service::UserService,
 };
+
 use dioxus_popup::PopupService;
 
 use super::i18n::FinalVoteModalTranslate;

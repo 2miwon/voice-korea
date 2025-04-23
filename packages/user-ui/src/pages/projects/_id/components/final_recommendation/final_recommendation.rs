@@ -46,6 +46,7 @@ pub fn FinalRecommendation(
                     }
                     div { class: "w-full mt-20 flex max-[700px]:flex-col max-[700px]:gap-10 flex-row justify-start gap-40",
                         div { class: "w-full flex flex-row justify-start gap-20",
+                            //FIXME: use roles
                             for _member in recommendation.members {
                                 AvatarLabel {
                                     //FIXME: use role

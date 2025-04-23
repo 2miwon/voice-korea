@@ -32,7 +32,7 @@ pub fn SurveyProgress(
         div { class: "flex flex-col w-full gap-10",
             for (i , question) in survey.questions.iter().enumerate() {
                 QuestionComponent {
-                    placeholder: tr.survey_input_placehoder,
+                    placeholder: tr.survey_input_placeholder,
                     question: question.clone(),
                     answer: answers().get(&i).cloned(),
                     onchange: move |e: Answer| {
