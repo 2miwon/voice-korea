@@ -94,8 +94,8 @@ translate! {
     }
 
     expected_time_label: {
-        ko: "예상 소요 시간",
-        en: "Estimated Time"
+        ko: "예상 소요 시간 (분)",
+        en: "Estimated Time (Minute)"
     }
     expected_time_hint: {
         ko: "예상 소요 시간 입력",

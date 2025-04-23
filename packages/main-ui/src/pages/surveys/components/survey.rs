@@ -45,6 +45,7 @@ pub fn QuestionListView(
                                             new.set_description(&question.description());
                                             q[index] = new;
                                         });
+                                    onchange.call(questions());
                                 }
                             },
                         }
@@ -61,6 +62,7 @@ pub fn QuestionListView(
                                     .with_mut(move |q| {
                                         q[index].set_title(&e.value());
                                     });
+                                onchange.call(questions());
                             },
                         }
                     }
@@ -70,9 +72,11 @@ pub fn QuestionListView(
                             lang,
                             onchange: move |v: Question| {
                                 questions.with_mut(move |q| q[index] = v);
+                                onchange.call(questions());
                             },
                             onremove: move |_| {
                                 questions.remove(index);
+                                onchange.call(questions());
                             },
                             question: questions()[index].clone(),
                         }
@@ -81,9 +85,11 @@ pub fn QuestionListView(
                             lang,
                             onchange: move |v: Question| {
                                 questions.with_mut(move |q| q[index] = v);
+                                onchange.call(questions());
                             },
                             onremove: move |_| {
                                 questions.remove(index);
+                                onchange.call(questions());
                             },
                             question: questions()[index].clone(),
                         }

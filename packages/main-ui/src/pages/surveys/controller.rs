@@ -1,5 +1,4 @@
-use bdk::prelude::btracing;
-use dioxus::prelude::*;
+use bdk::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_translate::{translate, Language};
 use models::{
@@ -151,6 +150,10 @@ impl Controller {
     }
 
     pub async fn start_survey(&mut self, survey_id: i64) {
+        if !self.validation_check(survey_id) {
+            return;
+        }
+
         let mut popup_service = self.popup_service;
         let client = (self.client)().clone();
         let org_id = (self.org_id)().parse::<i64>().unwrap_or_default();
@@ -307,4 +310,78 @@ impl Controller {
             .with_id("remove_survey")
             .with_title(translate.remove_modal_title);
     }
+
+    pub fn validation_check(&self, survey_id: i64) -> bool {
+        let surveys = self.get_surveys().unwrap().items;
+        let surveys: Vec<SurveyV2Summary> = surveys
+            .iter()
+            .filter(|v| v.id == survey_id)
+            .map(|v| v.clone())
+            .collect();
+
+        let survey = if surveys.is_empty() {
+            SurveyV2Summary::default()
+        } else {
+            surveys[0].clone()
+        };
+
+        let v = survey.attribute_quotas;
+        let sum: i64 = v.iter().map(|g| g.user_count).sum();
+
+        if survey.name.is_empty() {
+            btracing::e!(self.lang, ValidationError::TitleRequired);
+            return false;
+        }
+
+        if survey.description.is_empty() {
+            btracing::e!(self.lang, ValidationError::DescriptionRequired);
+            return false;
+        }
+
+        if survey.started_at >= survey.ended_at {
+            btracing::e!(self.lang, ValidationError::TimeValidationFailed);
+            return false;
+        }
+
+        if survey.questions.is_empty() {
+            btracing::e!(self.lang, ValidationError::QuestionRequired);
+            return false;
+        }
+
+        if survey.quotas != sum {
+            btracing::e!(self.lang, ValidationError::AttributeCountFailed);
+            return false;
+        }
+
+        true
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Translate)]
+pub enum ValidationError {
+    #[translate(
+        ko = "설문 조사의 제목을 입력해주세요.",
+        en = "Please enter a title for your survey."
+    )]
+    TitleRequired,
+    #[translate(
+        ko = "설문 조사의 설명을 입력해주세요.",
+        en = "Please enter a description of the survey."
+    )]
+    DescriptionRequired,
+    #[translate(
+        ko = "시작 날짜는 종료 날짜보다 작아야합니다.",
+        en = "The start date must be less than the end date."
+    )]
+    TimeValidationFailed,
+    #[translate(
+        ko = "1개 이상의 문항을 추가해주세요.",
+        en = "Please add one or more questions."
+    )]
+    QuestionRequired,
+    #[translate(
+        ko = "속성별 인원을 다시 확인해주세요.",
+        en = "Please check the number of people by attribute again."
+    )]
+    AttributeCountFailed,
 }
