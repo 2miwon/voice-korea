@@ -18,7 +18,7 @@ pub enum Route {
             ProjectListPage { lang: Language },
         #[end_layout]
 
-        #[nest("/project")]
+        #[nest("/projects")]
             #[layout(ProjectLayout)]
                 #[route("/:project_id")]
                 ProjectPage { lang: Language, project_id: i64 },
