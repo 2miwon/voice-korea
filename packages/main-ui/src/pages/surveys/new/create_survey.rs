@@ -1,5 +1,4 @@
-use dioxus::prelude::*;
-use dioxus_logger::tracing;
+use bdk::prelude::*;
 use dioxus_translate::{translate, Language};
 use models::{prelude::Question, ProjectArea};
 
@@ -197,8 +196,6 @@ pub fn CreateSurvey(
                     questions,
 
                     onchange: move |v: Vec<Question>| {
-                        tracing::debug!("questions: {:?}", v);
-                        questions.set(v.clone());
                         onchange
                             .call(CreateSurveyResponse {
                                 questions: v.clone(),
@@ -208,9 +205,9 @@ pub fn CreateSurvey(
                 }
             }
 
-            div { class: "flex flex-row w-full justify-end items-center gap-[20px] text-white mt-[40px]",
+            div { class: "flex flex-row w-full justify-end items-center gap-20 text-white mt-40",
                 button {
-                    class: "cursor-pointer px-[20px] py-[10px] border-[#BFC8D9] bg-white border-[1px] !text-davy-gray font-semibold text-[14px] rounded-[4px]",
+                    class: "cursor-pointer px-20 py-10 border-label-border-gray bg-white border !text-davy-gray font-semibold text-sm rounded-sm",
                     onclick: move |_| {
                         nav.go_back();
                     },
@@ -218,7 +215,7 @@ pub fn CreateSurvey(
                 }
 
                 button {
-                    class: "cursor-pointer px-[20px] py-[10px] bg-[#2A60D3] font-semibold text-[14px] rounded-[4px]",
+                    class: "cursor-pointer px-20 py-10 bg-hover font-semibold text-sm rounded-sm",
                     onclick: move |_| async move {
                         onnext(CreateSurveyResponse {
                             title: title(),
