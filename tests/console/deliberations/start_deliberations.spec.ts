@@ -81,10 +81,10 @@ test.describe('Deliberations Page Flow', () => {
     expect(page).toHaveURL('https://console.dev.voice-korea.com/en/deliberations/new')
 
     const firstTab = page.getByText('1')
-    const secondTab = page.getByText('2')
-    const thirdTab = page.getByText('3')
-    const fourthTab = page.getByText('4')
-    const fifthTab = page.getByText('5')
+    const secondTab = page.getByText('2', { exact: true })
+    const thirdTab = page.getByText('3', { exact: true })
+    const fourthTab = page.getByText('4', { exact: true })
+    const fifthTab = page.getByText('5', { exact: true })
 
     await expect(firstTab).toBeVisible()
 
@@ -169,6 +169,46 @@ test.describe('Deliberations Page Flow', () => {
     await expect(thumbnailPreview).toBeVisible()
 
     await toNextPageButton.click()
+
+    await expect(secondTab).toBeVisible()
+
+
+
+
+
+
+    // Section 2
+
+    const tabTwoTitle = page.getByText('Division of Roles')
+    await expect(tabTwoTitle).toBeVisible()
+
+    const adminLabel = page.getByText('Admin', { exact: true })
+    await expect(adminLabel).toBeVisible()
+
+    const customEmailInput = page.getByRole('textbox', { name: 'Enter the email in charge' })
+
+    const adminEmail = customEmailInput.first()
+    await expect(adminEmail).toBeVisible()
+    await adminEmail.fill("test@gmail.com")
+
+    const deliberationAdminEmail = customEmailInput.nth(1)
+    await expect(deliberationAdminEmail).toBeVisible()
+    await deliberationAdminEmail.fill("test@gmail.com")
+
+    const analystEmail = customEmailInput.nth(2)
+    await expect(analystEmail).toBeVisible()
+    await analystEmail.fill("test@gmail.com")
+
+    const mediatorEmail = customEmailInput.nth(3)
+    await expect(mediatorEmail).toBeVisible()
+    await mediatorEmail.fill("test@gmail.com")
+
+    const speakerEmail = customEmailInput.nth(4)
+    await expect(speakerEmail).toBeVisible()
+    await speakerEmail.fill("test@gmail.com")
+
+    const roleSummary = page.getByText('Role Summary')
+    await expect(roleSummary).toBeVisible()
 
 
 
