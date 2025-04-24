@@ -2,9 +2,5 @@ mod components;
 mod controller;
 mod page;
 
-mod video;
-
-pub(super) mod utils;
-
+pub use components::*;
 pub use page::*;
-pub use video::*;
