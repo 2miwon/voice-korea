@@ -19,8 +19,8 @@ pub enum Route {
         #[end_layout]
 
         #[nest("/projects")]
-            #[route("/:project_id/video")]
-                ProjectVideoPage { lang: Language, project_id: i64 },
+            #[route("/:project_id/discussion/:discussion_id")]
+                DiscussionVideoPage { lang: Language, project_id: i64, discussion_id: i64 },
             #[layout(ProjectLayout)]
                 #[route("/:project_id")]
                 ProjectPage { lang: Language, project_id: i64 },
