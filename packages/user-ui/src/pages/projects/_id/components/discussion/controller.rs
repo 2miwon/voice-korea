@@ -1,15 +1,16 @@
 use bdk::prelude::*;
-use models::{
-    DeliberationDiscussion, DeliberationDiscussionQuery, DeliberationDiscussionSummary, Discussion,
-};
+use models::{DeliberationDiscussion, DeliberationDiscussionQuery, DeliberationDiscussionSummary};
 
-#[derive(Debug, Clone, Copy, DioxusController)]
+use crate::routes::Route;
+
+#[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     #[allow(dead_code)]
     lang: Language,
     project_id: ReadOnlySignal<i64>,
 
     discussion: Resource<DeliberationDiscussionSummary>,
+    pub nav: Navigator,
 }
 
 impl Controller {
@@ -33,19 +34,17 @@ impl Controller {
             lang,
             project_id,
             discussion,
+            nav: use_navigator(),
         };
 
         Ok(ctrl)
     }
 
     pub async fn start_meeting(&self, discussion_id: i64) {
-        let project_id = self.project_id();
-        match Discussion::get_client(&crate::config::get().api_url)
-            .start_meeting(project_id, discussion_id)
-            .await
-        {
-            Ok(_) => btracing::info!("Meeting started successfully"),
-            Err(err) => tracing::error!("Failed to start meeting: {:?}", err),
-        }
+        self.nav.push(Route::DiscussionVideoPage {
+            lang: self.lang,
+            project_id: self.project_id(),
+            discussion_id,
+        });
     }
 }

@@ -1,5 +1,7 @@
 use bdk::prelude::*;
 
+use crate::routes::Route;
+
 #[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     #[allow(dead_code)]
@@ -28,6 +30,9 @@ impl Controller {
     }
 
     pub fn back(&self) {
-        self.nav.go_back();
+        self.nav.replace(Route::ProjectPage {
+            lang: self.lang,
+            project_id: self.id(),
+        });
     }
 }
