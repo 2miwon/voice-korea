@@ -56,7 +56,8 @@ impl Controller {
 
     pub fn back(&mut self) {
         self.save_deliberation();
-        self.nav.go_back();
+        self.nav
+            .replace(crate::routes::Route::DeliberationNewPage { lang: self.lang });
     }
 
     pub async fn temp_save(&mut self) {
