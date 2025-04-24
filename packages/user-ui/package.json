@@ -11,6 +11,7 @@
   "dependencies": {
     "@tailwindcss/cli": "^4.0.15",
     "amazon-chime-sdk-js": "^3.27.1",
+    "buffer": "^6.0.3",
     "firebase": "^11.3.1"
   },
   "devDependencies": {
