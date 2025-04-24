@@ -10,8 +10,8 @@ pub fn DiscussionVideoPage(
     discussion_id: ReadOnlySignal<i64>,
 ) -> Element {
     let ctrl = Controller::init(lang, project_id, discussion_id)?;
-    let mut mic = use_signal(|| false);
-    let mut video = use_signal(|| false);
+    let mut mic = use_signal(|| true);
+    let mut video = use_signal(|| true);
 
     rsx! {
         div { class: "flex flex-col w-full h-lvh justify-start items-start",

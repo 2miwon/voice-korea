@@ -1,5 +1,6 @@
 use crate::components::icons::{
-    end_circle::EndCircle, mic_off::MicOff, mic_on::MicOn, video_off::VideoOff, video_on::VideoOn,
+    end_circle::EndCircle, mic_off::MicOff, mic_on::MicOn, share::Share, video_off::VideoOff,
+    video_on::VideoOn,
 };
 use bdk::prelude::*;
 use web_sys::js_sys::eval;
@@ -53,6 +54,24 @@ pub fn Footer(
                         VideoOff {}
                     }
                     div { class: "font-semibold text-xs/15 text-white", "Video" }
+                }
+            }
+
+            div { class: "flex flex-row w-fit justify-start items-center",
+                button {
+                    class: "flex flex-col w-fit justify-center items-center px-10 py-4 gap-4",
+                    onclick: move |_| {
+                        let _ = eval(
+                            r#"
+                                                if (window._toggleShared) {
+                                                    window._toggleShared();
+                                                }
+                                            "#,
+                        );
+                    },
+                    Share {
+                    }
+                    div { class: "font-semibold text-xs/15 text-white", "Share" }
                 }
             }
 

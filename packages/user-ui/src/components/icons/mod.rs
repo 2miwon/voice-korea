@@ -25,4 +25,6 @@ pub mod mic_on;
 pub mod video_off;
 pub mod video_on;
 
+pub mod share;
+
 pub use logo::Logo;
