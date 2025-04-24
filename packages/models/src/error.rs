@@ -235,6 +235,9 @@ pub enum ApiError {
     #[translate(ko = "토론을 찾을 수 없습니다.", en = "Cannot find the discussion.")]
     DiscussionNotFound,
 
+    #[translate(ko = "사용자를 찾을 수 없습니다.", en = "Cannot find the user.")]
+    UserNotFound,
+
     #[translate(
         ko = "예약 정보를 찾을 수 없습니다.",
         en = "Cannot find the reservation information."

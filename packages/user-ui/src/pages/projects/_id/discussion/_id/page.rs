@@ -16,9 +16,9 @@ pub fn DiscussionVideoPage(
     rsx! {
         div { class: "flex flex-col w-full h-lvh justify-start items-start",
             Header {
-                title: "Debate topic",
-                onprev: move |_| {
-                    ctrl.back();
+                title: "Debate topic", //FIXME: fix to real title
+                onprev: move |_| async move {
+                    ctrl.back().await;
                 },
             }
 
@@ -34,8 +34,8 @@ pub fn DiscussionVideoPage(
                 change_video: move |v: bool| {
                     video.set(v);
                 },
-                onprev: move |_| {
-                    ctrl.back();
+                onprev: move |_| async move {
+                    ctrl.back().await;
                 },
             }
         }

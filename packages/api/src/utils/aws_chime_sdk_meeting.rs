@@ -31,7 +31,7 @@ impl ChimeMeetingService {
         Self { client, pipeline }
     }
 
-    pub async fn get_meeting_info(&self, meeting_id: &str) -> Result<Meeting, ApiError> {
+    pub async fn get_meeting_info(&self, meeting_id: &str) -> Option<Meeting> {
         let meeting = match self
             .client
             .get_meeting()
@@ -39,21 +39,17 @@ impl ChimeMeetingService {
             .send()
             .await
         {
-            Ok(v) => v.meeting.unwrap(),
+            Ok(v) => Some(v.meeting.unwrap()),
             Err(e) => {
                 tracing::error!("get_meeting error: {:?}", e);
-                return Err(ApiError::AwsChimeError(e.to_string()));
+                None
             }
         };
 
-        Ok(meeting)
+        meeting
     }
 
-    pub async fn get_attendee_info(
-        &self,
-        meeting_id: &str,
-        attendee_id: &str,
-    ) -> Result<Attendee, ApiError> {
+    pub async fn get_attendee_info(&self, meeting_id: &str, attendee_id: &str) -> Option<Attendee> {
         let attendee = match self
             .client
             .get_attendee()
@@ -62,14 +58,14 @@ impl ChimeMeetingService {
             .send()
             .await
         {
-            Ok(v) => v.attendee.unwrap(),
+            Ok(v) => Some(v.attendee.unwrap()),
             Err(e) => {
                 tracing::error!("get_attendee error: {:?}", e);
-                return Err(ApiError::AwsChimeError(e.to_string()));
+                None
             }
         };
 
-        Ok(attendee)
+        attendee
     }
 
     pub async fn create_meeting(&self, meeting_name: &str) -> Result<Meeting, ApiError> {

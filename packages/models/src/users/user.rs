@@ -16,13 +16,13 @@ pub struct User {
     pub created_at: i64,
     #[api_model(auto = [insert, update])]
     pub updated_at: i64,
-    #[api_model(action = [signup, login, reset, user_signup, user_login], unique, read_action = [get_user, find_by_email])]
+    #[api_model(summary, action = [signup, login, reset, user_signup, user_login], unique, read_action = [get_user, find_by_email])]
     #[validate(email)]
     pub email: String,
     #[api_model(action = [signup, login, reset], read_action = get_user)]
     #[validate(custom(function = "validate_hex"))]
     pub password: String,
-    #[api_model(action = [user_signup])]
+    #[api_model(summary, action = [user_signup])]
     #[validate(custom(function = "validate_nickname"))]
     pub nickname: Option<String>,
 

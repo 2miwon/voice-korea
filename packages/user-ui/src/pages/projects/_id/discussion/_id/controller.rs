@@ -80,6 +80,7 @@ impl Controller {
         let meeting_info = meeting.meeting;
         let attendee_info = meeting.attendee;
 
+        //FIXME: fix to js file
         let js = format!(
             r#"
                             setTimeout(async () => {{
@@ -183,10 +184,20 @@ impl Controller {
         let _ = eval(&js);
     }
 
-    pub fn back(&self) {
-        self.nav.replace(Route::ProjectPage {
-            lang: self.lang,
-            project_id: self.id(),
-        });
+    pub async fn back(&self) {
+        let _ = match Discussion::get_client(&crate::config::get().api_url)
+            .exit_meeting(self.id(), self.discussion_id())
+            .await
+        {
+            Ok(_) => {
+                self.nav.replace(Route::ProjectPage {
+                    lang: self.lang,
+                    project_id: self.id(),
+                });
+            }
+            Err(e) => {
+                btracing::error!("failed to exit room with error: {:?}", e);
+            }
+        };
     }
 }

@@ -11,7 +11,7 @@ use by_types::QueryResponse;
 use deliberation::Deliberation;
 use discussion_resources::DiscussionResource;
 use models::{
-    discussion_participants::DiscussionParticipant,
+    discussion_participants::{DiscussionParticipant, DiscussionParticipantRepository},
     dto::{MediaPlacementInfo, MeetingInfo},
     *,
 };
@@ -22,6 +22,7 @@ use crate::utils::app_claims::AppClaims;
 #[derive(Clone, Debug)]
 pub struct DiscussionController {
     repo: DiscussionRepository,
+    participation_repo: DiscussionParticipantRepository,
     pool: sqlx::Pool<sqlx::Postgres>,
 }
 
@@ -48,6 +49,47 @@ impl DiscussionController {
             .await?;
 
         Ok(QueryResponse { total_count, items })
+    }
+
+    async fn exit_meeting(&self, id: i64, auth: Option<Authorization>) -> Result<Discussion> {
+        let user_id = match auth {
+            Some(Authorization::Bearer { ref claims }) => AppClaims(claims).get_user_id(),
+            _ => 0,
+        };
+
+        if user_id == 0 {
+            return Err(ApiError::NoUser);
+        }
+
+        let discussion = Discussion::query_builder()
+            .id_equals(id)
+            .query()
+            .map(Discussion::from)
+            .fetch_optional(&self.pool)
+            .await?
+            .ok_or(ApiError::DiscussionNotFound)?;
+
+        if discussion.meeting_id.is_none() {
+            return Err(ApiError::AwsChimeError("Not Found Meeting ID".to_string()));
+        }
+
+        let participant = DiscussionParticipant::query_builder()
+            .discussion_id_equals(discussion.id)
+            .user_id_equals(user_id)
+            .query()
+            .map(DiscussionParticipant::from)
+            .fetch_optional(&self.pool)
+            .await?;
+
+        if participant.is_none() {
+            return Err(ApiError::UserNotFound);
+        }
+
+        let participant = participant.unwrap();
+
+        let _ = self.participation_repo.delete(participant.id).await?;
+
+        Ok(discussion)
     }
 
     async fn participant_meeting(
@@ -92,7 +134,40 @@ impl DiscussionController {
         }
 
         let meeting_id = discussion.meeting_id.unwrap();
-        let meeting = client.get_meeting_info(&meeting_id).await?;
+
+        let m = client.get_meeting_info(&meeting_id).await;
+
+        let meeting = if m.is_some() {
+            m.unwrap()
+        } else {
+            let v = match client.create_meeting(&discussion.name).await {
+                Ok(v) => Ok(v),
+                Err(e) => {
+                    tracing::error!("create meeting failed with error: {:?}", e);
+                    Err(ApiError::AwsChimeError(e.to_string()))
+                }
+            }?;
+
+            v
+        };
+
+        let _ = match self
+            .repo
+            .update(
+                id,
+                DiscussionRepositoryUpdateRequest {
+                    meeting_id: Some(meeting.meeting_id().unwrap().to_string()),
+                    ..Default::default()
+                },
+            )
+            .await
+        {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("start recording {}", e);
+                return Err(ApiError::DynamoUpdateException(e.to_string()));
+            }
+        };
 
         let mp = meeting.media_placement().ok_or(ApiError::AwsChimeError(
             "Missing media_placement".to_string(),
@@ -160,9 +235,23 @@ impl DiscussionController {
 
         let meeting_id = discussion.meeting_id.unwrap();
 
-        let meeting = client.get_meeting_info(&meeting_id).await?;
+        let m = client.get_meeting_info(&meeting_id).await;
 
-        let pipeline_id = match client.make_pipeline(meeting, discussion.name).await {
+        let meeting = if m.is_some() {
+            m.unwrap()
+        } else {
+            let v = match client.create_meeting(&discussion.name).await {
+                Ok(v) => Ok(v),
+                Err(e) => {
+                    tracing::error!("create meeting failed with error: {:?}", e);
+                    Err(ApiError::AwsChimeError(e.to_string()))
+                }
+            }?;
+
+            v
+        };
+
+        let pipeline_id = match client.make_pipeline(meeting.clone(), discussion.name).await {
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("failed to create pipeline: {:?}", e);
@@ -175,14 +264,9 @@ impl DiscussionController {
             .update(
                 id,
                 DiscussionRepositoryUpdateRequest {
-                    deliberation_id: None,
-                    started_at: None,
-                    ended_at: None,
-                    name: None,
-                    description: None,
-                    meeting_id: None,
                     pipeline_id: Some(pipeline_id),
-                    maximum_count: None,
+                    meeting_id: Some(meeting.meeting_id().unwrap().to_string()),
+                    ..Default::default()
                 },
             )
             .await
@@ -422,8 +506,13 @@ impl DiscussionController {
 impl DiscussionController {
     pub fn new(pool: sqlx::Pool<sqlx::Postgres>) -> Self {
         let repo = Discussion::get_repository(pool.clone());
+        let participation_repo = DiscussionParticipant::get_repository(pool.clone());
 
-        Self { repo, pool }
+        Self {
+            repo,
+            pool,
+            participation_repo,
+        }
     }
 
     pub fn route(&self) -> by_axum::axum::Router {
@@ -485,6 +574,11 @@ impl DiscussionController {
 
             DiscussionByIdAction::ParticipantMeeting(_) => {
                 let res = ctrl.participant_meeting(id, auth).await?;
+                Ok(Json(res))
+            }
+
+            DiscussionByIdAction::ExitMeeting(_) => {
+                let res = ctrl.exit_meeting(id, auth).await?;
                 Ok(Json(res))
             }
 
