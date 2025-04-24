@@ -14,16 +14,16 @@ pub fn Subjective(
         div { class: "flex flex-col w-full justify-start items-start",
             div { class: "flex flex-row w-full h-1 bg-period-border-gray my-10" }
 
-            input {
-                class: "flex flex-row w-full h-55 justify-start items-center bg-white focus:outline-none border-b-1 border-label-border-gray px-15 py-15 font-medium text-hint-gray text-[15px] leading-22 mb-20",
-                r#type: "text",
-                placeholder: tr.input_description_hint,
-                value: question.description(),
-                oninput: move |e: Event<FormData>| {
-                    question.set_description(&e.value());
-                    onchange.call(question.clone());
-                },
-            }
+            // input {
+            //     class: "flex flex-row w-full h-55 justify-start items-center bg-white focus:outline-none border-b-1 border-label-border-gray px-15 py-15 font-medium text-hint-gray text-[15px] leading-22 mb-20",
+            //     r#type: "text",
+            //     placeholder: tr.input_description_hint,
+            //     value: question.description(),
+            //     oninput: move |e: Event<FormData>| {
+            //         question.set_description(&e.value());
+            //         onchange.call(question.clone());
+            //     },
+            // }
 
             div { class: "flex flex-row w-full justify-end items-center gap-5",
                 button {

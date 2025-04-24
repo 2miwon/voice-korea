@@ -49,7 +49,8 @@ impl Controller {
 
     pub fn back(&mut self) {
         self.save_deliberation();
-        self.nav.go_back();
+        self.nav
+            .replace(crate::routes::Route::CompositionCommitee { lang: self.lang });
     }
 
     pub async fn temp_save(&mut self) {

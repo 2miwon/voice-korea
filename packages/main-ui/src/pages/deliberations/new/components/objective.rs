@@ -16,21 +16,21 @@ pub fn Objective(
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
 
-            input {
-                class: format!(
-                    "flex flex-row w-full h-55 justify-start items-center bg-background-gray focus:outline-none px-15 py-10 font-medium text-hint-gray text-[15px] leading-22 rounded-sm mt-10",
-                ),
-                r#type: "text",
-                placeholder: tr.input_description,
-                value: question.description(),
-                oninput: {
-                    let mut question = question.clone();
-                    move |e: Event<FormData>| {
-                        question.set_description(&e.value());
-                        onchange.call(question.clone());
-                    }
-                },
-            }
+            // input {
+            //     class: format!(
+            //         "flex flex-row w-full h-55 justify-start items-center bg-background-gray focus:outline-none px-15 py-10 font-medium text-hint-gray text-[15px] leading-22 rounded-sm mt-10",
+            //     ),
+            //     r#type: "text",
+            //     placeholder: tr.input_description,
+            //     value: question.description(),
+            //     oninput: {
+            //         let mut question = question.clone();
+            //         move |e: Event<FormData>| {
+            //             question.set_description(&e.value());
+            //             onchange.call(question.clone());
+            //         }
+            //     },
+            // }
 
             div { class: "flex flex-row w-full h-[1px] bg-period-border-gray my-10" }
 

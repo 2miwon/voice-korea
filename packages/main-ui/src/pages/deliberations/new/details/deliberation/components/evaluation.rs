@@ -1,6 +1,6 @@
 use crate::{
     components::{
-        form_field::{Divide, SelectInputField, UnderlineField},
+        form_field::{Divide, SelectInputField},
         section::{AddSection, MainSection},
     },
     pages::deliberations::new::details::deliberation::{
@@ -51,13 +51,13 @@ pub fn Evaluation(
                         options: Question::types(&lang),
                     }
                     Divide {}
-                    UnderlineField {
-                        placeholder: tr.content_placeholder.to_string(),
-                        value: question.description(),
-                        oninput: move |e: Event<FormData>| {
-                            set_description.call((index, e.value()));
-                        },
-                    }
+                    // UnderlineField {
+                    //     placeholder: tr.content_placeholder.to_string(),
+                    //     value: question.description(),
+                    //     oninput: move |e: Event<FormData>| {
+                    //         set_description.call((index, e.value()));
+                    //     },
+                    // }
 
                     match question {
                         Question::SingleChoice(_) | Question::MultipleChoice(_) => {
