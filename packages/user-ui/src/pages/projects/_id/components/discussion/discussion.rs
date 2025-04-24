@@ -97,7 +97,6 @@ pub fn DiscussionTab(
                     title: tr.time_table,
                     resources: deliberation_discussion.resources.clone(),
                 }
-            
             }
         }
     }
@@ -181,7 +180,6 @@ pub fn DiscussionTable(lang: Language, discussion: Discussion) -> Element {
                     td { class: "!text-left", {discussion.description} }
                 }
             }
-        
         }
     }
 }
