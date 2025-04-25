@@ -1,4 +1,5 @@
 pub mod comments;
+pub mod contents;
 pub mod inquiries;
 pub mod landing;
 pub mod metadata;
@@ -49,6 +50,10 @@ impl Version2Controller {
             .nest(
                 "/profile",
                 profile::ProfileController::new(pool.clone()).route()?,
+            )
+            .nest(
+                "/contents",
+                contents::ContentController::new(pool.clone()).route()?,
             )
             .nest(
                 "/projects",

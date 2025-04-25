@@ -1,5 +1,6 @@
 use bdk::prelude::*;
 use by_components::icons::validations::Clear;
+use models::{discussion_participants::DiscussionParticipant, UserSummary};
 
 use crate::components::icons::Logo;
 
@@ -7,7 +8,8 @@ use crate::components::icons::Logo;
 pub fn ParticipantSidebar(
     show_member: bool,
     hide_member: EventHandler<MouseEvent>,
-    emails: Vec<String>,
+    participants: Vec<DiscussionParticipant>,
+    users: Vec<UserSummary>,
 ) -> Element {
     rsx! {
         div {
@@ -32,7 +34,7 @@ pub fn ParticipantSidebar(
                     }
                 }
                 div { class: "flex flex-col w-full h-lvh justify-start items-start px-10 py-20 bg-key-gray gap-20",
-                    for email in emails {
+                    for user in users {
                         div { class: "flex flex-row w-full justify-start items-center gap-4",
                             div { class: "flex flex-row w-30 h-30 justify-center items-center rounded-full bg-text-gray",
                                 Logo {
@@ -42,7 +44,7 @@ pub fn ParticipantSidebar(
                                 }
                             }
 
-                            div { class: "font-medium text-white text-sm/18", {email} }
+                            div { class: "font-medium text-white text-sm/18", {user.email} }
                         }
                     }
                 }

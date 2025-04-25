@@ -15,6 +15,8 @@ pub fn DiscussionVideoPage(
     let mut mic = use_signal(|| true);
     let mut video = use_signal(|| true);
 
+    let participants = ctrl.participants()?;
+
     rsx! {
         div { class: "relative flex flex-col w-full h-lvh justify-start items-start",
             Header {
@@ -53,13 +55,8 @@ pub fn DiscussionVideoPage(
                     hide_member: move |_| {
                         show_side_member.set(false);
                     },
-                    emails: vec![
-                        "aaa@bbb.ccc".to_string(),
-                        "aaa1@bbb.ccc".to_string(),
-                        "aaa2@bbb.ccc".to_string(),
-                        "aaa3@bbb.ccc".to_string(),
-                        "aaa4@bbb.ccc".to_string(),
-                    ],
+                    participants: participants.participants,
+                    users: participants.users,
                 }
             }
         }

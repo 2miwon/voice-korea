@@ -1,6 +1,6 @@
 use bdk::prelude::*;
 use models::{
-    dto::{AttendeeInfo, MeetingData, MeetingInfo},
+    dto::{AttendeeInfo, MeetingData, MeetingInfo, ParticipantData},
     Discussion,
 };
 use web_sys::js_sys::eval;
@@ -19,6 +19,8 @@ pub struct Controller {
 
     meeting_info: Signal<MeetingInfo>,
     attendee_info: Signal<AttendeeInfo>,
+
+    participants: Resource<ParticipantData>,
 }
 
 impl Controller {
@@ -27,6 +29,13 @@ impl Controller {
         id: ReadOnlySignal<i64>,
         discussion_id: ReadOnlySignal<i64>,
     ) -> std::result::Result<Self, RenderError> {
+        let participants = use_server_future(move || async move {
+            ParticipantData::get_client(&crate::config::get().api_url)
+                .find(discussion_id())
+                .await
+                .unwrap_or_default()
+        })?;
+
         let mut ctrl = Self {
             lang,
             id,
@@ -35,6 +44,8 @@ impl Controller {
 
             meeting_info: use_signal(|| MeetingInfo::default()),
             attendee_info: use_signal(|| AttendeeInfo::default()),
+
+            participants,
         };
 
         use_future(move || async move {
@@ -181,6 +192,7 @@ impl Controller {
             meeting = serde_json::to_string(&meeting_info).unwrap(),
             attendee = serde_json::to_string(&attendee_info).unwrap(),
         );
+        self.participants.restart();
         let _ = eval(&js);
     }
 
