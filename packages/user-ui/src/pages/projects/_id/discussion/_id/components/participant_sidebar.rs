@@ -2,12 +2,15 @@ use bdk::prelude::*;
 use by_components::icons::validations::Clear;
 use models::{discussion_participants::DiscussionParticipant, UserSummary};
 
-use crate::components::icons::Logo;
+use crate::components::icons::{refresh::Refresh, Logo};
 
 #[component]
 pub fn ParticipantSidebar(
     show_member: bool,
     hide_member: EventHandler<MouseEvent>,
+
+    refresh: EventHandler<MouseEvent>,
+
     participants: Vec<DiscussionParticipant>,
     users: Vec<UserSummary>,
 ) -> Element {
@@ -20,6 +23,17 @@ pub fn ParticipantSidebar(
                     div { class: "flex flex-row w-fit justify-start items-center gap-10",
                         Logo { width: "30", height: "20", class: "fill-third" }
                         div { class: "font-semibold text-white text-sm/17", "Participants" }
+                        button {
+                            onclick: move |e: Event<MouseData>| {
+                                refresh.call(e);
+                            },
+                            Refresh {
+                                width: "12",
+                                height: "12",
+                                fill: "#bfc8d9",
+                                class: "[&>path]:stroke-discussion-border-gray",
+                            }
+                        }
                     }
                     button {
                         onclick: move |e: Event<MouseData>| {

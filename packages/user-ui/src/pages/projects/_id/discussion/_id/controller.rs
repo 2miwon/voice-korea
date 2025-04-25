@@ -55,6 +55,10 @@ impl Controller {
         Ok(ctrl)
     }
 
+    pub fn refresh(&mut self) {
+        self.participants.restart();
+    }
+
     pub async fn start_meeting(&mut self, discussion_id: i64) {
         let project_id = self.id();
         let meeting = Discussion::get_client(&crate::config::get().api_url)
@@ -197,6 +201,21 @@ impl Controller {
     }
 
     pub async fn back(&self) {
+        let _ = eval(
+            r#"
+        if (window._chimeSession) {
+            try {
+                window._chimeSession.audioVideo.stop();
+                window._chimeSession = null;
+                const container = document.getElementById("video-grid");
+                if (container) container.innerHTML = "";
+            } catch (e) {
+                console.error("Failed to clean up Chime session", e);
+            }
+        }
+    "#,
+        );
+
         let _ = match Discussion::get_client(&crate::config::get().api_url)
             .exit_meeting(self.id(), self.discussion_id())
             .await
@@ -209,6 +228,10 @@ impl Controller {
             }
             Err(e) => {
                 btracing::error!("failed to exit room with error: {:?}", e);
+                self.nav.replace(Route::ProjectPage {
+                    lang: self.lang,
+                    project_id: self.id(),
+                });
             }
         };
     }
