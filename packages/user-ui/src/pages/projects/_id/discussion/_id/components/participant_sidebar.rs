@@ -7,12 +7,12 @@ use crate::components::icons::{refresh::Refresh, Logo};
 #[component]
 pub fn ParticipantSidebar(
     show_member: bool,
-    hide_member: EventHandler<MouseEvent>,
-
-    refresh: EventHandler<MouseEvent>,
-
     participants: Vec<DiscussionParticipant>,
     users: Vec<UserSummary>,
+
+    hide_member: EventHandler<MouseEvent>,
+    refresh: EventHandler<MouseEvent>,
+    clicked_attendee: EventHandler<String>,
 ) -> Element {
     rsx! {
         div {
@@ -48,8 +48,15 @@ pub fn ParticipantSidebar(
                     }
                 }
                 div { class: "flex flex-col w-full h-lvh justify-start items-start px-10 py-20 bg-key-gray gap-20",
-                    for user in users {
-                        div { class: "flex flex-row w-full justify-start items-center gap-4",
+                    for (i , user) in users.iter().enumerate() {
+                        button {
+                            class: "flex flex-row w-full justify-start items-center gap-4",
+                            onclick: {
+                                let participant_id = participants[i].participant_id.clone();
+                                move |_| {
+                                    clicked_attendee.call(participant_id.clone());
+                                }
+                            },
                             div { class: "flex flex-row w-30 h-30 justify-center items-center rounded-full bg-text-gray",
                                 Logo {
                                     width: "21",
@@ -58,7 +65,7 @@ pub fn ParticipantSidebar(
                                 }
                             }
 
-                            div { class: "font-medium text-white text-sm/18", {user.email} }
+                            div { class: "font-medium text-white text-sm/18", {user.email.clone()} }
                         }
                     }
                 }

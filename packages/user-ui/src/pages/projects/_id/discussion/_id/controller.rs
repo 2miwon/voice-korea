@@ -59,6 +59,11 @@ impl Controller {
         self.participants.restart();
     }
 
+    // NOTE: this function is not testing because multiple user testing is restricted.
+    pub fn clicked_attendee(&mut self, attendee_id: String) {
+        let _ = eval(&format!(r#"window._focusVideo("{attendee_id}");"#)).unwrap();
+    }
+
     pub async fn start_meeting(&mut self, discussion_id: i64) {
         let project_id = self.id();
         let meeting = Discussion::get_client(&crate::config::get().api_url)
@@ -106,10 +111,10 @@ impl Controller {
 
                                 navigator.mediaDevices.getUserMedia({{ audio: true }})
                                     .then((stream) => {{
-                                        console.log("✅ getUserMedia 성공", stream);
+                                        console.log("getUserMedia Success", stream);
                                     }})
                                     .catch((err) => {{
-                                        console.error("❌ getUserMedia 실패", err.name, err.message);
+                                        console.error("getUserMedia Failed", err.name, err.message);
                                         return;
                                     }});
 
@@ -162,9 +167,32 @@ impl Controller {
                                     }}
                                 }};
 
+                                window._focusVideo = function(attendeeId) {{
+                                    if (!window._videoTileMap) return;
+                                    const tileId = window._videoTileMap[attendeeId];
+                                    if (!tileId) return;
+
+                                    const container = document.getElementById("video-grid");
+                                    let videoElement = document.getElementById("video-grid-video");
+                                    if (!videoElement) {{
+                                        videoElement = document.createElement("video");
+                                        videoElement.id = "video-grid-video";
+                                        videoElement.autoplay = true;
+                                        videoElement.playsInline = true;
+                                        videoElement.className = "w-full h-full object-cover";
+                                        container.innerHTML = "";
+                                        container.appendChild(videoElement);
+                                    }}
+
+                                    session.audioVideo.bindVideoElement(tileId, videoElement);
+                                }};
+
                                 session.audioVideo.addObserver({{
                                     videoTileDidUpdate: (tileState) => {{
                                         if (!tileState.tileId || tileState.isContent) return;
+
+                                        if (!window._videoTileMap) window._videoTileMap = {{}};
+                                        window._videoTileMap[tileState.attendeeId] = tileState.tileId;
 
                                         const container = document.getElementById("video-grid");
                                         let videoElement = document.getElementById("video-grid-video");

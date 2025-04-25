@@ -57,6 +57,10 @@ pub fn DiscussionVideoPage(
                     refresh: move |_| {
                         ctrl.refresh();
                     },
+
+                    clicked_attendee: move |attendee_id: String| {
+                        ctrl.clicked_attendee(attendee_id);
+                    },
                     participants: participants.participants,
                     users: participants.users,
                 }
