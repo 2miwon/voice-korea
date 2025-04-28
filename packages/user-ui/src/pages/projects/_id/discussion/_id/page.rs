@@ -70,7 +70,6 @@ pub fn DiscussionVideoPage(
                     hide_conversation: move |_| {
                         show_side_conversation.set(false);
                     },
-                    onrefresh: move |_| {},
                     onsend: move |text: String| {
                         tracing::debug!("message text: {:?}", text);
                         ctrl.send_message(text);

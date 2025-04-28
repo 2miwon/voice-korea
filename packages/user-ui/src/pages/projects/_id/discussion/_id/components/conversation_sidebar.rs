@@ -3,7 +3,7 @@ use by_components::icons::{links_share::Send2, validations::Clear};
 
 use super::super::chat_message::Chat;
 use crate::{
-    components::icons::{refresh::Refresh, Logo},
+    components::icons::Logo,
     utils::time::{current_date, format_timestamp_to_ampm},
 };
 
@@ -14,7 +14,6 @@ pub fn ConversationSidebar(
     hide_conversation: EventHandler<MouseEvent>,
 
     onsend: EventHandler<String>,
-    onrefresh: EventHandler<MouseEvent>,
 ) -> Element {
     let mut text = use_signal(|| "".to_string());
 
@@ -27,17 +26,6 @@ pub fn ConversationSidebar(
                     div { class: "flex flex-row w-fit justify-start items-center gap-10",
                         Logo { width: "30", height: "20", class: "fill-third" }
                         div { class: "font-semibold text-white text-sm/17", "Chat" }
-                        button {
-                            onclick: move |e: Event<MouseData>| {
-                                onrefresh.call(e);
-                            },
-                            Refresh {
-                                width: "12",
-                                height: "12",
-                                fill: "#bfc8d9",
-                                class: "[&>path]:stroke-discussion-border-gray",
-                            }
-                        }
                     }
                     button {
                         onclick: move |e: Event<MouseData>| {

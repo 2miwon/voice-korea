@@ -6,7 +6,8 @@ use crate::{
     components::AvatarLabel,
     pages::projects::_id::components::{
         accordion::Accordion, consideration::i18n::ProgressBarTranslate,
-        rich_text_viewer::RichTextViewer, section::Section, tab_title::TabTitle,
+        response_files::ResourcesComponent, rich_text_viewer::RichTextViewer, section::Section,
+        tab_title::TabTitle,
     },
     utils::time::formatted_timestamp,
 };
@@ -56,14 +57,25 @@ pub fn Consideration(
                         }
                     }
                 }
-                Accordion { title: tr.e_learning_title, default_open: false,
-                    div { class: "w-full flex flex-col gap-44 [&>:last-child]:hidden",
-                        for elearning in content.elearnings {
-                            ElearningComponent { lang, elearning }
-                            hr { class: "w-full border-b-1 border-line-gray" }
-                        }
-                    }
+
+                //FIXME: fix to pdf reader
+                ResourcesComponent {
+                    title: tr.e_learning_title,
+                    resources: content
+                        .elearnings
+                        .iter()
+                        .flat_map(|elearning| elearning.resources.clone())
+                        .collect(),
                 }
+
+            // Accordion { title: tr.e_learning_title, default_open: false,
+            //     div { class: "w-full flex flex-col gap-44 [&>:last-child]:hidden",
+            //         for elearning in content.elearnings {
+            //             ElearningComponent { lang, elearning }
+            //             hr { class: "w-full border-b-1 border-line-gray" }
+            //         }
+            //     }
+            // }
             }
         }
     }

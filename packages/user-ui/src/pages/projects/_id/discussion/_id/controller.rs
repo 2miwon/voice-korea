@@ -6,7 +6,7 @@ use models::{
 use wasm_bindgen::{prelude::Closure, JsCast};
 use web_sys::{js_sys::eval, window, CustomEvent};
 
-use crate::routes::Route;
+use crate::{routes::Route, service::user_service::UserService};
 
 use super::chat_message::{Chat, ChatMessage};
 
@@ -20,11 +20,12 @@ pub struct Controller {
     discussion_id: ReadOnlySignal<i64>,
     pub nav: Navigator,
 
+    pub user: UserService,
+
     meeting_info: Signal<MeetingInfo>,
     attendee_info: Signal<AttendeeInfo>,
 
     participants: Resource<ParticipantData>,
-    #[allow(dead_code)]
     chat_messages: Signal<Vec<Chat>>,
 }
 
@@ -46,6 +47,7 @@ impl Controller {
             id,
             discussion_id,
             nav: use_navigator(),
+            user: use_context(),
 
             meeting_info: use_signal(|| MeetingInfo::default()),
             attendee_info: use_signal(|| AttendeeInfo::default()),
@@ -64,6 +66,12 @@ impl Controller {
     }
 
     fn listen_chat_messages(&mut self) {
+        let user = self.user;
+
+        if !user.is_login() {
+            return;
+        };
+
         let mut chat_messages = self.chat_messages;
         let participants = self.participants;
         let extract_user_id = Self::extract_user_id;
@@ -137,6 +145,13 @@ impl Controller {
     }
 
     pub async fn start_meeting(&mut self, discussion_id: i64) {
+        let user = self.user;
+
+        if !user.is_login() {
+            btracing::error!("login is required");
+            return;
+        };
+
         let project_id = self.id();
         let meeting = Discussion::get_client(&crate::config::get().api_url)
             .start_meeting(project_id, discussion_id)
