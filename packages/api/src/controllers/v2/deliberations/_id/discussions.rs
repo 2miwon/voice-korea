@@ -11,6 +11,9 @@ use by_types::QueryResponse;
 use deliberation::Deliberation;
 use discussion_resources::DiscussionResource;
 use models::{
+    discussion_conversations::discussion_conversation::{
+        DiscussionConversation, DiscussionConversationRepository,
+    },
     discussion_participants::{DiscussionParticipant, DiscussionParticipantRepository},
     dto::{MediaPlacementInfo, MeetingInfo},
     *,
@@ -23,6 +26,7 @@ use crate::utils::app_claims::AppClaims;
 pub struct DiscussionController {
     repo: DiscussionRepository,
     participation_repo: DiscussionParticipantRepository,
+    conversation_repo: DiscussionConversationRepository,
     pool: sqlx::Pool<sqlx::Postgres>,
 }
 
@@ -49,6 +53,48 @@ impl DiscussionController {
             .await?;
 
         Ok(QueryResponse { total_count, items })
+    }
+
+    async fn send_conversation(
+        &self,
+        id: i64,
+        req: DiscussionSendConversationsRequest,
+        auth: Option<Authorization>,
+    ) -> Result<Discussion> {
+        let user_id = match auth {
+            Some(Authorization::Bearer { ref claims }) => AppClaims(claims).get_user_id(),
+            _ => 0,
+        };
+
+        if user_id == 0 {
+            return Err(ApiError::NoUser);
+        }
+
+        let user = User::query_builder()
+            .id_equals(user_id)
+            .query()
+            .map(UserSummary::from)
+            .fetch_one(&self.pool)
+            .await?;
+
+        let discussion = Discussion::query_builder()
+            .id_equals(id)
+            .query()
+            .map(Discussion::from)
+            .fetch_optional(&self.pool)
+            .await?
+            .ok_or(ApiError::DiscussionNotFound)?;
+
+        if discussion.meeting_id.is_none() {
+            return Err(ApiError::AwsChimeError("Not Found Meeting ID".to_string()));
+        }
+
+        let _ = self
+            .conversation_repo
+            .insert(id, user_id, user.email, req.conversation.comment)
+            .await;
+
+        Ok(discussion)
     }
 
     async fn exit_meeting(&self, id: i64, auth: Option<Authorization>) -> Result<Discussion> {
@@ -501,11 +547,13 @@ impl DiscussionController {
     pub fn new(pool: sqlx::Pool<sqlx::Postgres>) -> Self {
         let repo = Discussion::get_repository(pool.clone());
         let participation_repo = DiscussionParticipant::get_repository(pool.clone());
+        let conversation_repo = DiscussionConversation::get_repository(pool.clone());
 
         Self {
             repo,
             pool,
             participation_repo,
+            conversation_repo,
         }
     }
 
@@ -573,6 +621,11 @@ impl DiscussionController {
 
             DiscussionByIdAction::ExitMeeting(_) => {
                 let res = ctrl.exit_meeting(id, auth).await?;
+                Ok(Json(res))
+            }
+
+            DiscussionByIdAction::SendConversations(req) => {
+                let res = ctrl.send_conversation(id, req, auth).await?;
                 Ok(Json(res))
             }
 

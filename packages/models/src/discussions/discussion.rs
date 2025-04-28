@@ -2,6 +2,7 @@ use bdk::prelude::*;
 use validator::Validate;
 
 use crate::discussion_conversations::discussion_conversation::DiscussionConversation;
+use crate::discussion_conversations::discussion_conversation::DiscussionConversationCreateRequest;
 use crate::discussion_participants::DiscussionParticipant;
 
 use crate::{ResourceFile, User};
@@ -11,7 +12,7 @@ use crate::{ResourceFile, User};
 
 // TODO: Add Activities in Discussion.
 #[derive(Validate)]
-#[api_model(base = "/v2/deliberations/:deliberation-id/discussions", table = discussions, action = [create(resources = Vec<i64>, users = Vec<i64>)], action_by_id = [start_meeting, participant_meeting, exit_meeting, start_recording, end_recording, delete])]
+#[api_model(base = "/v2/deliberations/:deliberation-id/discussions", table = discussions, action = [create(resources = Vec<i64>, users = Vec<i64>)], action_by_id = [start_meeting, participant_meeting, exit_meeting, start_recording, end_recording, delete, send_conversations(conversation = DiscussionConversationCreateRequest)])]
 pub struct Discussion {
     #[api_model(summary, primary_key)]
     pub id: i64,
