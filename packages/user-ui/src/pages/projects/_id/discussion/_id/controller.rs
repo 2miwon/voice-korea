@@ -3,9 +3,12 @@ use models::{
     dto::{AttendeeInfo, MeetingData, MeetingInfo, ParticipantData},
     Discussion,
 };
-use web_sys::js_sys::eval;
+use wasm_bindgen::{prelude::Closure, JsCast};
+use web_sys::{js_sys::eval, window, CustomEvent};
 
 use crate::routes::Route;
+
+use super::chat_message::{Chat, ChatMessage};
 
 #[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
@@ -21,6 +24,8 @@ pub struct Controller {
     attendee_info: Signal<AttendeeInfo>,
 
     participants: Resource<ParticipantData>,
+    #[allow(dead_code)]
+    chat_messages: Signal<Vec<Chat>>,
 }
 
 impl Controller {
@@ -46,13 +51,79 @@ impl Controller {
             attendee_info: use_signal(|| AttendeeInfo::default()),
 
             participants,
+            chat_messages: use_signal(|| vec![]),
         };
+
+        ctrl.listen_chat_messages();
 
         use_future(move || async move {
             let _ = ctrl.start_meeting(discussion_id()).await;
         });
 
         Ok(ctrl)
+    }
+
+    fn listen_chat_messages(&mut self) {
+        let mut ctrl = self.clone();
+        let closure =
+            Closure::<dyn FnMut(web_sys::Event)>::wrap(Box::new(move |event: web_sys::Event| {
+                if let Ok(event) = event.dyn_into::<CustomEvent>() {
+                    if let Some(detail) = event.detail().as_string() {
+                        if let Ok(chat) = serde_json::from_str::<ChatMessage>(&detail) {
+                            let user_id =
+                                ctrl.extract_user_id(chat.sender_external_user_id.as_str());
+
+                            let email = ctrl.get_email_by_user_id(user_id);
+
+                            let c = Chat {
+                                text: chat.text,
+                                user_id,
+                                email,
+                                timestamp_ms: chat.timestamp_ms,
+                            };
+
+                            ctrl.chat_messages.with_mut(|chat| {
+                                if chat.is_empty()
+                                    || chat.last().unwrap().timestamp_ms != c.timestamp_ms
+                                {
+                                    tracing::debug!("chat data: {:?}", c);
+                                    chat.push(c);
+                                }
+                            });
+                        }
+                    }
+                }
+            }));
+
+        window()
+            .unwrap()
+            .document()
+            .unwrap()
+            .add_event_listener_with_callback("chat-received", closure.as_ref().unchecked_ref())
+            .unwrap();
+
+        closure.forget();
+    }
+
+    fn get_email_by_user_id(&self, user_id: i64) -> String {
+        let participants = self.participants().unwrap();
+        let (p, u) = (&participants.participants, &participants.users);
+
+        p.iter()
+            .position(|d| d.user_id == user_id)
+            .map(|index| u[index].email.clone())
+            .unwrap_or_default()
+    }
+
+    fn extract_user_id(&mut self, external_user_id: &str) -> i64 {
+        if external_user_id.starts_with("u-") {
+            let trimmed = external_user_id.trim_start_matches("u-");
+            let unquoted = trimmed.trim_matches('"');
+
+            unquoted.to_string().parse::<i64>().unwrap_or_default()
+        } else {
+            0
+        }
     }
 
     pub fn handle_refresh(&mut self) {
@@ -147,6 +218,16 @@ impl Controller {
                                     }}
                                 }};
 
+                                window._sendMessage = function (text) {{
+                                    if (!window._chimeSession) return;
+                                    try {{
+                                        window._chimeSession.audioVideo.realtimeSendDataMessage("chat", text, 1000);
+                                        console.log("success to send message with text: ", text);
+                                    }} catch (err) {{
+                                        console.error("Send data message error", err);
+                                    }};
+                                }}
+
                                 window._toggleAudio = function () {{
                                     if (window._audioMuted) {{
                                         session.audioVideo.realtimeUnmuteLocalAudio();
@@ -216,15 +297,57 @@ impl Controller {
                                     }}
                                 }});
 
-                                session.audioVideo.start();
-                                session.audioVideo.startLocalVideoTile();
+                                session.audioVideo.realtimeSubscribeToReceiveDataMessage("chat", (dataMessage) => {{
+                                    console.log("message received: ", dataMessage);
+                                    if (!dataMessage) return;
+
+                                    const chat = {{
+                                        topic: dataMessage.topic,
+                                        sender_attendee_id: dataMessage.senderAttendeeId,
+                                        sender_external_user_id: dataMessage.senderExternalUserId,
+                                        text: new TextDecoder().decode(dataMessage.data),
+                                        timestamp_ms: Math.floor(dataMessage.timestampMs),
+                                    }};
+
+                                    document.dispatchEvent(new CustomEvent("chat-received", {{
+                                        detail: JSON.stringify(chat)
+                                    }}));
+                                }});
+
                                 window._chimeSession = session;
+                                session.audioVideo.start();
+                                console.log("success to start chime session");
+                                session.audioVideo.startLocalVideoTile();
+                                
                             }}, 500);
                         "#,
             meeting = serde_json::to_string(&meeting_info).unwrap(),
             attendee = serde_json::to_string(&attendee_info).unwrap(),
         );
         self.participants.restart();
+        let _ = eval(&js);
+    }
+
+    pub fn send_message(&self, text: String) {
+        let escaped = text.replace('"', "\\\"");
+        let js = format!(
+            r#"
+            if (window._sendMessage) {{
+                window._sendMessage("{escaped}");
+
+                const chat = {{
+                    topic: "chat",
+                    sender_attendee_id: window._chimeSession.configuration.credentials.attendeeId,
+                    sender_external_user_id: window._chimeSession.configuration.credentials.externalUserId,
+                    text: "{escaped}",
+                    timestamp_ms: Date.now(),
+                }};
+                document.dispatchEvent(new CustomEvent("chat-received", {{
+                    detail: JSON.stringify(chat)
+                }}));
+            }}
+            "#
+        );
         let _ = eval(&js);
     }
 

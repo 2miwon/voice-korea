@@ -1,6 +1,7 @@
 pub mod adopted;
 pub mod auth;
 pub mod badge;
+pub mod chat;
 pub mod check;
 pub mod download;
 pub mod end_circle;

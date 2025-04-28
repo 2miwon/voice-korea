@@ -1,6 +1,6 @@
 use crate::components::icons::{
-    end_circle::EndCircle, mic_off::MicOff, mic_on::MicOn, share::Share, video_off::VideoOff,
-    video_on::VideoOn,
+    chat::Chat, end_circle::EndCircle, mic_off::MicOff, mic_on::MicOn, share::Share,
+    video_off::VideoOff, video_on::VideoOn,
 };
 use bdk::prelude::*;
 use by_components::icons::user::UserGroup;
@@ -11,9 +11,10 @@ pub fn Footer(
     onprev: EventHandler<MouseEvent>,
     mic: bool,
     video: bool,
-    change_mic: EventHandler<bool>,
-    change_video: EventHandler<bool>,
-    change_show_member: EventHandler<MouseEvent>,
+    onchange_mic: EventHandler<bool>,
+    onchange_video: EventHandler<bool>,
+    onchange_member: EventHandler<MouseEvent>,
+    onchange_chat: EventHandler<MouseEvent>,
 ) -> Element {
     rsx! {
         div { class: "flex flex-row w-full justify-between items-center px-40 py-10 bg-netural-9",
@@ -22,12 +23,12 @@ pub fn Footer(
                     onclick: move |_| {
                         let _ = eval(
                             r#"
-                                                if (window._toggleAudio) {
-                                                    window._toggleAudio();
-                                                }
-                                            "#,
+                                                                                if (window._toggleAudio) {
+                                                                                    window._toggleAudio();
+                                                                                }
+                                                                            "#,
                         );
-                        change_mic.call(!mic);
+                        onchange_mic.call(!mic);
                     },
                     title: "Audio",
                     if mic {
@@ -41,12 +42,12 @@ pub fn Footer(
                     onclick: move |_| {
                         let _ = eval(
                             r#"
-                                                if (window._toggleVideo) {
-                                                    window._toggleVideo();
-                                                }
-                                            "#,
+                                                                                if (window._toggleVideo) {
+                                                                                    window._toggleVideo();
+                                                                                }
+                                                                            "#,
                         );
-                        change_video.call(!video);
+                        onchange_video.call(!video);
                     },
                     title: "Video",
                     if video {
@@ -60,7 +61,7 @@ pub fn Footer(
             div { class: "flex flex-row w-fit justify-start items-center gap-10",
                 BottomLabel {
                     onclick: move |e| {
-                        change_show_member.call(e);
+                        onchange_member.call(e);
                     },
                     title: "Participants",
                     UserGroup {
@@ -71,13 +72,20 @@ pub fn Footer(
                     }
                 }
                 BottomLabel {
+                    onclick: move |e| {
+                        onchange_chat.call(e);
+                    },
+                    title: "Chat",
+                    Chat { width: "24", height: "24" }
+                }
+                BottomLabel {
                     onclick: move |_| {
                         let _ = eval(
                             r#"
-                                                if (window._toggleShared) {
-                                                    window._toggleShared();
-                                                }
-                                            "#,
+                                                                                if (window._toggleShared) {
+                                                                                    window._toggleShared();
+                                                                                }
+                                                                            "#,
                         );
                     },
                     title: "Share",
