@@ -277,7 +277,7 @@ impl Controller {
                                         session.audioVideo.stopLocalVideoTile();
                                         window._videoOn = false;
                                     }}
-                                    window._updateVideoStatus();
+                                    window._broadcastStatus();
                                 }};
 
                                 window._sendMessage = function (text) {{
@@ -298,7 +298,7 @@ impl Controller {
                                         session.audioVideo.realtimeMuteLocalAudio();
                                         window._audioMuted = true;
                                     }}
-                                    window._updateAudioStatus();
+                                    window._broadcastStatus();
                                 }};
 
                                 window._updateAudioStatus = function () {{
@@ -311,14 +311,21 @@ impl Controller {
                                     window.dispatchEvent(new CustomEvent("attendee-status", {{ detail: JSON.stringify(detail) }}));
                                 }};
 
-                                window._updateVideoStatus = function () {{
+                                window._broadcastStatus = function () {{
                                     const attendeeId = session.configuration.credentials.attendeeId;
                                     const detail = {{
                                         attendee_id: attendeeId,
                                         video_on: window._videoOn,
-                                        audio_muted: window._audioMuted, 
+                                        audio_muted: window._audioMuted,
                                     }};
+
                                     window.dispatchEvent(new CustomEvent("attendee-status", {{ detail: JSON.stringify(detail) }}));
+
+                                    try {{
+                                        session.audioVideo.realtimeSendDataMessage("attendee-status", JSON.stringify(detail), 1000);
+                                    }} catch (err) {{
+                                        console.error("Send attendee-status message failed", err);
+                                    }}
                                 }};
 
                                 window._toggleShared = async function () {{
@@ -378,6 +385,14 @@ impl Controller {
                                         const elem = document.getElementById("video-tile-" + tileId);
                                         if (elem) elem.remove();
                                     }}
+                                }});
+
+                                session.audioVideo.realtimeSubscribeToReceiveDataMessage("attendee-status", (dataMessage) => {{
+                                    if (!dataMessage) return;
+                                    const detailStr = new TextDecoder().decode(dataMessage.data);
+                                    console.log("received remote attendee-status:", detailStr);
+
+                                    window.dispatchEvent(new CustomEvent("attendee-status", {{ detail: detailStr }}));
                                 }});
 
                                 session.audioVideo.realtimeSubscribeToReceiveDataMessage("chat", (dataMessage) => {{
