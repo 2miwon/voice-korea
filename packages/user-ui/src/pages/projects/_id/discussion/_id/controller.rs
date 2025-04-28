@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use bdk::prelude::*;
 use models::{
     dto::{AttendeeInfo, MeetingData, MeetingInfo, ParticipantData},
@@ -8,7 +10,7 @@ use web_sys::{js_sys::eval, window, CustomEvent};
 
 use crate::{routes::Route, service::user_service::UserService};
 
-use super::chat_message::{Chat, ChatMessage};
+use super::{AttendeeStatus, Chat, ChatMessage, ReceivedAttendeeStatus};
 
 #[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
@@ -27,6 +29,8 @@ pub struct Controller {
 
     participants: Resource<ParticipantData>,
     chat_messages: Signal<Vec<Chat>>,
+
+    attendee_status: Signal<HashMap<String, AttendeeStatus>>,
 }
 
 impl Controller {
@@ -54,15 +58,56 @@ impl Controller {
 
             participants,
             chat_messages: use_signal(|| vec![]),
+            attendee_status: use_signal(HashMap::new),
         };
 
         ctrl.listen_chat_messages();
+        ctrl.listen_attendee_status();
 
         use_future(move || async move {
             let _ = ctrl.start_meeting(discussion_id()).await;
         });
 
         Ok(ctrl)
+    }
+
+    fn listen_attendee_status(&mut self) {
+        let user = self.user;
+
+        if !user.is_login() {
+            return;
+        };
+
+        let mut attendee_status = self.attendee_status;
+
+        let closure =
+            Closure::<dyn FnMut(web_sys::Event)>::wrap(Box::new(move |event: web_sys::Event| {
+                if let Ok(event) = event.dyn_into::<CustomEvent>() {
+                    if let Some(detail) = event.detail().as_string() {
+                        tracing::debug!("received details: {:?}", detail);
+                        if let Ok(status) = serde_json::from_str::<ReceivedAttendeeStatus>(&detail)
+                        {
+                            tracing::debug!("received status: {:?}", status);
+                            attendee_status.with_mut(|map| {
+                                map.insert(
+                                    status.attendee_id.clone(),
+                                    AttendeeStatus {
+                                        video_on: status.video_on,
+                                        audio_muted: status.audio_muted,
+                                    },
+                                );
+                            });
+                        }
+                    }
+                }
+            }));
+
+        window()
+            .unwrap()
+            .add_event_listener_with_callback("attendee-status", closure.as_ref().unchecked_ref())
+            .unwrap();
+
+        closure.forget();
     }
 
     fn listen_chat_messages(&mut self) {
@@ -232,6 +277,7 @@ impl Controller {
                                         session.audioVideo.stopLocalVideoTile();
                                         window._videoOn = false;
                                     }}
+                                    window._updateVideoStatus();
                                 }};
 
                                 window._sendMessage = function (text) {{
@@ -252,6 +298,27 @@ impl Controller {
                                         session.audioVideo.realtimeMuteLocalAudio();
                                         window._audioMuted = true;
                                     }}
+                                    window._updateAudioStatus();
+                                }};
+
+                                window._updateAudioStatus = function () {{
+                                    const attendeeId = session.configuration.credentials.attendeeId;
+                                    const detail = {{
+                                        attendee_id: attendeeId,
+                                        video_on: window._videoOn, 
+                                        audio_muted: window._audioMuted,
+                                    }};
+                                    window.dispatchEvent(new CustomEvent("attendee-status", {{ detail: JSON.stringify(detail) }}));
+                                }};
+
+                                window._updateVideoStatus = function () {{
+                                    const attendeeId = session.configuration.credentials.attendeeId;
+                                    const detail = {{
+                                        attendee_id: attendeeId,
+                                        video_on: window._videoOn,
+                                        audio_muted: window._audioMuted, 
+                                    }};
+                                    window.dispatchEvent(new CustomEvent("attendee-status", {{ detail: JSON.stringify(detail) }}));
                                 }};
 
                                 window._toggleShared = async function () {{
@@ -342,6 +409,21 @@ impl Controller {
         );
         self.participants.restart();
         let _ = eval(&js);
+
+        let _ = eval(
+            r#"
+            window.__update_attendee_status_in_rust__ = (attendeeId, videoOn, audioMuted) => {
+                const event = new CustomEvent("attendee-status", {
+                    detail: JSON.stringify({
+                        attendee_id: attendeeId,
+                        video_on: videoOn,
+                        audio_muted: audioMuted
+                    })
+                });
+                document.dispatchEvent(event);
+            };
+        "#,
+        );
     }
 
     pub fn send_message(&self, text: String) {

@@ -90,6 +90,8 @@ pub fn DiscussionVideoPage(
                     },
                     participants: participants.participants,
                     users: participants.users,
+
+                    attendee_status: ctrl.attendee_status(),
                 }
             }
         }

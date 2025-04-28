@@ -1,7 +1,7 @@
 use bdk::prelude::*;
 use by_components::icons::{links_share::Send2, validations::Clear};
 
-use super::super::chat_message::Chat;
+use super::super::Chat;
 use crate::{
     components::icons::Logo,
     utils::time::{current_date, format_timestamp_to_ampm},
