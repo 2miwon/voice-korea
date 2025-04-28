@@ -61,6 +61,7 @@ impl Controller {
             attendee_status: use_signal(HashMap::new),
         };
 
+        ctrl.listen_member_refresh();
         ctrl.listen_chat_messages();
         ctrl.listen_attendee_status();
 
@@ -69,6 +70,22 @@ impl Controller {
         });
 
         Ok(ctrl)
+    }
+
+    fn listen_member_refresh(&mut self) {
+        let mut participants = self.participants;
+        let closure = Closure::<dyn FnMut(_)>::wrap(Box::new(move |_event: web_sys::Event| {
+            participants.restart();
+        }));
+
+        window()
+            .unwrap()
+            .add_event_listener_with_callback(
+                "participant-refresh",
+                closure.as_ref().unchecked_ref(),
+            )
+            .unwrap();
+        closure.forget();
     }
 
     fn listen_attendee_status(&mut self) {
@@ -180,15 +197,12 @@ impl Controller {
         }
     }
 
-    pub fn handle_refresh(&mut self) {
-        self.participants.restart();
-    }
-
     // NOTE: this function is not testing because multiple user testing is restricted.
     pub fn handle_selecting_attendee(&mut self, attendee_id: String) {
         let _ = eval(&format!(r#"window._focusVideo("{attendee_id}");"#)).unwrap();
     }
 
+    //FIXME: fix to rust code
     pub async fn start_meeting(&mut self, discussion_id: i64) {
         let user = self.user;
 
@@ -384,6 +398,18 @@ impl Controller {
                                     videoTileWasRemoved: (tileId) => {{
                                         const elem = document.getElementById("video-tile-" + tileId);
                                         if (elem) elem.remove();
+                                    }}
+                                }});
+
+                                session.audioVideo.realtimeSubscribeToAttendeeIdPresence((attendeeId, present, externalUserId, dropped) => {{
+                                    console.log("presence changed", attendeeId, present);
+
+                                    if (present) {{
+                                        window.dispatchEvent(new Event("participant-refresh"));
+                                    }} else {{
+                                        setTimeout(() => {{
+                                            window.dispatchEvent(new Event("participant-refresh"));
+                                        }}, 2000); 
                                     }}
                                 }});
 

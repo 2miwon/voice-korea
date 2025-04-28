@@ -81,9 +81,6 @@ pub fn DiscussionVideoPage(
                     hide_member: move |_| {
                         show_side_member.set(false);
                     },
-                    onrefresh: move |_| {
-                        ctrl.handle_refresh();
-                    },
 
                     onselect: move |attendee_id: String| {
                         ctrl.handle_selecting_attendee(attendee_id);

@@ -5,7 +5,7 @@ use by_components::icons::{audio::MicOff, validations::Clear, video_camera::Vide
 use models::{discussion_participants::DiscussionParticipant, UserSummary};
 
 use crate::{
-    components::icons::{mic_on::MicOn, refresh::Refresh, video_on::VideoOn, Logo},
+    components::icons::{mic_on::MicOn, video_on::VideoOn, Logo},
     pages::AttendeeStatus,
 };
 
@@ -17,7 +17,6 @@ pub fn ParticipantSidebar(
     attendee_status: HashMap<String, AttendeeStatus>,
 
     hide_member: EventHandler<MouseEvent>,
-    onrefresh: EventHandler<MouseEvent>,
     onselect: EventHandler<String>,
 ) -> Element {
     rsx! {
@@ -29,17 +28,6 @@ pub fn ParticipantSidebar(
                     div { class: "flex flex-row w-fit justify-start items-center gap-10",
                         Logo { width: "30", height: "20", class: "fill-third" }
                         div { class: "font-semibold text-white text-sm/17", "Participants" }
-                        button {
-                            onclick: move |e: Event<MouseData>| {
-                                onrefresh.call(e);
-                            },
-                            Refresh {
-                                width: "12",
-                                height: "12",
-                                fill: "#bfc8d9",
-                                class: "[&>path]:stroke-discussion-border-gray",
-                            }
-                        }
                     }
                     button {
                         onclick: move |e: Event<MouseData>| {
