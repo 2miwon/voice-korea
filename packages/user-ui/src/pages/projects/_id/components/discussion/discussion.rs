@@ -83,6 +83,7 @@ pub fn DiscussionTab(
                             Video {
                                 lang,
                                 discussion: discussion.clone(),
+                                is_valid: ctrl.is_valid(),
                                 start_meeting: move |id: i64| async move {
                                     let _ = ctrl.start_meeting(id).await;
                                 },
@@ -103,7 +104,12 @@ pub fn DiscussionTab(
 }
 
 #[component]
-pub fn Video(lang: Language, discussion: Discussion, start_meeting: EventHandler<i64>) -> Element {
+pub fn Video(
+    lang: Language,
+    discussion: Discussion,
+    start_meeting: EventHandler<i64>,
+    is_valid: bool,
+) -> Element {
     let tr: DiscussionTranslate = translate(&lang);
 
     rsx! {
@@ -137,17 +143,15 @@ pub fn Video(lang: Language, discussion: Discussion, start_meeting: EventHandler
                 }
 
                 div { class: "flex flex-row w-full justify-end items-end",
-                    div {
-                        class: "cursor-pointer flex flex-row min-w-240 px-10 py-8 justify-center items-center bg-button-primary rounded-lg",
+                    button {
+                        class: "flex flex-row min-w-240 px-10 py-8 justify-center items-center bg-disabled aria-active:!bg-button-primary rounded-lg",
+                        "aria-active": is_valid,
+                        onclick: move |_| {
+                            start_meeting.call(discussion.id);
+                        },
                         visibility: if get_discussion_status(discussion.started_at, discussion.ended_at)
     != DiscussionStatus::InProgress { "hidden" },
-                        div {
-                            class: "font-medium text-base text-white",
-                            onclick: move |_| {
-                                start_meeting.call(discussion.id);
-                            },
-                            {tr.involved}
-                        }
+                        div { class: "font-medium text-base text-white", {tr.involved} }
                     }
                 }
             }
