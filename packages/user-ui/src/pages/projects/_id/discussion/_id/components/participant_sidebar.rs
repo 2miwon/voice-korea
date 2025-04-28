@@ -11,8 +11,8 @@ pub fn ParticipantSidebar(
     users: Vec<UserSummary>,
 
     hide_member: EventHandler<MouseEvent>,
-    refresh: EventHandler<MouseEvent>,
-    clicked_attendee: EventHandler<String>,
+    onrefresh: EventHandler<MouseEvent>,
+    onselect: EventHandler<String>,
 ) -> Element {
     rsx! {
         div {
@@ -25,7 +25,7 @@ pub fn ParticipantSidebar(
                         div { class: "font-semibold text-white text-sm/17", "Participants" }
                         button {
                             onclick: move |e: Event<MouseData>| {
-                                refresh.call(e);
+                                onrefresh.call(e);
                             },
                             Refresh {
                                 width: "12",
@@ -54,7 +54,7 @@ pub fn ParticipantSidebar(
                             onclick: {
                                 let participant_id = participants[i].participant_id.clone();
                                 move |_| {
-                                    clicked_attendee.call(participant_id.clone());
+                                    onselect.call(participant_id.clone());
                                 }
                             },
                             div { class: "flex flex-row w-30 h-30 justify-center items-center rounded-full bg-text-gray",

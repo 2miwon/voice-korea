@@ -54,12 +54,12 @@ pub fn DiscussionVideoPage(
                     hide_member: move |_| {
                         show_side_member.set(false);
                     },
-                    refresh: move |_| {
-                        ctrl.refresh();
+                    onrefresh: move |_| {
+                        ctrl.handle_refresh();
                     },
 
-                    clicked_attendee: move |attendee_id: String| {
-                        ctrl.clicked_attendee(attendee_id);
+                    onselect: move |attendee_id: String| {
+                        ctrl.handle_selecting_attendee(attendee_id);
                     },
                     participants: participants.participants,
                     users: participants.users,

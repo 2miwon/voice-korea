@@ -31,7 +31,7 @@ impl Controller {
     ) -> std::result::Result<Self, RenderError> {
         let participants = use_server_future(move || async move {
             ParticipantData::get_client(&crate::config::get().api_url)
-                .find(discussion_id())
+                .get(discussion_id())
                 .await
                 .unwrap_or_default()
         })?;
@@ -55,12 +55,12 @@ impl Controller {
         Ok(ctrl)
     }
 
-    pub fn refresh(&mut self) {
+    pub fn handle_refresh(&mut self) {
         self.participants.restart();
     }
 
     // NOTE: this function is not testing because multiple user testing is restricted.
-    pub fn clicked_attendee(&mut self, attendee_id: String) {
+    pub fn handle_selecting_attendee(&mut self, attendee_id: String) {
         let _ = eval(&format!(r#"window._focusVideo("{attendee_id}");"#)).unwrap();
     }
 

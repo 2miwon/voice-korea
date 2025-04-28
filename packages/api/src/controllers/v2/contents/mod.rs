@@ -2,20 +2,13 @@ use by_axum::{
     aide,
     auth::Authorization,
     axum::{
-        extract::{Path, Query, State},
+        extract::{Path, State},
         routing::get,
         Extension, Json,
     },
 };
 
-use models::{
-    discussion_participants::DiscussionParticipant,
-    dto::{
-        ParticipantData, ParticipantDataGetResponse, ParticipantDataParam,
-        ParticipantDataReadActionType,
-    },
-    *,
-};
+use models::{discussion_participants::DiscussionParticipant, dto::ParticipantData, *};
 
 use crate::utils::app_claims::AppClaims;
 
@@ -84,22 +77,12 @@ impl ContentController {
         State(ctrl): State<ContentController>,
         Extension(auth): Extension<Option<Authorization>>,
         Path(ContentPath { content_id }): Path<ContentPath>,
-        Query(q): Query<ParticipantDataParam>,
-    ) -> Result<Json<ParticipantDataGetResponse>> {
+    ) -> Result<Json<ParticipantData>> {
         let _ = match auth {
             Some(Authorization::Bearer { ref claims }) => AppClaims(claims).get_user_id(),
             _ => return Err(ApiError::Unauthorized),
         };
 
-        match q {
-            ParticipantDataParam::Read(param)
-                if param.action == Some(ParticipantDataReadActionType::Find) =>
-            {
-                Ok(Json(ParticipantDataGetResponse::Read(
-                    ctrl.query(content_id).await?,
-                )))
-            }
-            _ => Err(ApiError::InvalidAction),
-        }
+        Ok(Json(ctrl.query(content_id).await?))
     }
 }

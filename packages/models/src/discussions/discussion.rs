@@ -1,6 +1,7 @@
 use bdk::prelude::*;
 use validator::Validate;
 
+use crate::discussion_conversations::discussion_conversation::DiscussionConversation;
 use crate::discussion_participants::DiscussionParticipant;
 
 use crate::{ResourceFile, User};
@@ -44,8 +45,9 @@ pub struct Discussion {
     #[api_model(summary, action_by_id = update, version = v0.4)]
     pub pipeline_id: String,
 
-    #[api_model(summary, type = JSONB, version = v0.5)]
-    pub comments: Vec<DiscussionComment>,
+    #[api_model(summary, one_to_many = discussion_conversations, foreign_key = discussion_id)]
+    #[serde(default)]
+    pub conversations: Vec<DiscussionConversation>,
 
     #[api_model(summary, one_to_many = discussion_participants, foreign_key = discussion_id)]
     #[serde(default)]

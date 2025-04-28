@@ -105,6 +105,9 @@ impl ChimeMeetingService {
         meeting: &MeetingInfo,
         external_user_id: &str,
     ) -> Result<AttendeeInfo, ApiError> {
+        let user_id = format!("u-{:?}", external_user_id);
+        let external_user_id = user_id.as_str();
+
         let resp = match self
             .client
             .create_attendee()

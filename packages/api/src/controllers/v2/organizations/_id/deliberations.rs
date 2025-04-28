@@ -1239,7 +1239,6 @@ impl DeliberationController {
                         disc.maximum_count,
                         None,
                         "".to_string(),
-                        vec![],
                     )
                     .await?
                     .ok_or(ApiError::DeliberationDiscussionException)?;
@@ -1443,7 +1442,6 @@ impl DeliberationController {
                         disc.maximum_count,
                         None,
                         "".to_string(),
-                        vec![],
                     )
                     .await?
                     .ok_or(ApiError::DeliberationDiscussionException)?;

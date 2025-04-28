@@ -393,7 +393,6 @@ impl DiscussionController {
                 maximum_count,
                 None,
                 "".to_string(),
-                vec![],
             )
             .await?
             .ok_or(ApiError::DeliberationNotFound)?;
