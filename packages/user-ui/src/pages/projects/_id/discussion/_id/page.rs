@@ -64,6 +64,7 @@ pub fn DiscussionVideoPage(
                 }
 
                 ConversationSidebar {
+                    messages: ctrl.chat_messages(),
                     show_conversation: show_side_conversation(),
 
                     hide_conversation: move |_| {

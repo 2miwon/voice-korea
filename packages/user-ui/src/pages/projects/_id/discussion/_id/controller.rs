@@ -64,16 +64,18 @@ impl Controller {
     }
 
     fn listen_chat_messages(&mut self) {
-        let mut ctrl = self.clone();
+        let mut chat_messages = self.chat_messages;
+        let participants = self.participants;
+        let extract_user_id = Self::extract_user_id;
+        let get_email_by_user_id = Self::get_email_by_user_id;
+
         let closure =
             Closure::<dyn FnMut(web_sys::Event)>::wrap(Box::new(move |event: web_sys::Event| {
                 if let Ok(event) = event.dyn_into::<CustomEvent>() {
                     if let Some(detail) = event.detail().as_string() {
                         if let Ok(chat) = serde_json::from_str::<ChatMessage>(&detail) {
-                            let user_id =
-                                ctrl.extract_user_id(chat.sender_external_user_id.as_str());
-
-                            let email = ctrl.get_email_by_user_id(user_id);
+                            let user_id = extract_user_id(&chat.sender_external_user_id);
+                            let email = get_email_by_user_id(participants().unwrap(), user_id);
 
                             let c = Chat {
                                 text: chat.text,
@@ -82,7 +84,7 @@ impl Controller {
                                 timestamp_ms: chat.timestamp_ms,
                             };
 
-                            ctrl.chat_messages.with_mut(|chat| {
+                            chat_messages.with_mut(|chat| {
                                 if chat.is_empty()
                                     || chat.last().unwrap().timestamp_ms != c.timestamp_ms
                                 {
@@ -105,8 +107,7 @@ impl Controller {
         closure.forget();
     }
 
-    fn get_email_by_user_id(&self, user_id: i64) -> String {
-        let participants = self.participants().unwrap();
+    fn get_email_by_user_id(participants: ParticipantData, user_id: i64) -> String {
         let (p, u) = (&participants.participants, &participants.users);
 
         p.iter()
@@ -115,7 +116,7 @@ impl Controller {
             .unwrap_or_default()
     }
 
-    fn extract_user_id(&mut self, external_user_id: &str) -> i64 {
+    fn extract_user_id(external_user_id: &str) -> i64 {
         if external_user_id.starts_with("u-") {
             let trimmed = external_user_id.trim_start_matches("u-");
             let unquoted = trimmed.trim_matches('"');

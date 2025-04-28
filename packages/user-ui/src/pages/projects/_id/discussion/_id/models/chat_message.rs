@@ -9,7 +9,7 @@ pub struct ChatMessage {
     pub timestamp_ms: u64,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct Chat {
     pub text: String,
     pub user_id: i64,
