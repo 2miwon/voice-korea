@@ -1,6 +1,6 @@
 use bdk::prelude::*;
 use models::{
-    dto::{AttendeeInfo, MeetingData, MeetingInfo},
+    dto::{AttendeeInfo, MeetingData, MeetingInfo, ParticipantData},
     Discussion,
 };
 use web_sys::js_sys::eval;
@@ -19,6 +19,8 @@ pub struct Controller {
 
     meeting_info: Signal<MeetingInfo>,
     attendee_info: Signal<AttendeeInfo>,
+
+    participants: Resource<ParticipantData>,
 }
 
 impl Controller {
@@ -27,6 +29,13 @@ impl Controller {
         id: ReadOnlySignal<i64>,
         discussion_id: ReadOnlySignal<i64>,
     ) -> std::result::Result<Self, RenderError> {
+        let participants = use_server_future(move || async move {
+            ParticipantData::get_client(&crate::config::get().api_url)
+                .get(discussion_id())
+                .await
+                .unwrap_or_default()
+        })?;
+
         let mut ctrl = Self {
             lang,
             id,
@@ -35,6 +44,8 @@ impl Controller {
 
             meeting_info: use_signal(|| MeetingInfo::default()),
             attendee_info: use_signal(|| AttendeeInfo::default()),
+
+            participants,
         };
 
         use_future(move || async move {
@@ -42,6 +53,15 @@ impl Controller {
         });
 
         Ok(ctrl)
+    }
+
+    pub fn handle_refresh(&mut self) {
+        self.participants.restart();
+    }
+
+    // NOTE: this function is not testing because multiple user testing is restricted.
+    pub fn handle_selecting_attendee(&mut self, attendee_id: String) {
+        let _ = eval(&format!(r#"window._focusVideo("{attendee_id}");"#)).unwrap();
     }
 
     pub async fn start_meeting(&mut self, discussion_id: i64) {
@@ -91,10 +111,10 @@ impl Controller {
 
                                 navigator.mediaDevices.getUserMedia({{ audio: true }})
                                     .then((stream) => {{
-                                        console.log("✅ getUserMedia 성공", stream);
+                                        console.log("getUserMedia Success", stream);
                                     }})
                                     .catch((err) => {{
-                                        console.error("❌ getUserMedia 실패", err.name, err.message);
+                                        console.error("getUserMedia Failed", err.name, err.message);
                                         return;
                                     }});
 
@@ -147,9 +167,32 @@ impl Controller {
                                     }}
                                 }};
 
+                                window._focusVideo = function(attendeeId) {{
+                                    if (!window._videoTileMap) return;
+                                    const tileId = window._videoTileMap[attendeeId];
+                                    if (!tileId) return;
+
+                                    const container = document.getElementById("video-grid");
+                                    let videoElement = document.getElementById("video-grid-video");
+                                    if (!videoElement) {{
+                                        videoElement = document.createElement("video");
+                                        videoElement.id = "video-grid-video";
+                                        videoElement.autoplay = true;
+                                        videoElement.playsInline = true;
+                                        videoElement.className = "w-full h-full object-cover";
+                                        container.innerHTML = "";
+                                        container.appendChild(videoElement);
+                                    }}
+
+                                    session.audioVideo.bindVideoElement(tileId, videoElement);
+                                }};
+
                                 session.audioVideo.addObserver({{
                                     videoTileDidUpdate: (tileState) => {{
                                         if (!tileState.tileId || tileState.isContent) return;
+
+                                        if (!window._videoTileMap) window._videoTileMap = {{}};
+                                        window._videoTileMap[tileState.attendeeId] = tileState.tileId;
 
                                         const container = document.getElementById("video-grid");
                                         let videoElement = document.getElementById("video-grid-video");
@@ -181,10 +224,26 @@ impl Controller {
             meeting = serde_json::to_string(&meeting_info).unwrap(),
             attendee = serde_json::to_string(&attendee_info).unwrap(),
         );
+        self.participants.restart();
         let _ = eval(&js);
     }
 
     pub async fn back(&self) {
+        let _ = eval(
+            r#"
+        if (window._chimeSession) {
+            try {
+                window._chimeSession.audioVideo.stop();
+                window._chimeSession = null;
+                const container = document.getElementById("video-grid");
+                if (container) container.innerHTML = "";
+            } catch (e) {
+                console.error("Failed to clean up Chime session", e);
+            }
+        }
+    "#,
+        );
+
         let _ = match Discussion::get_client(&crate::config::get().api_url)
             .exit_meeting(self.id(), self.discussion_id())
             .await
@@ -197,6 +256,10 @@ impl Controller {
             }
             Err(e) => {
                 btracing::error!("failed to exit room with error: {:?}", e);
+                self.nav.replace(Route::ProjectPage {
+                    lang: self.lang,
+                    project_id: self.id(),
+                });
             }
         };
     }

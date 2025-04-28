@@ -1,6 +1,7 @@
 use bdk::prelude::*;
 use validator::Validate;
 
+use crate::discussion_conversations::discussion_conversation::DiscussionConversation;
 use crate::discussion_participants::DiscussionParticipant;
 
 use crate::{ResourceFile, User};
@@ -44,6 +45,10 @@ pub struct Discussion {
     #[api_model(summary, action_by_id = update, version = v0.4)]
     pub pipeline_id: String,
 
+    #[api_model(summary, one_to_many = discussion_conversations, foreign_key = discussion_id)]
+    #[serde(default)]
+    pub conversations: Vec<DiscussionConversation>,
+
     #[api_model(summary, one_to_many = discussion_participants, foreign_key = discussion_id)]
     #[serde(default)]
     pub participants: Vec<DiscussionParticipant>,
@@ -69,4 +74,12 @@ impl Into<DiscussionCreateRequest> for Discussion {
             maximum_count: self.maximum_count,
         }
     }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "server", derive(schemars::JsonSchema, aide::OperationIo))]
+pub struct DiscussionComment {
+    created_at: i64,
+    user_id: i64,
+    comment: String,
 }

@@ -1,13 +1,18 @@
 use bdk::prelude::*;
 use by_components::icons::validations::Clear;
+use models::{discussion_participants::DiscussionParticipant, UserSummary};
 
-use crate::components::icons::Logo;
+use crate::components::icons::{refresh::Refresh, Logo};
 
 #[component]
 pub fn ParticipantSidebar(
     show_member: bool,
+    participants: Vec<DiscussionParticipant>,
+    users: Vec<UserSummary>,
+
     hide_member: EventHandler<MouseEvent>,
-    emails: Vec<String>,
+    onrefresh: EventHandler<MouseEvent>,
+    onselect: EventHandler<String>,
 ) -> Element {
     rsx! {
         div {
@@ -18,6 +23,17 @@ pub fn ParticipantSidebar(
                     div { class: "flex flex-row w-fit justify-start items-center gap-10",
                         Logo { width: "30", height: "20", class: "fill-third" }
                         div { class: "font-semibold text-white text-sm/17", "Participants" }
+                        button {
+                            onclick: move |e: Event<MouseData>| {
+                                onrefresh.call(e);
+                            },
+                            Refresh {
+                                width: "12",
+                                height: "12",
+                                fill: "#bfc8d9",
+                                class: "[&>path]:stroke-discussion-border-gray",
+                            }
+                        }
                     }
                     button {
                         onclick: move |e: Event<MouseData>| {
@@ -32,8 +48,15 @@ pub fn ParticipantSidebar(
                     }
                 }
                 div { class: "flex flex-col w-full h-lvh justify-start items-start px-10 py-20 bg-key-gray gap-20",
-                    for email in emails {
-                        div { class: "flex flex-row w-full justify-start items-center gap-4",
+                    for (i , user) in users.iter().enumerate() {
+                        button {
+                            class: "flex flex-row w-full justify-start items-center gap-4",
+                            onclick: {
+                                let participant_id = participants[i].participant_id.clone();
+                                move |_| {
+                                    onselect.call(participant_id.clone());
+                                }
+                            },
                             div { class: "flex flex-row w-30 h-30 justify-center items-center rounded-full bg-text-gray",
                                 Logo {
                                     width: "21",
@@ -42,7 +65,7 @@ pub fn ParticipantSidebar(
                                 }
                             }
 
-                            div { class: "font-medium text-white text-sm/18", {email} }
+                            div { class: "font-medium text-white text-sm/18", {user.email.clone()} }
                         }
                     }
                 }

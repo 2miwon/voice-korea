@@ -11,9 +11,11 @@ pub fn DiscussionVideoPage(
     discussion_id: ReadOnlySignal<i64>,
 ) -> Element {
     let mut show_side_member = use_signal(|| false);
-    let ctrl = Controller::init(lang, project_id, discussion_id)?;
+    let mut ctrl = Controller::init(lang, project_id, discussion_id)?;
     let mut mic = use_signal(|| true);
     let mut video = use_signal(|| true);
+
+    let participants = ctrl.participants()?;
 
     rsx! {
         div { class: "relative flex flex-col w-full h-lvh justify-start items-start",
@@ -47,19 +49,20 @@ pub fn DiscussionVideoPage(
                     }
                 }
 
-                //FIXME: fix to real email
                 ParticipantSidebar {
                     show_member: show_side_member(),
                     hide_member: move |_| {
                         show_side_member.set(false);
                     },
-                    emails: vec![
-                        "aaa@bbb.ccc".to_string(),
-                        "aaa1@bbb.ccc".to_string(),
-                        "aaa2@bbb.ccc".to_string(),
-                        "aaa3@bbb.ccc".to_string(),
-                        "aaa4@bbb.ccc".to_string(),
-                    ],
+                    onrefresh: move |_| {
+                        ctrl.handle_refresh();
+                    },
+
+                    onselect: move |attendee_id: String| {
+                        ctrl.handle_selecting_attendee(attendee_id);
+                    },
+                    participants: participants.participants,
+                    users: participants.users,
                 }
             }
         }

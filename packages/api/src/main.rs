@@ -19,6 +19,7 @@ use models::{
     deliberation_response::DeliberationResponse, deliberation_role::DeliberationRole,
     deliberation_sample_survey_roles::deliberation_sample_survey_role::DeliberationSampleSurveyRole,
     deliberation_user::DeliberationUser, deliberation_vote::DeliberationVote,
+    discussion_conversations::discussion_conversation::DiscussionConversation,
     discussion_participants::DiscussionParticipant, invitation::Invitation,
     response::SurveyResponse, review::Review, v2::Institution,
 };
@@ -145,6 +146,7 @@ async fn migration(pool: &sqlx::Pool<sqlx::Postgres>) -> Result<()> {
         DeliberationVote,
         Step,
         Discussion,
+        DiscussionConversation,
         DiscussionParticipant,
         DeliberationResource,
         DeliberationComment,

@@ -338,14 +338,8 @@ impl DiscussionController {
             .update(
                 id,
                 DiscussionRepositoryUpdateRequest {
-                    deliberation_id: None,
-                    started_at: None,
-                    ended_at: None,
-                    name: None,
-                    description: None,
                     meeting_id: Some(meeting.meeting_id.unwrap_or_default()),
-                    pipeline_id: None,
-                    maximum_count: None,
+                    ..Default::default()
                 },
             )
             .await
