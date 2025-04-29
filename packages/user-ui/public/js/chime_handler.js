@@ -268,15 +268,35 @@ async function toggleScreenShare() {
 function cleanupChimeSession() {
   if (!chimeSession) return;
   try {
-    chimeSession.audioVideo.stop();
-    chimeSession = null;
+    console.log("Cleaning up Chime session...");
 
+    chimeSession.audioVideo.stopLocalVideoTile();
+    chimeSession.audioVideo.stopContentShare();
+    chimeSession.audioVideo.stop();
     const container = document.getElementById("video-grid");
     if (container) {
       container.innerHTML = "";
     }
+
+    navigator.mediaDevices
+      .getUserMedia({ audio: true, video: true })
+      .then((stream) => {
+        stream.getTracks().forEach((track) => {
+          track.stop();
+          console.log("Stopped media track:", track);
+        });
+      })
+      .catch((err) => {
+        console.warn("No active media stream to stop:", err);
+      });
+
     videoTileMap = {};
-    console.log("Chime session cleaned up.");
+    chimeSession = null;
+    isVideoOn = true;
+    isAudioMuted = false;
+    isScreenSharing = false;
+
+    console.log("Chime session cleaned up completely.");
   } catch (e) {
     console.error("Failed to clean up Chime session:", e);
   }
