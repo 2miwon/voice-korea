@@ -13,6 +13,8 @@ pub struct DiscussionConversation {
     pub discussion_id: i64,
     #[api_model(summary)]
     pub user_id: i64,
-    #[api_model(summary, create)]
+    #[api_model(summary, version = v0.1)]
+    pub email: String,
+    #[api_model(summary, action = create)]
     pub comment: String,
 }

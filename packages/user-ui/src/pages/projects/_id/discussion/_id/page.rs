@@ -2,7 +2,7 @@ use bdk::prelude::*;
 
 use crate::pages::projects::_id::discussion::_id::components::{Footer, Header, Video};
 use crate::pages::projects::_id::discussion::_id::controller::Controller;
-use crate::pages::ParticipantSidebar;
+use crate::pages::{ConversationSidebar, ParticipantSidebar};
 
 #[component]
 pub fn DiscussionVideoPage(
@@ -11,6 +11,7 @@ pub fn DiscussionVideoPage(
     discussion_id: ReadOnlySignal<i64>,
 ) -> Element {
     let mut show_side_member = use_signal(|| false);
+    let mut show_side_conversation = use_signal(|| false);
     let mut ctrl = Controller::init(lang, project_id, discussion_id)?;
     let mut mic = use_signal(|| true);
     let mut video = use_signal(|| true);
@@ -34,14 +35,27 @@ pub fn DiscussionVideoPage(
                         mic: mic(),
                         video: video(),
 
-                        change_mic: move |m: bool| {
+                        onchange_mic: move |m: bool| {
                             mic.set(m);
                         },
-                        change_video: move |v: bool| {
+                        onchange_video: move |v: bool| {
                             video.set(v);
                         },
-                        change_show_member: move |_| {
-                            show_side_member.set(!show_side_member());
+                        onchange_chat: move |_| {
+                            if show_side_conversation() {
+                                show_side_conversation.set(false);
+                            } else {
+                                show_side_conversation.set(true);
+                                show_side_member.set(false);
+                            }
+                        },
+                        onchange_member: move |_| {
+                            if show_side_member() {
+                                show_side_member.set(false);
+                            } else {
+                                show_side_member.set(true);
+                                show_side_conversation.set(false);
+                            }
                         },
                         onprev: move |_| async move {
                             ctrl.back().await;
@@ -49,13 +63,23 @@ pub fn DiscussionVideoPage(
                     }
                 }
 
+                ConversationSidebar {
+                    messages: ctrl.chat_messages(),
+                    show_conversation: show_side_conversation(),
+
+                    hide_conversation: move |_| {
+                        show_side_conversation.set(false);
+                    },
+                    onsend: move |text: String| {
+                        tracing::debug!("message text: {:?}", text);
+                        ctrl.send_message(text);
+                    },
+                }
+
                 ParticipantSidebar {
                     show_member: show_side_member(),
                     hide_member: move |_| {
                         show_side_member.set(false);
-                    },
-                    onrefresh: move |_| {
-                        ctrl.handle_refresh();
                     },
 
                     onselect: move |attendee_id: String| {
@@ -63,6 +87,8 @@ pub fn DiscussionVideoPage(
                     },
                     participants: participants.participants,
                     users: participants.users,
+
+                    attendee_status: ctrl.attendee_status(),
                 }
             }
         }

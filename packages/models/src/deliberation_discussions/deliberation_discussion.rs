@@ -2,6 +2,7 @@
 use bdk::prelude::*;
 use validator::Validate;
 
+use crate::deliberation_panel_email::DeliberationPanelEmail;
 use crate::deliberation_role::DeliberationRole;
 use crate::deliberation_user::DeliberationUser;
 use crate::discussions::Discussion;
@@ -34,6 +35,10 @@ pub struct DeliberationDiscussion {
 
     #[api_model(summary, many_to_one = deliberations)]
     pub deliberation_id: i64,
+
+    #[api_model(summary, one_to_many = deliberation_panel_emails, foreign_key = deliberation_id, reference_key = deliberation_id)]
+    #[serde(default)]
+    pub emails: Vec<DeliberationPanelEmail>,
 
     #[api_model(summary, many_to_many = deliberation_discussion_roles, foreign_table_name = deliberation_roles, foreign_primary_key = role_id, foreign_reference_key = discussion_id)]
     #[serde(default)]
