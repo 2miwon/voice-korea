@@ -11,6 +11,7 @@ pub mod logo;
 pub mod pencil;
 pub mod person;
 pub mod project;
+pub mod record;
 pub mod refresh;
 pub mod right_arrow;
 pub mod search;

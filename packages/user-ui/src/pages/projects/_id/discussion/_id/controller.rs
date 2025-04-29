@@ -33,6 +33,7 @@ pub struct Controller {
     chat_messages: Signal<Vec<Chat>>,
 
     attendee_status: Signal<HashMap<String, AttendeeStatus>>,
+    is_recording: Signal<bool>,
 }
 
 impl Controller {
@@ -61,6 +62,7 @@ impl Controller {
             participants,
             chat_messages: use_signal(|| vec![]),
             attendee_status: use_signal(HashMap::new),
+            is_recording: use_signal(|| false),
         };
 
         ctrl.listen_member_refresh();
@@ -310,6 +312,34 @@ impl Controller {
         let escaped = text.replace('"', "\\\"");
         let js = format!(r#"sendChimeMessage("{}");"#, escaped);
         let _ = eval(&js);
+    }
+
+    pub async fn start_recording(&mut self) {
+        let project_id = self.id();
+        let discussion_id = self.discussion_id();
+
+        let _ = Discussion::get_client(&crate::config::get().api_url)
+            .start_recording(project_id, discussion_id)
+            .await
+            .unwrap_or_default();
+
+        self.is_recording.set(true);
+    }
+
+    pub async fn end_recording(&mut self) {
+        let project_id = self.id();
+        let discussion_id = self.discussion_id();
+
+        let is_recording = self.is_recording();
+
+        if is_recording {
+            let _ = Discussion::get_client(&crate::config::get().api_url)
+                .end_recording(project_id, discussion_id)
+                .await
+                .unwrap_or_default();
+
+            self.is_recording.set(false);
+        }
     }
 
     pub async fn back(&self) {

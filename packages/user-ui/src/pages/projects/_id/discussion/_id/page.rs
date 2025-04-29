@@ -12,7 +12,7 @@ pub fn DiscussionVideoPage(
 ) -> Element {
     let mut show_side_member = use_signal(|| false);
     let mut show_side_conversation = use_signal(|| false);
-    let ctrl = Controller::init(lang, project_id, discussion_id)?;
+    let mut ctrl = Controller::init(lang, project_id, discussion_id)?;
     let mut mic = use_signal(|| true);
     let mut video = use_signal(|| true);
 
@@ -34,6 +34,7 @@ pub fn DiscussionVideoPage(
                     Footer {
                         mic: mic(),
                         video: video(),
+                        record: ctrl.is_recording(),
 
                         onchange_mic: move |m: bool| {
                             ctrl.toggle_audio();
@@ -60,6 +61,13 @@ pub fn DiscussionVideoPage(
                             } else {
                                 show_side_member.set(true);
                                 show_side_conversation.set(false);
+                            }
+                        },
+                        onchange_record: move |_| async move {
+                            if ctrl.is_recording() {
+                                ctrl.end_recording().await;
+                            } else {
+                                ctrl.start_recording().await;
                             }
                         },
                         onprev: move |_| async move {

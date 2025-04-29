@@ -10,10 +10,12 @@ pub fn Footer(
     onprev: EventHandler<MouseEvent>,
     mic: bool,
     video: bool,
+    record: bool,
     onchange_mic: EventHandler<bool>,
     onchange_video: EventHandler<bool>,
     onchange_share: EventHandler<MouseEvent>,
     onchange_member: EventHandler<MouseEvent>,
+    onchange_record: EventHandler<MouseEvent>,
     onchange_chat: EventHandler<MouseEvent>,
 ) -> Element {
     rsx! {
@@ -69,9 +71,15 @@ pub fn Footer(
                         onchange_share.call(e);
                     },
                     title: "Share",
-                    Share {
-                    }
+                    Share {}
                 }
+                        // BottomLabel {
+            //     onclick: move |e| {
+            //         onchange_record.call(e);
+            //     },
+            //     title: "Record",
+            //     Record {}
+            // }
             }
 
             BottomLabel {
