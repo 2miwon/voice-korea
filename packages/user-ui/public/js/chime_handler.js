@@ -3,6 +3,22 @@ let videoTileMap = {};
 let isVideoOn = true;
 let isAudioMuted = false;
 let isScreenSharing = false;
+let attendeeStatusInterval = null;
+
+function startSendingAttendeeStatus() {
+  stopSendingAttendeeStatus();
+
+  attendeeStatusInterval = setInterval(() => {
+    sendAttendeeStatus();
+  }, 3000);
+}
+
+function stopSendingAttendeeStatus() {
+  if (attendeeStatusInterval) {
+    clearInterval(attendeeStatusInterval);
+    attendeeStatusInterval = null;
+  }
+}
 
 async function startChimeSession(meetingInfo, attendeeInfo) {
   console.log("startChimeSession called");
@@ -362,7 +378,5 @@ window.toggleVideo = toggleVideo;
 window.toggleAudio = toggleAudio;
 window.toggleScreenShare = toggleScreenShare;
 window.cleanupChimeSession = cleanupChimeSession;
-
-document.addEventListener("chat-received", (e) => {
-  console.log("chat-received event fired:", e.detail);
-});
+window.startSendingAttendeeStatus = startSendingAttendeeStatus;
+window.stopSendingAttendeeStatus = stopSendingAttendeeStatus;

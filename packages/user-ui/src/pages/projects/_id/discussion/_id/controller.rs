@@ -322,6 +322,8 @@ impl Controller {
             }
         };
 
+        let _ = eval("startSendingAttendeeStatus();");
+
         self.participants.restart();
     }
 
@@ -361,6 +363,7 @@ impl Controller {
 
     pub async fn back(&self) {
         let _ = eval("cleanupChimeSession();");
+        let _ = eval("stopSendingAttendeeStatus();");
 
         let _ = match Discussion::get_client(&crate::config::get().api_url)
             .exit_meeting(self.id(), self.discussion_id())
