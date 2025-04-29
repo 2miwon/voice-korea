@@ -17,11 +17,12 @@ pub fn DiscussionVideoPage(
     let mut video = use_signal(|| true);
 
     let participants = ctrl.participants()?;
+    let title = ctrl.discussion()?.name;
 
     rsx! {
         div { class: "relative flex flex-col w-full h-lvh justify-start items-start",
             Header {
-                title: "Debate topic", //FIXME: fix to real title
+                title,
                 onprev: move |_| async move {
                     ctrl.back().await;
                 },

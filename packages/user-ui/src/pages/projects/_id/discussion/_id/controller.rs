@@ -30,6 +30,7 @@ pub struct Controller {
     attendee_info: Signal<AttendeeInfo>,
 
     participants: Resource<ParticipantData>,
+    discussion: Resource<Discussion>,
     chat_messages: Signal<Vec<Chat>>,
 
     attendee_status: Signal<HashMap<String, AttendeeStatus>>,
@@ -49,6 +50,21 @@ impl Controller {
                 .unwrap_or_default()
         })?;
 
+        let discussion = use_server_future(move || async move {
+            let res = match Discussion::get_client(&crate::config::get().api_url)
+                .get(id(), discussion_id())
+                .await
+            {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::error!("query discussion failed with error: {:?}", e);
+                    Discussion::default()
+                }
+            };
+
+            res
+        })?;
+
         let mut ctrl = Self {
             lang,
             id,
@@ -60,6 +76,7 @@ impl Controller {
             attendee_info: use_signal(|| AttendeeInfo::default()),
 
             participants,
+            discussion,
             chat_messages: use_signal(|| vec![]),
             attendee_status: use_signal(HashMap::new),
             is_recording: use_signal(|| false),
