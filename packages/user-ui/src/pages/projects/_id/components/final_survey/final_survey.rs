@@ -24,6 +24,7 @@ pub fn FinalSurvey(lang: Language, project_id: ReadOnlySignal<i64>, children: El
                     title: tr.title,
                     data: survey.clone().into(),
                     is_login: ctrl.user.is_login(),
+                    is_member: ctrl.is_member(),
                     on_process_survey: move |_| {
                         ctrl.set_step(SurveyStep::InProgress);
                     },

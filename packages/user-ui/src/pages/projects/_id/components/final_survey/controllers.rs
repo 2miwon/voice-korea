@@ -192,4 +192,17 @@ impl Controller {
             }
         };
     }
+
+    pub fn is_member(&self) -> bool {
+        let final_survey = self.survey().unwrap();
+        let emails: Vec<String> = final_survey
+            .emails
+            .iter()
+            .map(|v| v.email.clone())
+            .collect();
+
+        let email = (self.user.email)();
+
+        emails.contains(&email)
+    }
 }

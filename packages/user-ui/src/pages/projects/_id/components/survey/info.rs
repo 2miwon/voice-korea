@@ -39,6 +39,7 @@ pub fn SurveyInfo(
     title: String,
     data: SurveyData,
     is_login: bool,
+    is_member: bool,
     on_process_survey: EventHandler<MouseEvent>,
 ) -> Element {
     let tr: SurveyInfoTranslate = translate(&lang);
@@ -74,7 +75,7 @@ pub fn SurveyInfo(
 
             Button {
                 class: "flex flex-row px-15 py-13 disabled:bg-hint-gray disabled:cursor-not-allowed rounded-lg text-white text-base",
-                disabled: data.status != ProjectStatus::InProgress || !is_login,
+                disabled: data.status != ProjectStatus::InProgress || !is_login || !is_member,
                 onclick: move |e| {
                     on_process_survey.call(e);
                 },

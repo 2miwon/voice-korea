@@ -2,6 +2,7 @@
 use bdk::prelude::*;
 use validator::Validate;
 
+use crate::deliberation_panel_email::DeliberationPanelEmail;
 use crate::deliberation_response::*;
 use crate::deliberation_role::DeliberationRole;
 use crate::deliberation_user::DeliberationUser;
@@ -42,6 +43,9 @@ pub struct DeliberationSampleSurvey {
     #[serde(default)]
     pub point: i64,
 
+    #[api_model(summary, one_to_many = deliberation_panel_emails, foreign_key = deliberation_id, reference_key = deliberation_id)]
+    #[serde(default)]
+    pub emails: Vec<DeliberationPanelEmail>,
     #[api_model(summary, many_to_many = deliberation_sample_survey_roles, foreign_table_name = deliberation_roles, foreign_primary_key = role_id, foreign_reference_key = sample_survey_id)]
     #[serde(default)]
     pub roles: Vec<DeliberationRole>,
