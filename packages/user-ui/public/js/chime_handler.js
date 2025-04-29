@@ -46,31 +46,66 @@ async function startChimeSession(meetingInfo, attendeeInfo) {
 
   session.audioVideo.addObserver({
     videoTileDidUpdate: (tileState) => {
-      console.log("videoTileDidUpdate called:", tileState);
-      if (!tileState.tileId || tileState.isContent) return;
-
-      videoTileMap[tileState.attendeeId] = tileState.tileId;
+      console.log("tileStatus:", tileState);
+      if (!tileState.tileId) return;
 
       const container = document.getElementById("video-grid");
-      if (!container) return;
 
-      let videoElement = document.getElementById("video-grid-video");
-      if (!videoElement) {
-        videoElement = document.createElement("video");
-        videoElement.id = "video-grid-video";
-        videoElement.autoplay = true;
-        videoElement.playsInline = true;
-        videoElement.muted = tileState.localTile ?? false;
-        videoElement.className = "w-full h-full object-cover";
-        container.innerHTML = "";
-        container.appendChild(videoElement);
+      if (tileState.isContent) {
+        console.log("Rendering content share tile");
+        let contentVideo = document.getElementById("content-share-video");
+        if (!contentVideo) {
+          contentVideo = document.createElement("video");
+          contentVideo.id = "content-share-video";
+          contentVideo.autoplay = true;
+          contentVideo.playsInline = true;
+          contentVideo.className = "w-full h-full object-contain";
+          container.appendChild(contentVideo);
+        }
+
+        const myVideo = document.getElementById("my-video");
+        const focusedVideo = document.getElementById("focused-video");
+        if (myVideo) myVideo.style.display = "none";
+        if (focusedVideo) focusedVideo.style.display = "none";
+
+        chimeSession.audioVideo.bindVideoElement(
+          tileState.tileId,
+          contentVideo
+        );
+        return;
       }
 
-      session.audioVideo.bindVideoElement(tileState.tileId, videoElement);
+      videoTileMap[tileState.boundAttendeeId] = tileState.tileId;
+
+      if (tileState.localTile) {
+        let myVideo = document.getElementById("my-video");
+        if (!myVideo) {
+          myVideo = document.createElement("video");
+          myVideo.id = "my-video";
+          myVideo.autoplay = true;
+          myVideo.playsInline = true;
+          myVideo.muted = true;
+          myVideo.className = "w-full h-full object-cover";
+          container.appendChild(myVideo);
+        }
+        chimeSession.audioVideo.bindVideoElement(tileState.tileId, myVideo);
+        console.log("Bound my local video");
+      }
     },
 
     videoTileWasRemoved: (tileId) => {
-      console.log("videoTileWasRemoved called:", tileId);
+      console.log("videoTileWasRemoved:", tileId);
+
+      const contentVideo = document.getElementById("content-share-video");
+      if (contentVideo) {
+        contentVideo.remove();
+
+        const myVideo = document.getElementById("my-video");
+        const focusedVideo = document.getElementById("focused-video");
+        if (myVideo) myVideo.style.display = "block";
+        if (focusedVideo) focusedVideo.style.display = "block";
+      }
+
       const elem = document.getElementById("video-tile-" + tileId);
       if (elem) elem.remove();
     },
@@ -155,26 +190,52 @@ function sendChimeMessage(text) {
 }
 
 function focusVideo(attendeeId) {
-  if (!chimeSession || !videoTileMap) return;
+  if (!chimeSession) return;
 
-  const tileId = videoTileMap[attendeeId];
-  if (!tileId) return;
+  const myId = chimeSession.configuration.credentials.attendeeId;
 
-  const container = document.getElementById("video-grid");
-  if (!container) return;
+  const videoGrid = document.getElementById("video-grid");
+  const myVideo = document.getElementById("my-video");
+  let focusedVideo = document.getElementById("focused-video");
 
-  let videoElement = document.getElementById("video-grid-video");
-  if (!videoElement) {
-    videoElement = document.createElement("video");
-    videoElement.id = "video-grid-video";
-    videoElement.autoplay = true;
-    videoElement.playsInline = true;
-    videoElement.className = "w-full h-full object-cover";
-    container.innerHTML = "";
-    container.appendChild(videoElement);
+  if (attendeeId === myId) {
+    if (focusedVideo) {
+      focusedVideo.remove();
+    }
+    if (myVideo) {
+      myVideo.style.display = "block";
+    }
+    console.log("Returned to my local video");
+    return;
   }
 
-  chimeSession.audioVideo.bindVideoElement(tileId, videoElement);
+  if (!focusedVideo && videoGrid) {
+    focusedVideo = document.createElement("video");
+    focusedVideo.id = "focused-video";
+    focusedVideo.autoplay = true;
+    focusedVideo.playsInline = true;
+    focusedVideo.className = "w-full h-full object-cover";
+    videoGrid.appendChild(focusedVideo);
+  }
+
+  if (!focusedVideo) return;
+
+  if (myVideo) {
+    myVideo.style.display = "none";
+  }
+
+  const tileId = videoTileMap[attendeeId];
+
+  console.log("tileId: ", tileId);
+  if (tileId) {
+    chimeSession.audioVideo.bindVideoElement(tileId, focusedVideo);
+    focusedVideo.style.backgroundColor = "transparent";
+    console.log(`Focused on attendee with video: ${attendeeId}`);
+  } else {
+    focusedVideo.srcObject = null;
+    focusedVideo.style.backgroundColor = "black";
+    console.warn(`Focused on attendee with no video: ${attendeeId}`);
+  }
 }
 
 function toggleVideo() {
@@ -182,6 +243,8 @@ function toggleVideo() {
     console.error("No active Chime session");
     return;
   }
+
+  const myId = chimeSession.configuration.credentials.attendeeId;
 
   if (isVideoOn) {
     chimeSession.audioVideo.stopLocalVideoTile();
@@ -193,6 +256,7 @@ function toggleVideo() {
     console.log("Video started.");
   }
 
+  focusVideo(myId);
   sendAttendeeStatus();
 }
 
@@ -273,22 +337,11 @@ function cleanupChimeSession() {
     chimeSession.audioVideo.stopLocalVideoTile();
     chimeSession.audioVideo.stopContentShare();
     chimeSession.audioVideo.stop();
-    const container = document.getElementById("video-grid");
-    if (container) {
-      container.innerHTML = "";
-    }
 
-    navigator.mediaDevices
-      .getUserMedia({ audio: true, video: true })
-      .then((stream) => {
-        stream.getTracks().forEach((track) => {
-          track.stop();
-          console.log("Stopped media track:", track);
-        });
-      })
-      .catch((err) => {
-        console.warn("No active media stream to stop:", err);
-      });
+    const videoGrid = document.getElementById("video-grid");
+    if (videoGrid) {
+      videoGrid.innerHTML = "";
+    }
 
     videoTileMap = {};
     chimeSession = null;
