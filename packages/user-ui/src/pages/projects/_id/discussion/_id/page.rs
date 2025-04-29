@@ -12,7 +12,7 @@ pub fn DiscussionVideoPage(
 ) -> Element {
     let mut show_side_member = use_signal(|| false);
     let mut show_side_conversation = use_signal(|| false);
-    let mut ctrl = Controller::init(lang, project_id, discussion_id)?;
+    let ctrl = Controller::init(lang, project_id, discussion_id)?;
     let mut mic = use_signal(|| true);
     let mut video = use_signal(|| true);
 
@@ -36,10 +36,15 @@ pub fn DiscussionVideoPage(
                         video: video(),
 
                         onchange_mic: move |m: bool| {
+                            ctrl.toggle_audio();
                             mic.set(m);
                         },
                         onchange_video: move |v: bool| {
+                            ctrl.toggle_video();
                             video.set(v);
+                        },
+                        onchange_share: move |_| {
+                            ctrl.toggle_screen_share();
                         },
                         onchange_chat: move |_| {
                             if show_side_conversation() {

@@ -4,7 +4,6 @@ use crate::components::icons::{
 };
 use bdk::prelude::*;
 use by_components::icons::user::UserGroup;
-use web_sys::js_sys::eval;
 
 #[component]
 pub fn Footer(
@@ -13,6 +12,7 @@ pub fn Footer(
     video: bool,
     onchange_mic: EventHandler<bool>,
     onchange_video: EventHandler<bool>,
+    onchange_share: EventHandler<MouseEvent>,
     onchange_member: EventHandler<MouseEvent>,
     onchange_chat: EventHandler<MouseEvent>,
 ) -> Element {
@@ -21,13 +21,6 @@ pub fn Footer(
             div { class: "flex flex-row w-fit justify-start items-center gap-10",
                 BottomLabel {
                     onclick: move |_| {
-                        let _ = eval(
-                            r#"
-                                                                                if (window._toggleAudio) {
-                                                                                    window._toggleAudio();
-                                                                                }
-                                                                            "#,
-                        );
                         onchange_mic.call(!mic);
                     },
                     title: "Audio",
@@ -40,13 +33,6 @@ pub fn Footer(
 
                 BottomLabel {
                     onclick: move |_| {
-                        let _ = eval(
-                            r#"
-                                                                                if (window._toggleVideo) {
-                                                                                    window._toggleVideo();
-                                                                                }
-                                                                            "#,
-                        );
                         onchange_video.call(!video);
                     },
                     title: "Video",
@@ -79,14 +65,8 @@ pub fn Footer(
                     Chat { width: "24", height: "24" }
                 }
                 BottomLabel {
-                    onclick: move |_| {
-                        let _ = eval(
-                            r#"
-                                                                                if (window._toggleShared) {
-                                                                                    window._toggleShared();
-                                                                                }
-                                                                            "#,
-                        );
+                    onclick: move |e| {
+                        onchange_share.call(e);
                     },
                     title: "Share",
                     Share {
