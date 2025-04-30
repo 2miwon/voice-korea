@@ -692,7 +692,11 @@ impl DeliberationController {
     ) -> Result<Vec<DeliberationSampleSurvey>> {
         let mut v = vec![];
 
-        for DeliberationSampleSurveyCreateRequest {
+        if sample_surveys.is_empty() {
+            return Ok(v);
+        }
+
+        let DeliberationSampleSurveyCreateRequest {
             started_at,
             ended_at,
             title,
@@ -701,79 +705,81 @@ impl DeliberationController {
             point,
             users,
             surveys,
-        } in sample_surveys
-        {
-            let sample = self
-                .sample_survey
-                .insert_with_tx(
-                    &mut *tx,
-                    started_at,
-                    ended_at,
-                    title.clone(),
-                    description.clone(),
-                    deliberation_id,
-                    estimate_time,
-                    point,
-                )
-                .await?
-                .ok_or(ApiError::DeliberationSampleSurveyException)?;
+        } = sample_surveys[0].clone();
 
-            let mut roles = vec![];
+        let mut sample = self
+            .sample_survey
+            .insert_with_tx(
+                &mut *tx,
+                started_at,
+                ended_at,
+                title.clone(),
+                description.clone(),
+                deliberation_id,
+                estimate_time,
+                point,
+            )
+            .await?
+            .ok_or(ApiError::DeliberationSampleSurveyException)?;
 
-            for email in users {
-                let d = deliberation_roles
-                    .iter()
-                    .find(|v| v.email == email)
-                    .unwrap_or(&DeliberationRole::default())
-                    .clone();
+        let mut roles = vec![];
 
-                roles.push(d);
-            }
+        for email in users {
+            let d = deliberation_roles
+                .iter()
+                .find(|v| v.email == email)
+                .unwrap_or(&DeliberationRole::default())
+                .clone();
 
-            for role in roles {
-                let _ = self
-                    .sample_survey_role
-                    .insert_with_tx(&mut *tx, role.id, sample.id)
-                    .await?
-                    .ok_or(ApiError::DeliberationSampleSurveyException)?;
-            }
-
-            let survey = self
-                .survey
-                .insert_with_tx(
-                    &mut *tx,
-                    title,
-                    ProjectType::SampleSurvey,
-                    project_areas
-                        .clone()
-                        .get(0)
-                        .unwrap_or(&ProjectArea::Economy)
-                        .clone(),
-                    ProjectStatus::InProgress,
-                    started_at,
-                    ended_at,
-                    description,
-                    0, //FIXME: fix quota
-                    org_id,
-                    surveys,
-                    vec![],
-                    vec![],
-                    vec![], //FIXME: fix panel count
-                    estimate_time,
-                    point,
-                    None,
-                )
-                .await?
-                .ok_or(ApiError::DeliberationSampleSurveyException)?;
-
-            let _ = self
-                .sample_survey_survey
-                .insert_with_tx(&mut *tx, survey.id, sample.id)
-                .await?
-                .ok_or(ApiError::DeliberationSampleSurveyException)?;
-
-            v.push(sample);
+            roles.push(d);
         }
+
+        for role in roles {
+            let _ = self
+                .sample_survey_role
+                .insert_with_tx(&mut *tx, role.id, sample.id)
+                .await?
+                .ok_or(ApiError::DeliberationSampleSurveyException)?;
+        }
+
+        let survey = self
+            .survey
+            .insert_with_tx(
+                &mut *tx,
+                title,
+                ProjectType::SampleSurvey,
+                project_areas
+                    .clone()
+                    .get(0)
+                    .unwrap_or(&ProjectArea::Economy)
+                    .clone(),
+                ProjectStatus::InProgress,
+                started_at,
+                ended_at,
+                description,
+                0, //FIXME: fix quota
+                org_id,
+                surveys,
+                vec![],
+                vec![],
+                vec![], //FIXME: fix panel count
+                estimate_time,
+                point,
+                None,
+            )
+            .await?
+            .ok_or(ApiError::DeliberationSampleSurveyException)?;
+
+        let _ = self
+            .sample_survey_survey
+            .insert_with_tx(&mut *tx, survey.id, sample.id)
+            .await?
+            .ok_or(ApiError::DeliberationSampleSurveyException)?;
+
+        sample.surveys = vec![survey];
+
+        v.push(sample);
+
         Ok(v)
     }
 
@@ -804,7 +810,7 @@ impl DeliberationController {
                 .fetch_all(&self.pool)
                 .await?;
 
-            let sample = if results.is_empty() {
+            let sample = if results.clone().is_empty() {
                 let v = self
                     .create_sample_survey(
                         &mut *tx,
@@ -821,6 +827,7 @@ impl DeliberationController {
                     .unwrap_or_else(DeliberationSampleSurvey::default)
             } else {
                 results
+                    .clone()
                     .into_iter()
                     .next()
                     .unwrap_or_else(DeliberationSampleSurvey::default)
@@ -851,8 +858,6 @@ impl DeliberationController {
                 .map(DeliberationSampleSurveyRole::from)
                 .fetch_all(&self.pool)
                 .await?;
-
-            tracing::debug!("remain_users: {:?}", remain_users);
 
             for remain in remain_users {
                 match self
@@ -903,41 +908,48 @@ impl DeliberationController {
                     .delete_with_tx(&mut *tx, survey.id)
                     .await?
                     .ok_or(ApiError::DeliberationSampleSurveyException)?;
+
+                self.survey
+                    .delete_with_tx(&mut *tx, survey.survey_id)
+                    .await?
+                    .ok_or(ApiError::DeliberationSampleSurveyException)?;
             }
 
-            let survey = self
-                .survey
-                .insert_with_tx(
-                    &mut *tx,
-                    title,
-                    ProjectType::SampleSurvey,
-                    project_areas
-                        .clone()
-                        .get(0)
-                        .unwrap_or(&ProjectArea::Economy)
-                        .clone(),
-                    ProjectStatus::InProgress,
-                    started_at,
-                    ended_at,
-                    description,
-                    0, //FIXME: fix quota
-                    org_id,
-                    surveys,
-                    vec![],
-                    vec![],
-                    vec![], //FIXME: fix panel count
-                    estimate_time,
-                    point,
-                    None,
-                )
-                .await?
-                .ok_or(ApiError::DeliberationSampleSurveyException)?;
+            if !results.is_empty() {
+                let survey = self
+                    .survey
+                    .insert_with_tx(
+                        &mut *tx,
+                        title,
+                        ProjectType::SampleSurvey,
+                        project_areas
+                            .clone()
+                            .get(0)
+                            .unwrap_or(&ProjectArea::Economy)
+                            .clone(),
+                        ProjectStatus::InProgress,
+                        started_at,
+                        ended_at,
+                        description,
+                        0, //FIXME: fix quota
+                        org_id,
+                        surveys,
+                        vec![],
+                        vec![],
+                        vec![], //FIXME: fix panel count
+                        estimate_time,
+                        point,
+                        None,
+                    )
+                    .await?
+                    .ok_or(ApiError::DeliberationSampleSurveyException)?;
 
-            let _ = self
-                .sample_survey_survey
-                .insert_with_tx(&mut *tx, survey.id, sample.id)
-                .await?
-                .ok_or(ApiError::DeliberationSampleSurveyException)?;
+                let _ = self
+                    .sample_survey_survey
+                    .insert_with_tx(&mut *tx, survey.id, sample.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationSampleSurveyException)?;
+            }
         }
 
         Ok(())
@@ -1476,7 +1488,12 @@ impl DeliberationController {
         final_surveys: Vec<DeliberationFinalSurveyCreateRequest>,
     ) -> Result<Vec<DeliberationFinalSurvey>> {
         let mut v = vec![];
-        for DeliberationFinalSurveyCreateRequest {
+
+        if final_surveys.is_empty() {
+            return Ok(v);
+        }
+
+        let DeliberationFinalSurveyCreateRequest {
             started_at,
             ended_at,
             title,
@@ -1485,78 +1502,81 @@ impl DeliberationController {
             point,
             users,
             surveys,
-        } in final_surveys
-        {
-            let d = self
-                .final_repo
-                .insert_with_tx(
-                    &mut *tx,
-                    started_at,
-                    ended_at,
-                    title.clone(),
-                    description.clone(),
-                    deliberation_id,
-                    estimate_time,
-                    point,
-                )
-                .await?
-                .ok_or(ApiError::DeliberationFinalSurveyException)?;
+        } = final_surveys[0].clone();
 
-            let mut roles = vec![];
+        let mut d = self
+            .final_repo
+            .insert_with_tx(
+                &mut *tx,
+                started_at,
+                ended_at,
+                title.clone(),
+                description.clone(),
+                deliberation_id,
+                estimate_time,
+                point,
+            )
+            .await?
+            .ok_or(ApiError::DeliberationFinalSurveyException)?;
 
-            for email in users {
-                let d = deliberation_roles
-                    .iter()
-                    .find(|v| v.email == email)
-                    .unwrap_or(&DeliberationRole::default())
-                    .clone();
+        let mut roles = vec![];
 
-                roles.push(d);
-            }
+        for email in users {
+            let d = deliberation_roles
+                .iter()
+                .find(|v| v.email == email)
+                .unwrap_or(&DeliberationRole::default())
+                .clone();
 
-            for role in roles {
-                let _ = self
-                    .final_role
-                    .insert_with_tx(&mut *tx, role.id, d.id)
-                    .await?
-                    .ok_or(ApiError::DeliberationFinalSurveyException)?;
-            }
-
-            let survey = self
-                .survey
-                .insert_with_tx(
-                    &mut *tx,
-                    title,
-                    ProjectType::FinalSurvey,
-                    project_areas
-                        .clone()
-                        .get(0)
-                        .unwrap_or(&ProjectArea::Economy)
-                        .clone(),
-                    ProjectStatus::InProgress,
-                    started_at,
-                    ended_at,
-                    description,
-                    0, //FIXME: fix quota
-                    org_id,
-                    surveys,
-                    vec![],
-                    vec![],
-                    vec![], //FIXME: fix panel count
-                    estimate_time,
-                    point,
-                    None,
-                )
-                .await?
-                .ok_or(ApiError::DeliberationFinalSurveyException)?;
-
-            let _ = self
-                .final_survey
-                .insert_with_tx(&mut *tx, survey.id, d.id)
-                .await?
-                .ok_or(ApiError::DeliberationFinalSurveyException)?;
-            v.push(d);
+            roles.push(d);
         }
+
+        for role in roles {
+            let _ = self
+                .final_role
+                .insert_with_tx(&mut *tx, role.id, d.id)
+                .await?
+                .ok_or(ApiError::DeliberationFinalSurveyException)?;
+        }
+
+        let survey = self
+            .survey
+            .insert_with_tx(
+                &mut *tx,
+                title,
+                ProjectType::FinalSurvey,
+                project_areas
+                    .clone()
+                    .get(0)
+                    .unwrap_or(&ProjectArea::Economy)
+                    .clone(),
+                ProjectStatus::InProgress,
+                started_at,
+                ended_at,
+                description,
+                0, //FIXME: fix quota
+                org_id,
+                surveys,
+                vec![],
+                vec![],
+                vec![], //FIXME: fix panel count
+                estimate_time,
+                point,
+                None,
+            )
+            .await?
+            .ok_or(ApiError::DeliberationFinalSurveyException)?;
+
+        let _ = self
+            .final_survey
+            .insert_with_tx(&mut *tx, survey.id, d.id)
+            .await?
+            .ok_or(ApiError::DeliberationFinalSurveyException)?;
+
+        d.surveys = vec![survey];
+
+        v.push(d);
+
         Ok(v)
     }
 
@@ -1587,7 +1607,7 @@ impl DeliberationController {
                 .fetch_all(&self.pool)
                 .await?;
 
-            let d = if results.is_empty() {
+            let d = if results.clone().is_empty() {
                 let v = self
                     .create_final_survey(
                         &mut *tx,
@@ -1604,6 +1624,7 @@ impl DeliberationController {
                     .unwrap_or_else(DeliberationFinalSurvey::default)
             } else {
                 results
+                    .clone()
                     .into_iter()
                     .next()
                     .unwrap_or_else(DeliberationFinalSurvey::default)
@@ -1682,41 +1703,48 @@ impl DeliberationController {
                     .delete_with_tx(&mut *tx, survey.id)
                     .await?
                     .ok_or(ApiError::DeliberationFinalSurveyException)?;
+
+                self.survey
+                    .delete_with_tx(&mut *tx, survey.survey_id)
+                    .await?
+                    .ok_or(ApiError::DeliberationFinalSurveyException)?;
             }
 
-            let survey = self
-                .survey
-                .insert_with_tx(
-                    &mut *tx,
-                    title,
-                    ProjectType::FinalSurvey,
-                    project_areas
-                        .clone()
-                        .get(0)
-                        .unwrap_or(&ProjectArea::Economy)
-                        .clone(),
-                    ProjectStatus::InProgress,
-                    started_at,
-                    ended_at,
-                    description,
-                    0, //FIXME: fix quota
-                    org_id,
-                    surveys,
-                    vec![],
-                    vec![],
-                    vec![], //FIXME: fix panel count
-                    estimate_time,
-                    point,
-                    None,
-                )
-                .await?
-                .ok_or(ApiError::DeliberationFinalSurveyException)?;
+            if !results.is_empty() {
+                let survey = self
+                    .survey
+                    .insert_with_tx(
+                        &mut *tx,
+                        title,
+                        ProjectType::FinalSurvey,
+                        project_areas
+                            .clone()
+                            .get(0)
+                            .unwrap_or(&ProjectArea::Economy)
+                            .clone(),
+                        ProjectStatus::InProgress,
+                        started_at,
+                        ended_at,
+                        description,
+                        0, //FIXME: fix quota
+                        org_id,
+                        surveys,
+                        vec![],
+                        vec![],
+                        vec![], //FIXME: fix panel count
+                        estimate_time,
+                        point,
+                        None,
+                    )
+                    .await?
+                    .ok_or(ApiError::DeliberationFinalSurveyException)?;
 
-            let _ = self
-                .final_survey
-                .insert_with_tx(&mut *tx, survey.id, d.id)
-                .await?
-                .ok_or(ApiError::DeliberationFinalSurveyException)?;
+                let _ = self
+                    .final_survey
+                    .insert_with_tx(&mut *tx, survey.id, d.id)
+                    .await?
+                    .ok_or(ApiError::DeliberationFinalSurveyException)?;
+            }
         }
 
         Ok(())
