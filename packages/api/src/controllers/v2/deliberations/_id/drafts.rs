@@ -14,6 +14,7 @@ use models::{
         DeliberationDraftSummary,
     },
     deliberation_response::{DeliberationResponse, DeliberationType},
+    deliberation_role::DeliberationRole,
     *,
 };
 use sqlx::postgres::PgRow;
@@ -195,35 +196,26 @@ impl DeliberationDraftController {
         auth: Option<Authorization>,
         deliberation_id: i64,
     ) -> Result<DeliberationDraftGetResponse> {
-        let user_id: i64 = match auth {
-            Some(Authorization::Bearer { ref claims }) => AppClaims(claims).get_user_id(),
-            _ => 0,
+        let (user_id, email): (i64, String) = match auth {
+            Some(Authorization::Bearer { ref claims }) => (
+                AppClaims(claims).get_user_id(),
+                AppClaims(claims).get_email(),
+            ),
+            _ => (0, "".to_string()),
         };
 
         let mut is_member = false;
 
         if user_id != 0 {
-            let user = User::query_builder()
-                .id_equals(user_id)
+            let res: Option<DeliberationRole> = DeliberationRole::query_builder()
+                .deliberation_id_equals(deliberation_id)
+                .email_equals(email)
                 .query()
-                .map(User::from)
-                .fetch_one(&self.pool)
+                .map(Into::into)
+                .fetch_optional(&self.pool)
                 .await?;
 
-            let email = user.email;
-
-            let emails: Vec<String> = Deliberation::query_builder()
-                .id_equals(deliberation_id)
-                .query()
-                .map(Deliberation::from)
-                .fetch_one(&self.pool)
-                .await?
-                .roles
-                .iter()
-                .map(|v| v.email.clone())
-                .collect();
-
-            is_member = emails.contains(&email);
+            is_member = res.is_some();
         }
 
         let responses = DeliberationResponse::query_builder()
