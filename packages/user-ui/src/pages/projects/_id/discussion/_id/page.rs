@@ -37,18 +37,18 @@ pub fn DiscussionVideoPage(
                         video: video(),
                         record: ctrl.is_recording(),
 
-                        onchange_mic: move |m: bool| {
+                        on_mic_change: move |m: bool| {
                             ctrl.toggle_audio();
                             mic.set(m);
                         },
-                        onchange_video: move |v: bool| {
+                        on_video_change: move |v: bool| {
                             ctrl.toggle_video();
                             video.set(v);
                         },
-                        onchange_share: move |_| {
+                        on_share_change: move |_| {
                             ctrl.toggle_screen_share();
                         },
-                        onchange_chat: move |_| {
+                        on_chat_change: move |_| {
                             if show_side_conversation() {
                                 show_side_conversation.set(false);
                             } else {
@@ -56,7 +56,7 @@ pub fn DiscussionVideoPage(
                                 show_side_member.set(false);
                             }
                         },
-                        onchange_member: move |_| {
+                        on_member_change: move |_| {
                             if show_side_member() {
                                 show_side_member.set(false);
                             } else {
@@ -64,7 +64,7 @@ pub fn DiscussionVideoPage(
                                 show_side_conversation.set(false);
                             }
                         },
-                        onchange_record: move |_| async move {
+                        on_record_change: move |_| async move {
                             if ctrl.is_recording() {
                                 ctrl.end_recording().await;
                             } else {
