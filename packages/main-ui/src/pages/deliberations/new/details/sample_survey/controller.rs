@@ -170,11 +170,17 @@ impl Controller {
 
         let title = sample_survey.title;
         let description = sample_survey.description;
+        let started_at = sample_survey.started_at;
+        let ended_at = sample_survey.ended_at;
 
         let members = sample_survey.users;
         let surveys = sample_survey.surveys;
 
-        !(title.is_empty() || description.is_empty() || members.is_empty() || surveys.is_empty())
+        !(title.is_empty()
+            || description.is_empty()
+            || started_at >= ended_at
+            || members.is_empty()
+            || surveys.is_empty())
     }
 
     pub fn validation_check(&self) -> bool {
@@ -182,6 +188,8 @@ impl Controller {
 
         let title = sample_survey.title;
         let description = sample_survey.description;
+        let started_at = sample_survey.started_at;
+        let ended_at = sample_survey.ended_at;
 
         let members = sample_survey.users;
         let surveys = sample_survey.surveys;
@@ -192,6 +200,10 @@ impl Controller {
         }
         if description.is_empty() {
             btracing::e!(self.lang, ValidationError::DescriptionRequired);
+            return false;
+        }
+        if started_at >= ended_at {
+            btracing::e!(self.lang, ValidationError::TimeValidationFailed);
             return false;
         }
         if members.is_empty() {
@@ -219,6 +231,11 @@ pub enum ValidationError {
         en = "Please enter the sample survey description."
     )]
     DescriptionRequired,
+    #[translate(
+        ko = "시작 날짜는 종료 날짜보다 작아야합니다.",
+        en = "The start date must be less than the end date."
+    )]
+    TimeValidationFailed,
     #[translate(
         ko = "1명 이상의 담당자를 선택해주세요.",
         en = "Please select one or more contact persons."
