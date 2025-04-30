@@ -51,9 +51,9 @@ pub struct DeliberationSampleSurvey {
     pub roles: Vec<DeliberationRole>,
 
     //FIXME: this field will be deprecated. use roles field instead.
-    #[api_model(summary, many_to_many = deliberation_sample_survey_members, foreign_table_name = users, foreign_primary_key = user_id, foreign_reference_key = sample_survey_id)]
+    #[api_model(skip)]
     #[serde(default)]
-    pub members: Vec<User>,
+    pub is_member: bool,
 
     #[api_model(summary, many_to_many = deliberation_sample_survey_surveys, foreign_table_name = surveys, foreign_primary_key = survey_id, foreign_reference_key = sample_survey_id)]
     #[serde(default)]

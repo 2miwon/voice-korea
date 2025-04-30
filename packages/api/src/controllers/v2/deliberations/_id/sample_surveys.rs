@@ -107,6 +107,33 @@ impl DeliberationSampleSurveyController {
             Some(Authorization::Bearer { ref claims }) => AppClaims(claims).get_user_id(),
             _ => 0,
         };
+
+        let mut is_member = false;
+
+        if user_id != 0 {
+            let user = User::query_builder()
+                .id_equals(user_id)
+                .query()
+                .map(User::from)
+                .fetch_one(&self.pool)
+                .await?;
+
+            let email = user.email;
+
+            let emails: Vec<String> = Deliberation::query_builder()
+                .id_equals(deliberation_id)
+                .query()
+                .map(Deliberation::from)
+                .fetch_one(&self.pool)
+                .await?
+                .roles
+                .iter()
+                .map(|v| v.email.clone())
+                .collect();
+
+            is_member = emails.contains(&email);
+        }
+
         let responses = DeliberationResponse::query_builder()
             .deliberation_id_equals(deliberation_id)
             .deliberation_type_equals(DeliberationType::Survey)
@@ -137,6 +164,7 @@ impl DeliberationSampleSurveyController {
             .await?;
         res.user_response = user_response;
         res.responses = responses;
+        res.is_member = is_member;
         Ok(DeliberationSampleSurveyGetResponse::Read(res))
     }
 }
