@@ -24,9 +24,6 @@ use models::{
     deliberation_discussion_resources::deliberation_discussion_resource::*,
     deliberation_discussion_roles::deliberation_discussion_role::*,
     deliberation_discussions::deliberation_discussion::*,
-    deliberation_draft_members::deliberation_draft_member::*,
-    deliberation_draft_resources::deliberation_draft_resource::*,
-    deliberation_draft_surveys::deliberation_draft_survey::*,
     deliberation_drafts::deliberation_draft::*,
     deliberation_final_survey_roles::deliberation_final_survey_role::*,
     deliberation_final_survey_surveys::deliberation_final_survey_survey::*,
@@ -102,9 +99,6 @@ pub struct DeliberationController {
     final_role: DeliberationFinalSurveyRoleRepository,
     final_survey: DeliberationFinalSurveySurveyRepository,
     draft_repo: DeliberationDraftRepository,
-    draft_member: DeliberationDraftMemberRepository,
-    draft_survey: DeliberationDraftSurveyRepository,
-    draft_resource: DeliberationDraftResourceRepository,
     panel_emails: DeliberationPanelEmailRepository,
 }
 
@@ -1756,52 +1750,12 @@ impl DeliberationController {
         deliberation_id: i64,
         drafts: Vec<DeliberationDraftCreateRequest>,
     ) -> Result<()> {
-        for DeliberationDraftCreateRequest {
-            started_at,
-            ended_at,
-            title,
-            description,
-            users,
-            resources,
-            surveys,
-        } in drafts
-        {
-            let d = self
+        for DeliberationDraftCreateRequest { title, description } in drafts {
+            let _ = self
                 .draft_repo
-                .insert_with_tx(
-                    &mut *tx,
-                    started_at,
-                    ended_at,
-                    title,
-                    description,
-                    deliberation_id,
-                )
+                .insert_with_tx(&mut *tx, title, description, deliberation_id)
                 .await?
                 .ok_or(ApiError::DeliberationFinalRecommendationException)?;
-
-            for user_id in users {
-                let _ = self
-                    .draft_member
-                    .insert_with_tx(&mut *tx, user_id, d.id)
-                    .await?
-                    .ok_or(ApiError::DeliberationFinalRecommendationException)?;
-            }
-
-            for survey_id in surveys {
-                let _ = self
-                    .draft_survey
-                    .insert_with_tx(&mut *tx, survey_id, d.id)
-                    .await?
-                    .ok_or(ApiError::DeliberationFinalRecommendationException)?;
-            }
-
-            for resource_id in resources {
-                let _ = self
-                    .draft_resource
-                    .insert_with_tx(&mut *tx, resource_id, d.id)
-                    .await?
-                    .ok_or(ApiError::DeliberationFinalRecommendationException)?;
-            }
         }
         Ok(())
     }
@@ -2028,9 +1982,7 @@ impl DeliberationController {
         let final_role = DeliberationFinalSurveyRole::get_repository(pool.clone());
         let final_survey = DeliberationFinalSurveySurvey::get_repository(pool.clone());
         let draft_repo = DeliberationDraft::get_repository(pool.clone());
-        let draft_member = DeliberationDraftMember::get_repository(pool.clone());
-        let draft_survey = DeliberationDraftSurvey::get_repository(pool.clone());
-        let draft_resource = DeliberationDraftResource::get_repository(pool.clone());
+
         let panel_emails = DeliberationPanelEmail::get_repository(pool.clone());
 
         Self {
@@ -2062,9 +2014,6 @@ impl DeliberationController {
             final_role,
             final_survey,
             draft_repo,
-            draft_member,
-            draft_survey,
-            draft_resource,
             panel_emails,
         }
     }

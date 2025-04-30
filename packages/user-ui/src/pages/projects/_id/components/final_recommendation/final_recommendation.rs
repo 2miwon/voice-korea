@@ -1,11 +1,9 @@
 use bdk::prelude::*;
 use models::Tab;
 
-use crate::{
-    components::AvatarLabel,
-    pages::projects::_id::components::{survey::Statistics, tab_title::TabTitle},
-    utils::time::formatted_timestamp,
-};
+use crate::components::button::Button;
+use crate::pages::projects::_id::components::final_recommendation::rich_text_edit::RichTextEdit;
+use crate::pages::projects::_id::components::{survey::Statistics, tab_title::TabTitle};
 
 use super::super::{accordion::Accordion, rich_text_viewer::RichTextViewer, section::Section};
 
@@ -18,43 +16,61 @@ pub fn FinalRecommendation(
     project_id: ReadOnlySignal<i64>,
     children: Element,
 ) -> Element {
-    let _tr: FinalRecommendationTranslate = translate(&lang);
-    let ctrl = Controller::new(lang, project_id)?;
+    let tr: FinalRecommendationTranslate = translate(&lang);
+    let mut ctrl = Controller::new(lang, project_id)?;
 
     let recommendation = ctrl.recommendation()?;
     let tab_title: &str = Tab::FinalDraft.translate(&lang);
 
+    let mut title = use_signal(|| recommendation.title.clone());
+    let mut description = use_signal(|| recommendation.description.clone());
+    let mut update_clicked = use_signal(|| false);
+
     rsx! {
         Section { id: "final-recommendation",
             TabTitle { title: tab_title,
-                div { class: "font-medium text-[15px] text-black",
-                    {
-                        format!(
-                            "{} ~ {}",
-                            formatted_timestamp(lang, recommendation.started_at),
-                            formatted_timestamp(lang, recommendation.ended_at),
-                        )
+                div { class: "text-black",
+                    Button {
+                        class: "flex flex-row px-15 py-13 rounded-lg text-white text-base disabled:hidden",
+                        disabled: update_clicked() || !recommendation.is_member,
+                        onclick: move |_e| {
+                            update_clicked.set(true);
+                        },
+                        {tr.update}
                     }
                 }
             }
+
+            RichTextEdit {
+                lang,
+                title,
+                description,
+                visibility: update_clicked(),
+
+                on_title_change: move |t: String| {
+                    title.set(t);
+                },
+                on_description_change: move |d: String| {
+                    description.set(d);
+                },
+
+                onupdate: move |_| async move {
+                    let _ = ctrl.upsert_recommendation(title(), description()).await;
+                    title.set("".to_string());
+                    description.set("".to_string());
+                    update_clicked.set(false);
+                },
+            }
+
             div { class: "flex flex-col gap-10",
                 Accordion { title: recommendation.title, default_open: true,
                     RichTextViewer {
-                        class: "w-full flex justify-start text-[15px]",
+                        class: "text-left",
                         contenteditable: false,
                         html: recommendation.description,
                     }
                     div { class: "w-full mt-20 flex max-[700px]:flex-col max-[700px]:gap-10 flex-row justify-start gap-40",
-                        div { class: "w-full flex flex-row justify-start gap-20",
-                            //FIXME: use roles
-                            for _member in recommendation.members {
-                                AvatarLabel {
-                                    //FIXME: use role
-                                    label: "UNKNOWN",
-                                    sub: "DAO",
-                                }
-                            }
-                        }
+                        div { class: "w-full flex flex-row justify-start gap-20" }
                     }
                 }
             }
@@ -66,50 +82,3 @@ pub fn FinalRecommendation(
         }
     }
 }
-
-// #[component]
-// pub fn EditDraft(
-//     lang: Language,
-//     content: String,
-//     change_content: EventHandler<String>,
-//     title: String,
-//     change_title: EventHandler<String>,
-//     update_draft: EventHandler<MouseEvent>,
-// ) -> Element {
-//     let tr: FinalRecommendationTranslate = translate(&lang);
-
-//     rsx! {
-//         div { class: "flex flex-col w-full justify-start items-start",
-//             div { class: "flex flex-col min-w-350 w-full justify-center items-center gap-15",
-//                 div { class: "flex flex-col w-full justify-start items-start gap-10",
-//                     div { class: "font-semibold text-[15px] text-text-black", {tr.name} }
-//                     InputBox {
-//                         class: "flex flex-row w-full rounded-[10px] px-15 py-10 placeholder-hint-gray bg-transparent text-text-black border border-gray-300 focus:outline-none focus:border focus:border-button-primary",
-//                         placeholder: tr.name_hint,
-//                         value: title,
-//                         onchange: move |value: String| {
-//                             change_title.call(value);
-//                         },
-//                     }
-//                 }
-//                 div { class: "flex flex-col w-full justify-start items-start gap-10",
-//                     div { class: "font-semibold text-[15px] text-text-black", {tr.description} }
-//                     RichText {
-//                         content,
-//                         onchange: move |value: String| {
-//                             change_content.call(value);
-//                         },
-//                     }
-//                 }
-
-//                 div {
-//                     class: "cursor-pointer flex flex-row w-200 justify-center items-center bg-button-primary rounded-lg px-16 py-14 font-bold text-white text-base",
-//                     onclick: move |e: Event<MouseData>| {
-//                         update_draft.call(e);
-//                     },
-//                     {tr.update}
-//                 }
-//             }
-//         }
-//     }
-// }
