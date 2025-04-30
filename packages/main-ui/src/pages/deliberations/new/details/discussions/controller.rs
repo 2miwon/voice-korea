@@ -8,7 +8,9 @@ use crate::{
     config,
     routes::Route,
     service::login_service::LoginService,
-    utils::time::{current_midnight_timestamp, current_timestamp},
+    utils::time::{
+        current_midnight_timestamp, current_timestamp_with_time, parsed_timestamp_with_time,
+    },
 };
 
 use super::DeliberationNewController;
@@ -68,7 +70,6 @@ impl Controller {
                 .get(0)
                 .unwrap_or(&DeliberationDiscussionCreateRequest::default())
                 .clone();
-            let current_timestamp = current_timestamp();
 
             move || {
                 let committees = req.roles.iter().map(|v| v.email.clone()).collect();
@@ -76,11 +77,11 @@ impl Controller {
                 let ended_at = discussion.clone().ended_at;
 
                 if started_at == 0 {
-                    discussion.started_at = current_timestamp;
+                    discussion.started_at = current_timestamp_with_time(0, 0, 0);
                 }
 
                 if ended_at == 0 {
-                    discussion.ended_at = current_timestamp;
+                    discussion.ended_at = current_timestamp_with_time(23, 59, 59);
                 }
 
                 ctrl.discussion.set(discussion.clone());
@@ -122,13 +123,13 @@ impl Controller {
 
     pub fn set_start_date(&mut self, started_at: i64) {
         self.discussion.with_mut(|req| {
-            req.started_at = started_at;
+            req.started_at = parsed_timestamp_with_time(started_at, 0, 0, 0);
         });
     }
 
     pub fn set_end_date(&mut self, ended_at: i64) {
         self.discussion.with_mut(|req| {
-            req.ended_at = ended_at;
+            req.ended_at = parsed_timestamp_with_time(ended_at, 23, 59, 59);
         });
     }
 
@@ -243,8 +244,6 @@ impl Controller {
 
         let title = discussion.title;
         let description = discussion.description;
-        let started_at = discussion.started_at;
-        let ended_at = discussion.ended_at;
 
         let members = discussion.users;
         let resources = discussion.resources;
@@ -252,7 +251,6 @@ impl Controller {
 
         !(title.is_empty()
             || description.is_empty()
-            || started_at >= ended_at
             || members.is_empty()
             || resources.is_empty()
             || discussions.is_empty())
@@ -263,8 +261,6 @@ impl Controller {
 
         let title = discussion.title;
         let description = discussion.description;
-        let started_at = discussion.started_at;
-        let ended_at = discussion.ended_at;
 
         let members = discussion.users;
         let resources = discussion.resources;
@@ -276,10 +272,6 @@ impl Controller {
         }
         if description.is_empty() {
             btracing::e!(self.lang, ValidationError::DescriptionRequired);
-            return false;
-        }
-        if started_at >= ended_at {
-            btracing::e!(self.lang, ValidationError::TimeValidationFailed);
             return false;
         }
         if members.is_empty() {
@@ -311,11 +303,6 @@ pub enum ValidationError {
         en = "Please enter the discussion description."
     )]
     DescriptionRequired,
-    #[translate(
-        ko = "시작 날짜는 종료 날짜보다 작아야합니다.",
-        en = "The start date must be less than the end date."
-    )]
-    TimeValidationFailed,
     #[translate(
         ko = "1명 이상의 담당자를 선택해주세요.",
         en = "Please select one or more contact persons."
