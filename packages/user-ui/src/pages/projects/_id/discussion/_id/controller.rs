@@ -165,7 +165,7 @@ impl Controller {
             }
 
             let mut chat_messages = self.chat_messages;
-            let participants = self.participants;
+            let participants = self.participants();
             let extract_user_id = Self::extract_user_id;
             let get_email_by_user_id = Self::get_email_by_user_id;
 
@@ -175,10 +175,10 @@ impl Controller {
                         if let Some(detail) = event.detail().as_string() {
                             if let Ok(chat) = serde_json::from_str::<ChatMessage>(&detail) {
                                 let user_id = extract_user_id(&chat.sender_external_user_id);
-                                let email = get_email_by_user_id(
-                                    participants().unwrap_or_default(),
-                                    user_id,
-                                );
+                                let email = match participants.clone() {
+                                    Ok(v) => get_email_by_user_id(v, user_id),
+                                    Err(_) => "".to_string(),
+                                };
 
                                 let c = Chat {
                                     text: chat.text,
@@ -322,8 +322,6 @@ impl Controller {
             }
         };
 
-        let _ = eval("startSendingAttendeeStatus();");
-
         self.participants.restart();
     }
 
@@ -363,7 +361,6 @@ impl Controller {
 
     pub async fn back(&self) {
         let _ = eval("cleanupChimeSession();");
-        let _ = eval("stopSendingAttendeeStatus();");
 
         let _ = match Discussion::get_client(&crate::config::get().api_url)
             .exit_meeting(self.id(), self.discussion_id())

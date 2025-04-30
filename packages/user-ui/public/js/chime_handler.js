@@ -4,21 +4,22 @@ let isVideoOn = true;
 let isAudioMuted = false;
 let isScreenSharing = false;
 let attendeeStatusInterval = null;
+let chimeObserver = null;
 
-function startSendingAttendeeStatus() {
-  stopSendingAttendeeStatus();
+// function startSendingAttendeeStatus() {
+//   stopSendingAttendeeStatus();
 
-  attendeeStatusInterval = setInterval(() => {
-    sendAttendeeStatus();
-  }, 3000);
-}
+//   attendeeStatusInterval = setInterval(() => {
+//     sendAttendeeStatus();
+//   }, 3000);
+// }
 
-function stopSendingAttendeeStatus() {
-  if (attendeeStatusInterval) {
-    clearInterval(attendeeStatusInterval);
-    attendeeStatusInterval = null;
-  }
-}
+// function stopSendingAttendeeStatus() {
+//   if (attendeeStatusInterval) {
+//     clearInterval(attendeeStatusInterval);
+//     attendeeStatusInterval = null;
+//   }
+// }
 
 async function startChimeSession(meetingInfo, attendeeInfo) {
   console.log("startChimeSession called");
@@ -53,15 +54,17 @@ async function startChimeSession(meetingInfo, attendeeInfo) {
       console.warn("No video input devices found.");
     }
 
-    await session.audioVideo.start();
-    session.audioVideo.startLocalVideoTile();
     console.log("Chime session started successfully.");
   } catch (e) {
     console.error("Failed to start Chime session:", e);
   }
 
-  session.audioVideo.addObserver({
+  await session.audioVideo.start();
+  session.audioVideo.startLocalVideoTile();
+
+  chimeObserver = {
     videoTileDidUpdate: (tileState) => {
+      if (!chimeSession || !chimeSession.audioVideo) return;
       console.log("tileStatus:", tileState);
       if (!tileState.tileId) return;
 
@@ -110,6 +113,7 @@ async function startChimeSession(meetingInfo, attendeeInfo) {
     },
 
     videoTileWasRemoved: (tileId) => {
+      if (!chimeSession || !chimeSession.audioVideo) return;
       console.log("videoTileWasRemoved:", tileId);
 
       const contentVideo = document.getElementById("content-share-video");
@@ -125,7 +129,9 @@ async function startChimeSession(meetingInfo, attendeeInfo) {
       const elem = document.getElementById("video-tile-" + tileId);
       if (elem) elem.remove();
     },
-  });
+  };
+
+  session.audioVideo.addObserver(chimeObserver);
 
   session.audioVideo.realtimeSubscribeToReceiveDataMessage(
     "chat",
@@ -346,7 +352,11 @@ async function toggleScreenShare() {
 }
 
 function cleanupChimeSession() {
-  if (!chimeSession) return;
+  if (!chimeSession || !chimeSession.audioVideo) {
+    console.warn("chimeSession is null in videoTileDidUpdate");
+    return;
+  }
+
   try {
     console.log("Cleaning up Chime session...");
 
@@ -360,10 +370,14 @@ function cleanupChimeSession() {
     }
 
     videoTileMap = {};
-    chimeSession = null;
     isVideoOn = true;
     isAudioMuted = false;
     isScreenSharing = false;
+
+    if (chimeSession && chimeObserver) {
+      chimeSession.audioVideo.removeObserver(chimeObserver);
+      chimeObserver = null;
+    }
 
     console.log("Chime session cleaned up completely.");
   } catch (e) {
@@ -378,5 +392,3 @@ window.toggleVideo = toggleVideo;
 window.toggleAudio = toggleAudio;
 window.toggleScreenShare = toggleScreenShare;
 window.cleanupChimeSession = cleanupChimeSession;
-window.startSendingAttendeeStatus = startSendingAttendeeStatus;
-window.stopSendingAttendeeStatus = stopSendingAttendeeStatus;
