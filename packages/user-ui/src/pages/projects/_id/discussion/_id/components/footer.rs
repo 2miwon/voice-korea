@@ -4,31 +4,26 @@ use crate::components::icons::{
 };
 use bdk::prelude::*;
 use by_components::icons::user::UserGroup;
-use web_sys::js_sys::eval;
 
 #[component]
 pub fn Footer(
     onprev: EventHandler<MouseEvent>,
     mic: bool,
     video: bool,
-    onchange_mic: EventHandler<bool>,
-    onchange_video: EventHandler<bool>,
-    onchange_member: EventHandler<MouseEvent>,
-    onchange_chat: EventHandler<MouseEvent>,
+    record: bool,
+    on_mic_change: EventHandler<bool>,
+    on_video_change: EventHandler<bool>,
+    on_share_change: EventHandler<MouseEvent>,
+    on_member_change: EventHandler<MouseEvent>,
+    on_record_change: EventHandler<MouseEvent>,
+    on_chat_change: EventHandler<MouseEvent>,
 ) -> Element {
     rsx! {
         div { class: "flex flex-row w-full justify-between items-center px-40 py-10 bg-netural-9",
             div { class: "flex flex-row w-fit justify-start items-center gap-10",
                 BottomLabel {
                     onclick: move |_| {
-                        let _ = eval(
-                            r#"
-                                                                                if (window._toggleAudio) {
-                                                                                    window._toggleAudio();
-                                                                                }
-                                                                            "#,
-                        );
-                        onchange_mic.call(!mic);
+                        on_mic_change.call(!mic);
                     },
                     title: "Audio",
                     if mic {
@@ -40,14 +35,7 @@ pub fn Footer(
 
                 BottomLabel {
                     onclick: move |_| {
-                        let _ = eval(
-                            r#"
-                                                                                if (window._toggleVideo) {
-                                                                                    window._toggleVideo();
-                                                                                }
-                                                                            "#,
-                        );
-                        onchange_video.call(!video);
+                        on_video_change.call(!video);
                     },
                     title: "Video",
                     if video {
@@ -61,7 +49,7 @@ pub fn Footer(
             div { class: "flex flex-row w-fit justify-start items-center gap-10",
                 BottomLabel {
                     onclick: move |e| {
-                        onchange_member.call(e);
+                        on_member_change.call(e);
                     },
                     title: "Participants",
                     UserGroup {
@@ -73,25 +61,25 @@ pub fn Footer(
                 }
                 BottomLabel {
                     onclick: move |e| {
-                        onchange_chat.call(e);
+                        on_chat_change.call(e);
                     },
                     title: "Chat",
                     Chat { width: "24", height: "24" }
                 }
                 BottomLabel {
-                    onclick: move |_| {
-                        let _ = eval(
-                            r#"
-                                                                                if (window._toggleShared) {
-                                                                                    window._toggleShared();
-                                                                                }
-                                                                            "#,
-                        );
+                    onclick: move |e| {
+                        on_share_change.call(e);
                     },
                     title: "Share",
-                    Share {
-                    }
+                    Share {}
                 }
+                        // BottomLabel {
+            //     onclick: move |e| {
+            //         onchange_record.call(e);
+            //     },
+            //     title: "Record",
+            //     Record {}
+            // }
             }
 
             BottomLabel {

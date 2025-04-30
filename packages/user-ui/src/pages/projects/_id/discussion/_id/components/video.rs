@@ -8,9 +8,6 @@ pub fn Video(video: bool) -> Element {
                 id: "video-grid",
                 class: "flex flex-col w-full h-[80vh] justify-end items-center aria-active:!bg-text-black",
                 "aria-active": !video,
-                if !video {
-                    div { class: "font-normal text-xs text-white mb-2", "nickname" }
-                }
             }
         }
     }

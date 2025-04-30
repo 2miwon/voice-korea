@@ -17,11 +17,12 @@ pub fn DiscussionVideoPage(
     let mut video = use_signal(|| true);
 
     let participants = ctrl.participants()?;
+    let title = ctrl.discussion()?.name;
 
     rsx! {
         div { class: "relative flex flex-col w-full h-lvh justify-start items-start",
             Header {
-                title: "Debate topic", //FIXME: fix to real title
+                title,
                 onprev: move |_| async move {
                     ctrl.back().await;
                 },
@@ -34,14 +35,20 @@ pub fn DiscussionVideoPage(
                     Footer {
                         mic: mic(),
                         video: video(),
+                        record: ctrl.is_recording(),
 
-                        onchange_mic: move |m: bool| {
+                        on_mic_change: move |m: bool| {
+                            ctrl.toggle_audio();
                             mic.set(m);
                         },
-                        onchange_video: move |v: bool| {
+                        on_video_change: move |v: bool| {
+                            ctrl.toggle_video();
                             video.set(v);
                         },
-                        onchange_chat: move |_| {
+                        on_share_change: move |_| {
+                            ctrl.toggle_screen_share();
+                        },
+                        on_chat_change: move |_| {
                             if show_side_conversation() {
                                 show_side_conversation.set(false);
                             } else {
@@ -49,12 +56,19 @@ pub fn DiscussionVideoPage(
                                 show_side_member.set(false);
                             }
                         },
-                        onchange_member: move |_| {
+                        on_member_change: move |_| {
                             if show_side_member() {
                                 show_side_member.set(false);
                             } else {
                                 show_side_member.set(true);
                                 show_side_conversation.set(false);
+                            }
+                        },
+                        on_record_change: move |_| async move {
+                            if ctrl.is_recording() {
+                                ctrl.end_recording().await;
+                            } else {
+                                ctrl.start_recording().await;
                             }
                         },
                         onprev: move |_| async move {
