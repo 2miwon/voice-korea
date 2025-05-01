@@ -2,11 +2,10 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,
-  ErrorCode,
   ListToolsRequestSchema,
-  McpError,
 } from "@modelcontextprotocol/sdk/types.js";
-import { makeApiCall } from "./commons/utils/axios.js";
+import { Container } from "typedi";
+import ProjectService from "./services/projectService.js";
 
 const server = new Server({
   name: "voice-korea-mcp-tool",
@@ -39,33 +38,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params as any;
       // Find a project by its ID
-      try {
-        if (name === "get_project_by_id") {
-          const { question, id } = args;
-          const project = await makeApiCall(`/projects/${id}`, { method: 'GET' })
-          if (!project) {
-            return {
-              content: [{ type: "text", text: `No project found with ID ${id}` }]
-            };
-          }
-
-          return {
-            content: [
-              {
-                type: "text",
-                text: `question asked is: ${question}, matching data project data is: ${JSON.stringify(project, null, 2)}`
-              }
-            ]
-          };
-        }
-        return {
-          content: [{ type: "text", text: `Error No matching tool handler found!` }]
-        };
-      } catch (error: any) {
-        return {
-          content: [{ type: "text", text: `Error fetching project: ${error.message}` }]
-        };
+      if (name === "get_project_by_id") {
+        const { question, id } = args;
+        const projectService = Container.get(ProjectService);
+        return await projectService.getProjectById(id, question);
       }
+
+      else if (name === "get_surveys_in_a_project") {
+        const { question, id } = args;
+        const projectService = Container.get(ProjectService);
+        return await projectService.getProjectSurveys(id, question);
+      }
+      return {
+        content: [{ type: "text", text: `Error No matching tool handler found!` }]
+      };
 });
 
 const transport = new StdioServerTransport();
