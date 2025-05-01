@@ -6,7 +6,6 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
-import axios from 'axios';
 import { makeApiCall } from "./commons/utils/axios.js";
 
 const server = new Server({
@@ -22,14 +21,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
         tools: [
         {
-          name: "search_voice_korea_projects",
-          description: "Search Voice Korea Projects",
+          name: "get_project_by_id",
+          description: "Fetch Voice Korea Project by its ID",
           inputSchema: {
             type: "object",
             properties: {
-              question: { type: "string" }
+              question: { type: "string" },
+              id: { type: "number" }
             },
-            required: ["question"]
+            required: ["question","id"]
           }
         }
       ]
@@ -37,22 +37,34 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 });
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params as any;
+      // Find a project by its ID
       try {
-        if (request.params.name === "search_voice_korea_projects") {
-          const { data } = await makeApiCall(`/landing?param-type=read&action=find-one`, { method: 'GET' })
-          const listOfProjects = data.projects || [];
+        if (name === "get_project_by_id") {
+          const { question, id } = args;
+          const project = await makeApiCall(`/projects/${id}`, { method: 'GET' })
+          if (!project) {
+            return {
+              content: [{ type: "text", text: `No project found with ID ${id}` }]
+            };
+          }
+
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(listOfProjects, null, 2)
+                text: `question asked is: ${question}, matching data project data is: ${JSON.stringify(project, null, 2)}`
               }
             ]
           };
         }
-        throw new Error("Tool not defined");
-      } catch (error) {
-        throw new Error("Failed to fetch projects");
+        return {
+          content: [{ type: "text", text: `Error No matching tool handler found!` }]
+        };
+      } catch (error: any) {
+        return {
+          content: [{ type: "text", text: `Error fetching project: ${error.message}` }]
+        };
       }
 });
 
