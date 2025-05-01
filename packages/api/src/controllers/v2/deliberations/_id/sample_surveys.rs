@@ -9,6 +9,7 @@ use by_axum::{
 };
 use by_types::QueryResponse;
 use models::{
+    deliberation_panel_email::DeliberationPanelEmail,
     deliberation_response::{DeliberationResponse, DeliberationType},
     deliberation_sample_surveys::deliberation_sample_survey::{
         DeliberationSampleSurveyGetResponse, DeliberationSampleSurveyParam,
@@ -103,10 +104,28 @@ impl DeliberationSampleSurveyController {
         deliberation_id: i64,
         auth: Option<Authorization>,
     ) -> Result<DeliberationSampleSurveyGetResponse> {
-        let user_id = match auth {
-            Some(Authorization::Bearer { ref claims }) => AppClaims(claims).get_user_id(),
-            _ => 0,
+        let (user_id, email): (i64, String) = match auth {
+            Some(Authorization::Bearer { ref claims }) => (
+                AppClaims(claims).get_user_id(),
+                AppClaims(claims).get_email(),
+            ),
+            _ => (0, "".to_string()),
         };
+
+        let mut is_member = false;
+
+        if user_id != 0 {
+            let res: Option<DeliberationPanelEmail> = DeliberationPanelEmail::query_builder()
+                .deliberation_id_equals(deliberation_id)
+                .email_equals(email)
+                .query()
+                .map(Into::into)
+                .fetch_optional(&self.pool)
+                .await?;
+
+            is_member = res.is_some();
+        }
+
         let responses = DeliberationResponse::query_builder()
             .deliberation_id_equals(deliberation_id)
             .deliberation_type_equals(DeliberationType::Survey)
@@ -137,6 +156,7 @@ impl DeliberationSampleSurveyController {
             .await?;
         res.user_response = user_response;
         res.responses = responses;
+        res.is_member = is_member;
         Ok(DeliberationSampleSurveyGetResponse::Read(res))
     }
 }

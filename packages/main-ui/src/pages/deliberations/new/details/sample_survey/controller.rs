@@ -5,7 +5,10 @@ use models::{
     *,
 };
 
-use crate::{routes::Route, utils::time::current_timestamp};
+use crate::{
+    routes::Route,
+    utils::time::{current_timestamp_with_time, parsed_timestamp_with_time},
+};
 
 use super::DeliberationNewController;
 
@@ -40,7 +43,6 @@ impl Controller {
                 .get(0)
                 .unwrap_or(&DeliberationSampleSurveyCreateRequest::default())
                 .clone();
-            let current_timestamp = current_timestamp();
 
             move || {
                 let committees = req.roles.iter().map(|v| v.email.clone()).collect();
@@ -48,11 +50,11 @@ impl Controller {
                 let ended_at = sample_surveys.clone().ended_at;
 
                 if started_at == 0 {
-                    sample_surveys.started_at = current_timestamp;
+                    sample_surveys.started_at = current_timestamp_with_time(0, 0, 0);
                 }
 
                 if ended_at == 0 {
-                    sample_surveys.ended_at = current_timestamp;
+                    sample_surveys.ended_at = current_timestamp_with_time(23, 59, 59);
                 }
 
                 ctrl.sample_survey.set(sample_surveys.clone());
@@ -77,13 +79,13 @@ impl Controller {
 
     pub fn set_start_date(&mut self, started_at: i64) {
         self.sample_survey.with_mut(|req| {
-            req.started_at = started_at;
+            req.started_at = parsed_timestamp_with_time(started_at, 0, 0, 0);
         });
     }
 
     pub fn set_end_date(&mut self, ended_at: i64) {
         self.sample_survey.with_mut(|req| {
-            req.ended_at = ended_at;
+            req.ended_at = parsed_timestamp_with_time(ended_at, 23, 59, 59);
         });
     }
 

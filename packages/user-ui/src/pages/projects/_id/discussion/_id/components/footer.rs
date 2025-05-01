@@ -20,7 +20,7 @@ pub fn Footer(
 ) -> Element {
     rsx! {
         div { class: "flex flex-row w-full justify-between items-center px-40 py-10 bg-netural-9",
-            div { class: "flex flex-row w-fit justify-start items-center gap-10",
+            div { class: "flex flex-row w-120 justify-start items-center gap-10",
                 BottomLabel {
                     onclick: move |_| {
                         on_mic_change.call(!mic);
@@ -46,32 +46,38 @@ pub fn Footer(
                 }
             }
 
-            div { class: "flex flex-row w-fit justify-start items-center gap-10",
-                BottomLabel {
-                    onclick: move |e| {
-                        on_member_change.call(e);
-                    },
-                    title: "Participants",
-                    UserGroup {
-                        width: "24",
-                        height: "24",
-                        fill: "#ffffff",
-                        class: "[&>path]:stroke-white",
+            div { class: "flex flex-row w-fit justify-start items-center",
+                div { class: "flex flex-row w-100 justify-center items-center",
+                    BottomLabel {
+                        onclick: move |e| {
+                            on_member_change.call(e);
+                        },
+                        title: "Participants",
+                        UserGroup {
+                            width: "24",
+                            height: "24",
+                            fill: "#ffffff",
+                            class: "[&>path]:stroke-white",
+                        }
                     }
                 }
-                BottomLabel {
-                    onclick: move |e| {
-                        on_chat_change.call(e);
-                    },
-                    title: "Chat",
-                    Chat { width: "24", height: "24" }
+                div { class: "flex flex-row w-100 justify-center items-center",
+                    BottomLabel {
+                        onclick: move |e| {
+                            on_chat_change.call(e);
+                        },
+                        title: "Chat",
+                        Chat { width: "24", height: "24" }
+                    }
                 }
-                BottomLabel {
-                    onclick: move |e| {
-                        on_share_change.call(e);
-                    },
-                    title: "Share",
-                    Share {}
+                div { class: "flex flex-row w-100 justify-center items-center",
+                    BottomLabel {
+                        onclick: move |e| {
+                            on_share_change.call(e);
+                        },
+                        title: "Share",
+                        Share {}
+                    }
                 }
                         // BottomLabel {
             //     onclick: move |e| {
@@ -82,12 +88,14 @@ pub fn Footer(
             // }
             }
 
-            BottomLabel {
-                onclick: move |e| {
-                    onprev.call(e);
-                },
-                title: "End",
-                EndCircle {}
+            div { class: "flex flex-row w-120 justify-end items-center",
+                BottomLabel {
+                    onclick: move |e| {
+                        onprev.call(e);
+                    },
+                    title: "End",
+                    EndCircle {}
+                }
             }
         }
     }

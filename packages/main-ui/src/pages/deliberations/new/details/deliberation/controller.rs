@@ -5,7 +5,7 @@ use crate::{
     config,
     routes::Route,
     service::{login_service::LoginService, popup_service::PopupService},
-    utils::time::current_timestamp,
+    utils::time::{current_timestamp_with_time, parsed_timestamp_with_time},
 };
 
 use super::{components::load_data_modal::LoadDataModal, DeliberationNewController};
@@ -71,8 +71,6 @@ impl Controller {
 
         let req = ctrl.parent.deliberation_requests();
 
-        let current_timestamp = current_timestamp();
-
         use_effect(move || {
             let committees = req.roles.iter().map(|v| v.email.clone()).collect();
             let mut deliberation = req
@@ -83,10 +81,10 @@ impl Controller {
             let started_at = deliberation.started_at;
             let ended_at = deliberation.ended_at;
             if started_at == 0 {
-                deliberation.started_at = current_timestamp;
+                deliberation.started_at = current_timestamp_with_time(0, 0, 0);
             }
             if ended_at == 0 {
-                deliberation.ended_at = current_timestamp;
+                deliberation.ended_at = current_timestamp_with_time(23, 59, 59);
             }
             ctrl.deliberation.set(deliberation.clone());
             ctrl.committee_members.set(committees);
@@ -111,13 +109,13 @@ impl Controller {
 
     pub fn set_start_date(&mut self, started_at: i64) {
         self.deliberation.with_mut(|req| {
-            req.started_at = started_at;
+            req.started_at = parsed_timestamp_with_time(started_at, 0, 0, 0);
         });
     }
 
     pub fn set_end_date(&mut self, ended_at: i64) {
         self.deliberation.with_mut(|req| {
-            req.ended_at = ended_at;
+            req.ended_at = parsed_timestamp_with_time(ended_at, 23, 59, 59);
         });
     }
 

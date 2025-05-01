@@ -2,14 +2,19 @@
 use crate::deliberation_report::DeliberationReport;
 use crate::deliberation_response::DeliberationResponse;
 use crate::deliberation_user::DeliberationUser;
+use crate::DeliberationFinalSurvey;
+
 use crate::ResourceFile;
 use crate::SurveyV2;
 use bdk::prelude::*;
 use validator::Validate;
 
+#[cfg(feature = "server")]
+use crate::DeliberationFinalSurveyRepositoryQueryBuilder;
+
 //FIXME: ADD ROLES
 #[derive(Validate)]
-#[api_model(base = "/v2/deliberations/:deliberation-id/drafts", table = deliberation_drafts, read_action = read, action = [create(users = Vec<i64>, resources = Vec<i64>, surveys = Vec<i64>)])]
+#[api_model(base = "/v2/deliberations/:deliberation-id/drafts", table = deliberation_drafts, read_action = read)]
 pub struct DeliberationDraft {
     #[api_model(summary, primary_key)]
     pub id: i64,
@@ -17,13 +22,6 @@ pub struct DeliberationDraft {
     pub created_at: i64,
     #[api_model(summary, auto = [insert, update])]
     pub updated_at: i64,
-
-    // started_at indicates the start time of the deliberation.
-    #[api_model(summary, action = create)]
-    pub started_at: i64,
-    // ended_at indicates the end time of the deliberation.
-    #[api_model(summary, action = create)]
-    pub ended_at: i64,
 
     #[api_model(summary, action = create, action_by_id = update)]
     pub title: String,
@@ -33,17 +31,13 @@ pub struct DeliberationDraft {
     #[api_model(summary, many_to_one = deliberations)]
     pub deliberation_id: i64,
 
-    #[api_model(summary, many_to_many = deliberation_draft_members, foreign_table_name = users, foreign_primary_key = user_id, foreign_reference_key = draft_id)]
+    #[api_model(skip)]
     #[serde(default)]
-    pub members: Vec<DeliberationUser>,
+    pub is_member: bool,
 
-    #[api_model(summary, many_to_many = deliberation_draft_resources, foreign_table_name = resources, foreign_primary_key = resource_id, foreign_reference_key = draft_id)]
+    #[api_model(skip)]
     #[serde(default)]
-    pub resources: Vec<ResourceFile>,
-
-    #[api_model(summary, many_to_many = deliberation_draft_surveys, foreign_table_name = surveys, foreign_primary_key = survey_id, foreign_reference_key = draft_id)]
-    #[serde(default)]
-    pub surveys: Vec<SurveyV2>,
+    pub final_surveys: Vec<DeliberationFinalSurvey>,
 
     #[api_model(skip)]
     #[serde(default)]
@@ -53,11 +47,6 @@ pub struct DeliberationDraft {
 impl Into<DeliberationDraftCreateRequest> for DeliberationDraft {
     fn into(self) -> DeliberationDraftCreateRequest {
         DeliberationDraftCreateRequest {
-            users: self.members.into_iter().map(|u| u.user_id).collect(),
-            resources: self.resources.into_iter().map(|r| r.id).collect(),
-            surveys: self.surveys.into_iter().map(|s| s.id).collect(),
-            started_at: self.started_at,
-            ended_at: self.ended_at,
             title: self.title,
             description: self.description,
         }
