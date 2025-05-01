@@ -81,4 +81,30 @@ export default class ProjectService {
             };
           }
     }
+
+    public async fetchLatestProjects(question: string)
+    {
+        try {
+          const maxLimit = CONFIGS.MAX_LIMIT
+            const project = await makeApiCall(`/projects?size=${maxLimit}&param-type=query`, { method: 'GET' })
+            if (!project.items) {
+              return {
+                content: [{ type: "text", text: `No projects found!` }]
+              };
+            }
+    
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `question asked is: ${question}, matching data project data is: ${JSON.stringify(project, null, 2)}`
+                }
+              ]
+            };
+        } catch (error: any) {
+            return {
+              content: [{ type: "text", text: `Error fetching project: ${error.message}` }]
+            };
+          }
+    }
 }

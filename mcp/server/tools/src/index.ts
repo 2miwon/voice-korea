@@ -46,6 +46,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const projectService = Container.get(ProjectService);
         return await projectService.searchProjects(title, question);
       }
+
+      else if(name === "fetch_latest_projects"){
+        const { question } = args;
+        const projectService = Container.get(ProjectService);
+        return await projectService.fetchLatestProjects(question);
+      }
+
+
       return {
         content: [{ type: "text", text: `Error No matching tool handler found!` }]
       };

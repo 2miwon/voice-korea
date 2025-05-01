@@ -36,5 +36,16 @@ export const projectTools: Tool[] = [
           },
           required: ["question","title"]
         }
-      }
+      },
+      {
+        name: "fetch_latest_projects",
+        description: "Fetch Most recent Voice Korea Projects",
+        inputSchema: {
+          type: "object",
+          properties: {
+            question: { type: "string" },
+          },
+          required: ["question"]
+        }
+      },
 ];
