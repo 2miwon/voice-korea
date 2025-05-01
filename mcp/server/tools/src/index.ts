@@ -21,18 +21,6 @@ const server = new Server({
 server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
         tools: [
-          {
-          name: "calculate_sum",
-          description: "Add two numbers together",
-          inputSchema: {
-            type: "object",
-            properties: {
-              a: { type: "number" },
-              b: { type: "number" }
-            },
-            required: ["a", "b"]
-          }
-        },
         {
           name: "search_voice_korea_projects",
           description: "Search Voice Korea Projects",
@@ -49,13 +37,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 });
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    if (request.params.name === "calculate_sum") {
-        const { a, b } = request.params.arguments as any;
-        if (typeof a !== 'number' || typeof b !== 'number') {
-          throw new Error("Invalid arguments: a and b must be numbers");
-        }
-        return { toolResult: a + b };
-      }
       try {
         if (request.params.name === "search_voice_korea_projects") {
           const { data } = await makeApiCall(`/landing?param-type=read&action=find-one`, { method: 'GET' })
