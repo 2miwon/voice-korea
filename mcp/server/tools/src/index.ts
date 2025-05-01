@@ -5,7 +5,8 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { Container } from "typedi";
-import ProjectService from "./services/projectService.js";
+import ProjectService from "./services/ProjectService.js";
+import { projectTools } from "./tools/ProjectTools.js";
 
 const server = new Server({
   name: "voice-korea-mcp-tool",
@@ -17,21 +18,9 @@ const server = new Server({
 });
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
+  const tools = [...projectTools];
     return {
-        tools: [
-        {
-          name: "get_project_by_id",
-          description: "Fetch Voice Korea Project by its ID",
-          inputSchema: {
-            type: "object",
-            properties: {
-              question: { type: "string" },
-              id: { type: "number" }
-            },
-            required: ["question","id"]
-          }
-        }
-      ]
+        tools
       };
 });
 
@@ -44,10 +33,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return await projectService.getProjectById(id, question);
       }
 
+      // Find the surveys in a project
       else if (name === "get_surveys_in_a_project") {
         const { question, id } = args;
         const projectService = Container.get(ProjectService);
         return await projectService.getProjectSurveys(id, question);
+      }
+
+      // Find projects by their title
+      else if (name === "search_projects_by_title") {
+        const { question, title } = args;
+        const projectService = Container.get(ProjectService);
+        return await projectService.searchProjects(title, question);
       }
       return {
         content: [{ type: "text", text: `Error No matching tool handler found!` }]
