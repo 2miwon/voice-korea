@@ -28,12 +28,12 @@ translate! {
 
     inquiry_title: {
         ko: "공정하고 투명한 의사결정을 위한 공론조사 솔루션, VOICE KOREA",
-        en: "Public opinion survey solution for fair and transparent decision-making, VOICE KOREA"
+        en: "Deliberation survey solution for fair and transparent decision-making, VOICE KOREA"
     }
 
     inquiry_description: {
         ko: "VOICE KOREA는 DAO 블록체인 기술을 활용하여, 데이터 조작 없이 신뢰할 수 있는 공론조사를 제공합니다.\n귀 기관에 최적화된 공론조사 시스템을 원하신다면, 지금 문의하세요!",
-        en: "VOICE KOREA utilizes DAO blockchain technology to provide reliable public opinion surveys without data manipulation.\nIf you want a public opinion survey system optimized for your organization, contact us now!"
+        en: "VOICE KOREA utilizes DAO blockchain technology to provide reliable deliberation surveys without data manipulation.\nIf you want a deliberation survey system optimized for your organization, contact us now!"
     }
 
     blockchain_info_1: {
@@ -99,7 +99,7 @@ translate! {
     }
     institution_description: {
         ko: "정책 결정 기관은 중요한 문제를 논의하고 정책을 결정하는 곳으로, 여러분의 의견을 반영한 공론조사를 진행합니다. ",
-        en: "The policy-making body is a place where important issues are discussed and policies are decided, and public opinion surveys are conducted that reflect your opinions."
+        en: "The policy-making body is a place where important issues are discussed and policies are decided, and deliberation surveys are conducted that reflect your opinions."
     }
 }
 
@@ -113,7 +113,7 @@ translate! {
 
     free_description: {
         ko: "무료로 공론조사에 참여하고, 사회적 의사결정에 기여하세요. 투명한 블록체인 시스템에서 당신의 의견을 안전하게 제출할 수 있습니다.",
-        en: "Participate in public opinion surveys for free and contribute to social decision-making. You can safely submit your opinions in a transparent blockchain system."
+        en: "Participate in deliberation surveys for free and contribute to social decision-making. You can safely submit your opinions in a transparent blockchain system."
     }
 
     won: {
@@ -123,7 +123,7 @@ translate! {
 
     free_info_label_1: {
         ko: "기본 공론조사 참여",
-        en: "Participation in basic public opinion surveys"
+        en: "Participation in basic deliberation surveys"
     }
     free_info_description_1: {
         ko: "사회적 이슈에 의견을 제출할 수 있습니다.",
@@ -157,12 +157,12 @@ translate! {
 
     premium_description: {
         ko: "프리미엄 서비스로 더 많은 공론조사에 참여하고, 심층 분석 리포트와 더 큰 보상을 받으세요. 더 나은 사회적 결정을 함께 만들어갈 수 있습니다.",
-        en: "Participate in more public opinion polls, receive in-depth analysis reports, and receive greater rewards with our premium service. We can make better social decisions together."
+        en: "Participate in more deliberation polls, receive in-depth analysis reports, and receive greater rewards with our premium service. We can make better social decisions together."
     }
 
     premium_info_label_1: {
         ko: "무제한 공론조사 참여",
-        en: "Participation in unlimited public opinion surveys"
+        en: "Participation in unlimited deliberation surveys"
     }
     premium_info_description_1: {
         ko: "유료 사용자는 다양한 중요 이슈에 대한 무제한 참여가 가능하며, 특별한 조사에도 참여할 수 있습니다.",
@@ -184,7 +184,7 @@ translate! {
     }
     premium_info_description_3: {
         ko: "유료 사용자는 공론조사 참여에 대해 더 많은 보상을 받으며, 이는 블록체인 기반의 토큰으로 지급됩니다.",
-        en: "Paid users receive more compensation for participating in public opinion polls, which are paid in blockchain-based tokens."
+        en: "Paid users receive more compensation for participating in deliberation polls, which are paid in blockchain-based tokens."
     }
 
     premium_info_label_4: {
@@ -219,7 +219,7 @@ translate! {
     }
     project_description: {
         ko: "여러분의 의견이 정책에 반영될 수 있도록 진행된 공론조사 프로젝트 목록입니다. 함께 살펴보고, 어떤 주제들이 논의되었는지 확인해 보세요.",
-        en: "This is a list of public opinion survey projects conducted to ensure that your opinions are reflected in policies. Take a look together and see what topics were discussed."
+        en: "This is a list of deliberation survey projects conducted to ensure that your opinions are reflected in policies. Take a look together and see what topics were discussed."
     }
 }
 
@@ -256,7 +256,7 @@ translate! {
 
     title: {
         ko: "VOICE KOREA의 공론 조사 특징",
-        en: "Characteristics of VOICE KOREA’s public opinion survey"
+        en: "Characteristics of VOICE KOREA’s deliberation survey"
     }
 
     sub_title_1: {
@@ -307,7 +307,7 @@ translate! {
 
     button: {
         ko: "공론 조사 만들기",
-        en: "Create a public opinion survey"
+        en: "Create a deliberation survey"
     }
 }
 
@@ -321,16 +321,16 @@ translate! {
 
     guideline_desc: {
         ko: "공론조사 참여 및 설계 콘솔에 대한 자세한 가이드를 다운로드하실 수 있습니다. 해당 가이드를 통해 플랫폼 사용법과 공론 조사 설계 방법을 쉽게 이해할 수 있습니다.\n파일을 다운로드하여 공론조사와 설계 콘솔에 대한 중요한 정보를  확인하고, 참여 및 설계를 더욱 효과적으로 진행하세요.",
-        en: "You can download detailed guides on participating in public opinion surveys and using the design console. Through this guide, you can easily understand how to use the platform and design public opinion surveys.\nDownload the file to check important information about the public opinion survey and design console, and participate and design more effectively."
+        en: "You can download detailed guides on participating in deliberation surveys and using the design console. Through this guide, you can easily understand how to use the platform and design deliberation surveys.\nDownload the file to check important information about the deliberation survey and design console, and participate and design more effectively."
     }
 
     public_opinion_participation_guide: {
         ko: "공론 조사 참여 가이드",
-        en: "Public Opinion Participation Guide"
+        en: "Deliberation Participation Guide"
     }
 
     public_opinion_survey_design_console_guide: {
         ko: "공론 조사 설계 콘솔 가이드",
-        en: "Public Opinion Survey Design Console Guide"
+        en: "Deliberation Survey Design Console Guide"
     }
 }

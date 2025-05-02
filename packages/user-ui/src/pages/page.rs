@@ -54,7 +54,6 @@ pub fn MainPage(lang: Language) -> Element {
                 },
             }
             GuideSection { lang }
-        
         }
     }
 }
