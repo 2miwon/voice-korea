@@ -115,6 +115,7 @@ jobs:
           SERVICE: main-ui
           BASE_DOMAIN: biyard.co
           DOMAIN: voice-korea.dev.biyard.co
+          SLACK_CHANNEL_INQUIRY: ${{ secrets.DEV_SLACK }}
           ENABLE_S3: true
           ENABLE_LAMBDA: true
           ENABLE_FARGATE: false

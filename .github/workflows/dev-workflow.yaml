@@ -183,6 +183,7 @@ jobs:
           JWT_SECRET_KEY: ${{ secrets.DEV_JWT_SECRET_KEY }}
           BUCKET_NAME: voice-korea.dev.biyard.co
           CHIME_BUCKET: chime-metadata.dev.voice-korea.com #FIXME: fix to bucket name to dev.voice-korea.com and folder to chime
+          SLACK_CHANNEL_INQUIRY: ${{ secrets.DEV_SLACK }}
           ENABLE_S3: false
           ENABLE_FARGATE: false
           ENABLE_DYNAMO: false

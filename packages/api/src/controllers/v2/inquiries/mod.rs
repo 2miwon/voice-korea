@@ -1,3 +1,4 @@
+use bdk::prelude::*;
 use by_axum::{
     auth::Authorization,
     axum::{extract::State, routing::post, Extension, Json},
@@ -40,11 +41,38 @@ impl InquiryController {
     }
 
     async fn create(&self, param: InquiryCreateRequest) -> Result<Inquiry> {
+        let _ = self
+            .notify_slack(
+                param.name.clone(),
+                param.email.clone(),
+                param.message.clone(),
+            )
+            .await;
+
         let res = self
             .repo
             .insert(param.name, param.email, param.message)
             .await?;
 
         Ok(res)
+    }
+
+    async fn notify_slack(&self, name: String, email: String, message: String) -> Result<()> {
+        let config = crate::config::get();
+
+        let msg = format!(
+            "Voice Korea\nname: {}\nemail: {}\nmessage: {}",
+            name, email, message
+        );
+
+        tracing::debug!(
+            "notify_slack: {} {}",
+            msg,
+            config.slack_channel_inquiry.to_string()
+        );
+
+        btracing::notify!(config.slack_channel_inquiry.to_string(), &msg);
+
+        Ok(())
     }
 }

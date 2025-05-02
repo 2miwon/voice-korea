@@ -28,9 +28,9 @@ dependencies = [
 
 [[package]]
 name = "aide"
-version = "0.14.1"
+version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ef7da148319b3f1ac7d338f7a144521ee399cd65e4381aa0c17994e74304aa8"
+checksum = "a2477554ebf38aea815a9c4729100cfc32f766876c45b9c9c38ef221b9d1a703"
 dependencies = [
  "aide-macros",
  "axum 0.8.1",
@@ -42,6 +42,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde_json",
+ "serde_qs 0.14.0",
  "thiserror 2.0.12",
  "tower-layer",
  "tower-service",
@@ -95,6 +96,7 @@ dependencies = [
  "aws-sdk-chimesdkmeetings",
  "aws-sdk-s3",
  "aws-sdk-sesv2",
+ "bdk",
  "by-axum",
  "by-types",
  "chrono",
@@ -769,7 +771,7 @@ checksum = "edca88bc138befd0323b20752846e6587272d3b03b0343c8ea28a6f819e6e71f"
 dependencies = [
  "async-trait",
  "axum-core 0.4.5",
- "axum-macros",
+ "axum-macros 0.4.2",
  "base64 0.22.1",
  "bytes",
  "futures-util",
@@ -807,6 +809,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d6fd624c75e18b3b4c6b9caf42b1afe24437daaee904069137d8bab077be8b8"
 dependencies = [
  "axum-core 0.5.0",
+ "axum-macros 0.5.0",
  "bytes",
  "form_urlencoded",
  "futures-util",
@@ -912,6 +915,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "axum-macros"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "604fde5e028fea851ce1d8570bbdc034bec850d157f7569d10f347d06808c05c"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.99",
+]
+
+[[package]]
 name = "backtrace"
 version = "0.3.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -986,6 +1000,9 @@ dependencies = [
  "reqwest",
  "rest-api",
  "schemars",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
  "sqlx",
  "tracing",
  "validator",
@@ -1074,6 +1091,7 @@ version = "0.1.2"
 dependencies = [
  "dioxus",
  "gloo-timers",
+ "serde",
  "tracing",
 ]
 
@@ -4763,6 +4781,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_qs"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b417bedc008acbdf6d6b4bc482d29859924114bbe2650b7921fb68a261d0aa6"
+dependencies = [
+ "axum 0.8.1",
+ "futures",
+ "percent-encoding",
+ "serde",
+ "thiserror 2.0.12",
+]
+
+[[package]]
 name = "serde_repr"
 version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4808,7 +4839,7 @@ dependencies = [
  "send_wrapper",
  "serde",
  "serde_json",
- "serde_qs",
+ "serde_qs 0.13.0",
  "server_fn_macro_default",
  "thiserror 2.0.12",
  "throw_error",
