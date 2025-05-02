@@ -3,20 +3,6 @@ use bdk::prelude::*;
 translate! {
     DeliberationTranslate;
 
-
-    backward: {
-        ko: "뒤로",
-        en: "Backward"
-    }
-    temporary_save: {
-        ko: "임시저장",
-        en: "Temporary Save"
-    }
-    next: {
-        ko: "다음으로",
-        en: "Next"
-    }
-
     overview: {
         ko: "학습 설정",
         en: "Learning Settings"
