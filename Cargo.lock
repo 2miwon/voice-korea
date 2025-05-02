@@ -88,7 +88,7 @@ checksum = "dcfed56ad506cb2c684a14971b8861fdc3baaaae314b9e5f9bb532cbe3ba7a4f"
 
 [[package]]
 name = "api"
-version = "0.3.39"
+version = "0.3.40"
 dependencies = [
  "aws-config",
  "aws-sdk-chimesdkmediapipelines",
@@ -6182,7 +6182,7 @@ dependencies = [
 
 [[package]]
 name = "watcher"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "chrono",
  "lambda_http 0.13.0",

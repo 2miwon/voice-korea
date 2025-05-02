@@ -1,4 +1,3 @@
-use chrono::{DateTime, FixedOffset, Utc};
 use lambda_http::{run, service_fn, Body, Error, RequestExt, RequestPayloadExt, Response};
 use reqwest::StatusCode;
 use serde::Deserialize;
@@ -23,22 +22,18 @@ async fn handler(event: lambda_http::Request) -> Result<Response<Body>, Error> {
         if let Ok(event_bridge_event) = serde_json::from_value::<EventBridgeEvent>(payload.clone())
         {
             if event_bridge_event.source.as_deref() == Some("aws.events") {
-                let utc_now: DateTime<Utc> = Utc::now();
-                let kst_offset = FixedOffset::east_opt(9 * 3600).unwrap();
-                let kst_time = utc_now.with_timezone(&kst_offset);
-                let formatted_date = kst_time.format("%y-%m-%d").to_string();
                 match Watcher::new() {
-                    Ok(v) => match v.finalize_survey(formatted_date.clone()).await {
-                        Ok(v) => {
-                            return Ok(response(
-                                StatusCode::OK,
-                                format!("Finalized({}) {:?}", formatted_date, v),
-                            ));
-                        }
-                        Err(e) => {
+                    Ok(v) => {
+                        if let Err(e) = v.update_deliberation_status().await {
                             return Ok(response(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()));
                         }
-                    },
+
+                        if let Err(e) = v.update_survey_status().await {
+                            return Ok(response(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()));
+                        }
+
+                        return Ok(response(StatusCode::OK, "finalized".to_string()));
+                    }
                     Err(e) => {
                         return Ok(response(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()));
                     }

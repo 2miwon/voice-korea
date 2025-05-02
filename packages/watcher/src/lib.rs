@@ -1,4 +1,3 @@
-use models::prelude::{AdminSurveyCompleteRequest, AdminSurveyCompleteResponse};
 use reqwest::{header::HeaderMap, Client};
 use std::error::Error;
 
@@ -31,18 +30,29 @@ impl Watcher {
         })
     }
 
-    pub async fn finalize_survey(&self, date: String) -> Result<AdminSurveyCompleteResponse> {
-        let data = AdminSurveyCompleteRequest { ended_at: date };
+    pub async fn update_deliberation_status(&self) -> Result<()> {
         let res = self
             .req_client
             .request(
-                reqwest::Method::PATCH,
-                format!("{}/m1/survey", self.endpoint),
+                reqwest::Method::POST,
+                format!("{}/m1/deliberations", self.endpoint),
             )
-            .json(&data)
             .send()
             .await?;
-        let res = res.error_for_status()?.json().await?;
-        Ok(res)
+        res.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn update_survey_status(&self) -> Result<()> {
+        let res = self
+            .req_client
+            .request(
+                reqwest::Method::POST,
+                format!("{}/m1/surveys", self.endpoint),
+            )
+            .send()
+            .await?;
+        res.error_for_status()?;
+        Ok(())
     }
 }
