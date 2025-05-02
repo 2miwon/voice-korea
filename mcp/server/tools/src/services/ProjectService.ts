@@ -38,7 +38,7 @@ export default class ProjectService {
             const project = await makeApiCall(`/projects?action=search&bookmark=1&size=${maxLimit}&title=${title}&param-type=query`, { method: 'GET' })
             if (!project.items) {
               return {
-                content: [{ type: "text", text: `No project found with title ${title}` }]
+                content: [{ type: "text", text: `No projects found with title ${title}` }]
               };
             }
     
