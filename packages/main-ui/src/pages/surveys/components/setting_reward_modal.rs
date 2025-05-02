@@ -120,7 +120,7 @@ translate! {
 
     estimate_title: {
         ko: "예상 소요 시간 (분)",
-        en: "Estimated time (minutes)"
+        en: "Estimated time (Minutes)"
     }
     estimate_description: {
         ko: "예상 소요 시간은 관리자가 설정하는 기준 시간이며, 리워드 지급과는 관계가 없습니다.",

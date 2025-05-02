@@ -55,6 +55,10 @@ translate! {
         ko: "일정표는 참여 일정 안내용으로 활용됩니다.",
         en: "The schedule is used to guide the participation schedule."
     }
+    condition: {
+        ko: "(jpg, png, pdf, xls, xlsx, csv 파일만 업로드 가능합니다.)",
+        en: "(Only jpg, png, pdf, xls, xlsx, csv files can be uploaded.)"
+    }
     schedule: {
         ko: "일정표",
         en: "Schedule"

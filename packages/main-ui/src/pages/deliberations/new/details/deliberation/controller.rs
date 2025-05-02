@@ -1,13 +1,11 @@
 use bdk::prelude::*;
-use models::{
-    deliberation_user::DeliberationUserCreateRequest, elearning::ElearningCreateRequest, *,
-};
+use models::{elearning::ElearningCreateRequest, *};
 
 use crate::{
     config,
     routes::Route,
     service::{login_service::LoginService, popup_service::PopupService},
-    utils::time::current_timestamp,
+    utils::time::{current_timestamp_with_time, parsed_timestamp_with_time},
 };
 
 use super::{components::load_data_modal::LoadDataModal, DeliberationNewController};
@@ -17,15 +15,12 @@ pub struct Controller {
     #[allow(dead_code)]
     lang: Language,
     org_id: i64,
-    // pub _parent: super::super::Controller,
     pub e_learning_tab: Signal<bool>,
 
-    pub members: Resource<Vec<OrganizationMemberSummary>>,
-    pub committee_members: Signal<Vec<DeliberationUserCreateRequest>>,
+    pub metadatas: Resource<Vec<ResourceFileSummary>>,
+    pub committee_members: Signal<Vec<String>>,
 
-    deliberation: Signal<DeliberationContentCreateRequest>,
-    // elearnings: Signal<Vec<ElearningCreateRequest>>,
-    // questions: Signal<Vec<Option<Question>>>,
+    pub deliberation: Signal<DeliberationContentCreateRequest>,
     pub parent: DeliberationNewController,
     pub nav: Navigator,
     pub popup_service: PopupService,
@@ -37,24 +32,24 @@ impl Controller {
         let deliberation = use_signal(|| DeliberationContentCreateRequest::default());
         let popup_service: PopupService = use_context();
 
-        let members = use_server_future(move || {
+        let metadatas = use_server_future(move || {
             let page = 1;
-            let size = 100;
+            let size = 300;
             async move {
+                let client = ResourceFile::get_client(&config::get().api_url);
                 let org_id = user.get_selected_org();
                 if org_id.is_none() {
                     tracing::error!("Organization ID is missing");
                     return vec![];
                 }
-                let endpoint = crate::config::get().api_url;
-                let res = OrganizationMember::get_client(endpoint)
+                client
                     .query(
                         org_id.unwrap().id,
-                        OrganizationMemberQuery::new(size).with_page(page),
+                        ResourceFileQuery::new(size).with_page(page),
                     )
-                    .await;
-
-                res.unwrap_or_default().items
+                    .await
+                    .unwrap_or_default()
+                    .items
             }
         })?;
 
@@ -63,7 +58,7 @@ impl Controller {
             org_id: user.get_selected_org().unwrap_or_default().id,
             e_learning_tab: use_signal(|| true),
 
-            members,
+            metadatas,
             committee_members: use_signal(|| vec![]),
 
             parent: use_context(),
@@ -76,11 +71,8 @@ impl Controller {
 
         let req = ctrl.parent.deliberation_requests();
 
-        let current_timestamp = current_timestamp();
-
-        let committees = req.roles;
-
         use_effect(move || {
+            let committees = req.roles.iter().map(|v| v.email.clone()).collect();
             let mut deliberation = req
                 .contents
                 .get(0)
@@ -89,26 +81,16 @@ impl Controller {
             let started_at = deliberation.started_at;
             let ended_at = deliberation.ended_at;
             if started_at == 0 {
-                deliberation.started_at = current_timestamp;
+                deliberation.started_at = current_timestamp_with_time(0, 0, 0);
             }
             if ended_at == 0 {
-                deliberation.ended_at = current_timestamp;
+                deliberation.ended_at = current_timestamp_with_time(23, 59, 59);
             }
             ctrl.deliberation.set(deliberation.clone());
-            ctrl.committee_members.set(committees.clone());
-            // if deliberation.elearnings.is_empty() {
-            //     let mut elearning = ElearningCreateRequest::default();
-            //     elearning.resources.push(ResourceFile::default());
-            //     deliberation.elearnings.push(elearning);
-            // } else {
-            //     ctrl.elearnings.set(deliberation.elearnings.clone());
-            // }
-            // if deliberation.questions.is_empty() {
-            //     deliberation.questions.push(None);
-            // } else {
-            //     ctrl.questions.set(deliberation.questions.clone());
-            // }
+            ctrl.committee_members.set(committees);
         });
+
+        use_context_provider(|| ctrl);
 
         Ok(ctrl)
     }
@@ -127,26 +109,25 @@ impl Controller {
 
     pub fn set_start_date(&mut self, started_at: i64) {
         self.deliberation.with_mut(|req| {
-            req.started_at = started_at;
+            req.started_at = parsed_timestamp_with_time(started_at, 0, 0, 0);
         });
     }
 
     pub fn set_end_date(&mut self, ended_at: i64) {
         self.deliberation.with_mut(|req| {
-            req.ended_at = ended_at;
+            req.ended_at = parsed_timestamp_with_time(ended_at, 23, 59, 59);
         });
     }
 
-    pub fn add_committee(&mut self, user_id: i64) {
+    pub fn add_committee(&mut self, email: String) {
         self.deliberation.with_mut(|req| {
-            req.users.push(user_id);
+            req.users.push(email);
         });
     }
 
-    pub fn remove_committee(&mut self, user_id: i64) {
+    pub fn remove_committee(&mut self, email: String) {
         self.deliberation.with_mut(|req| {
-            req.users
-                .retain(|committee_id| committee_id.clone() != user_id);
+            req.users.retain(|e| !(e.clone() == email));
         })
     }
 
@@ -154,34 +135,11 @@ impl Controller {
         self.deliberation.with_mut(|req| req.users = vec![]);
     }
 
-    pub fn get_committees(&self) -> Vec<OrganizationMemberSummary> {
-        let committees = self.committee_members();
-        let members = self.members().unwrap_or_default();
-
-        tracing::debug!("members: {:?} committees: {:?}", members, committees);
-
-        let d = members
-            .clone()
-            .into_iter()
-            .filter(|member| {
-                committees
-                    .iter()
-                    .any(|committee| committee.user_id == member.user_id)
-            })
-            .collect();
-
-        d
-    }
-
-    pub fn get_selected_committee(&self) -> Vec<OrganizationMemberSummary> {
-        let total_committees = self.members().unwrap_or_default();
+    pub fn get_selected_committee(&self) -> Vec<String> {
         let deliberation = self.deliberation();
         let roles = deliberation.clone().users;
-        total_committees
-            .clone()
-            .into_iter()
-            .filter(|member| roles.iter().any(|id| id.clone() == member.user_id))
-            .collect()
+
+        roles
     }
 
     pub fn remove_elearning(&mut self, index: usize) {
@@ -195,6 +153,7 @@ impl Controller {
             let mut elearning = ElearningCreateRequest::default();
             elearning.resources.push(ResourceFile::default());
             req.elearnings.push(elearning);
+            tracing::debug!("elearnings: {:?}", req.elearnings);
         });
     }
 
@@ -252,14 +211,17 @@ impl Controller {
     }
 
     pub async fn temp_save(&mut self) {
+        tracing::debug!("deliberations: {:?}", self.deliberation());
         self.parent.save_content(self.deliberation());
         self.parent.temporary_save(false).await;
     }
 
     pub fn next(&mut self) {
-        self.parent.save_content(self.deliberation());
-        self.nav
-            .push(Route::DeliberationDiscussionSettingPage { lang: self.lang });
+        if self.validation_check() {
+            self.parent.save_content(self.deliberation());
+            self.nav
+                .push(Route::DeliberationDiscussionSettingPage { lang: self.lang });
+        }
     }
 
     pub fn set_selected_field(&mut self, index: usize, field: String) {
@@ -268,8 +230,11 @@ impl Controller {
             return;
         }
         self.deliberation.with_mut(|req| {
-            let question_field = Question::new(&field);
-            req.questions[index] = Some(question_field);
+            let question = req.questions[index].clone();
+            let mut question_field = Question::new(&field);
+            question_field.set_title(&question.title());
+            question_field.set_description(&question.description());
+            req.questions[index] = question_field;
         });
     }
 
@@ -279,9 +244,7 @@ impl Controller {
             return;
         }
         self.deliberation.with_mut(|req| {
-            if let Some(ref mut question) = req.questions[index] {
-                question.set_title(&title);
-            }
+            req.questions[index].set_title(&title);
         });
     }
 
@@ -291,19 +254,25 @@ impl Controller {
             return;
         }
         self.deliberation.with_mut(|req| {
-            if let Some(ref mut question) = req.questions[index] {
-                question.set_description(&content);
-            }
+            req.questions[index].set_description(&content);
         });
     }
 
-    #[allow(dead_code)]
+    pub fn get_metadatas(&self) -> Vec<ResourceFileSummary> {
+        match self.metadatas() {
+            Ok(v) => v,
+            Err(_) => vec![],
+        }
+    }
+
     pub fn open_load_from_data_modal(&mut self, index: usize) {
         let mut ctrl = *self;
         self.popup_service
             .open(rsx! {
                 LoadDataModal {
                     lang: self.lang,
+                    metadatas: ctrl.get_metadatas(),
+
                     onclose: move |_| {
                         ctrl.popup_service.close();
                     },
@@ -318,13 +287,31 @@ impl Controller {
 
     pub fn add_question(&mut self) {
         self.deliberation.with_mut(|req| {
-            req.questions.push(None);
+            req.questions.push(Question::default());
         });
     }
 
     pub fn remove_question(&mut self, index: usize) {
         self.deliberation.with_mut(|req| {
             req.questions.remove(index);
+        });
+    }
+
+    pub fn change_option(&mut self, question_index: usize, option_index: usize, option: String) {
+        self.deliberation.with_mut(|req| {
+            req.questions[question_index].change_option(option_index, &option);
+        });
+    }
+
+    pub fn remove_option(&mut self, question_index: usize, option_index: usize) {
+        self.deliberation.with_mut(|req| {
+            req.questions[question_index].remove_option(option_index);
+        });
+    }
+
+    pub fn add_option(&mut self, question_index: usize) {
+        self.deliberation.with_mut(|req| {
+            req.questions[question_index].add_option("");
         });
     }
 
@@ -342,4 +329,98 @@ impl Controller {
                 }
             });
     }
+
+    pub fn is_valid(&self) -> bool {
+        let deliberation = self.deliberation();
+
+        let title = deliberation.title;
+        let description = deliberation.description;
+        let started_at = deliberation.started_at;
+        let ended_at = deliberation.ended_at;
+
+        let members = deliberation.users;
+        let elearnings = deliberation.elearnings;
+        let questions = deliberation.questions;
+
+        !(title.is_empty()
+            || description.is_empty()
+            || started_at >= ended_at
+            || members.is_empty()
+            || elearnings.is_empty()
+            || questions.is_empty())
+    }
+
+    pub fn validation_check(&self) -> bool {
+        let deliberation = self.deliberation();
+
+        let title = deliberation.title;
+        let description = deliberation.description;
+        let started_at = deliberation.started_at;
+        let ended_at = deliberation.ended_at;
+
+        let members = deliberation.users;
+        let elearnings = deliberation.elearnings;
+        let questions = deliberation.questions;
+
+        if title.is_empty() {
+            btracing::e!(self.lang, ValidationError::TitleRequired);
+            return false;
+        }
+        if description.is_empty() {
+            btracing::e!(self.lang, ValidationError::DescriptionRequired);
+            return false;
+        }
+        if started_at >= ended_at {
+            btracing::e!(self.lang, ValidationError::TimeValidationFailed);
+            return false;
+        }
+        if members.is_empty() {
+            btracing::e!(self.lang, ValidationError::MemberRequired);
+            return false;
+        }
+        if elearnings.is_empty() {
+            btracing::e!(self.lang, ValidationError::ElearningRequired);
+            return false;
+        }
+        if questions.is_empty() {
+            btracing::e!(self.lang, ValidationError::QuestionRequired);
+            return false;
+        }
+
+        true
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Translate)]
+pub enum ValidationError {
+    #[translate(
+        ko = "숙의 제목을 입력해주세요.",
+        en = "Please enter the deliberation title."
+    )]
+    TitleRequired,
+    #[translate(
+        ko = "숙의 설명을 입력해주세요.",
+        en = "Please enter the deliberation description."
+    )]
+    DescriptionRequired,
+    #[translate(
+        ko = "시작 날짜는 종료 날짜보다 작아야합니다.",
+        en = "The start date must be less than the end date."
+    )]
+    TimeValidationFailed,
+    #[translate(
+        ko = "1명 이상의 담당자를 선택해주세요.",
+        en = "Please select one or more contact persons."
+    )]
+    MemberRequired,
+    #[translate(
+        ko = "하나 이상의 이러닝 자료를 생성해주세요.",
+        en = "Please create one or more eLearning materials."
+    )]
+    ElearningRequired,
+    #[translate(
+        ko = "한 문항 이상의 설문을 입력해주세요.",
+        en = "Please enter one or more questions in the survey."
+    )]
+    QuestionRequired,
 }

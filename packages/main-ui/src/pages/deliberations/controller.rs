@@ -125,6 +125,18 @@ impl Controller {
         self.mouse_pos.with(|v| v.1 + 20.0)
     }
 
+    pub fn move_user_page(&self, project_id: i64) {
+        use web_sys::window;
+
+        let url = crate::config::get().user_url;
+
+        let user_domain = format!("{}/{}/projects/{}", url, self.lang, project_id);
+
+        if let Some(w) = window() {
+            let _ = w.open_with_url(&user_domain);
+        }
+    }
+
     pub fn total_pages(&self) -> usize {
         let size = self.size;
         self.deliberations.with(|v| {

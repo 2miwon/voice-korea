@@ -1,12 +1,12 @@
 use bdk::prelude::*;
 
-use crate::by_components::loaders::cube_loader::CubeLoader;
+use crate::pages::projects::_id::components::skeleton::Skeleton;
 use dioxus_translate::Language;
 
 use crate::pages::projects::_id::{
     components::{
-        basic_info::BasicInfo, comments::Comment, deliberation::Deliberation,
-        discussion::DiscussionComponent, final_recommendation::FinalRecommendation,
+        basic_info::BasicInfo, comments::Comment, consideration::Consideration,
+        discussion::DiscussionTab, final_recommendation::FinalRecommendation,
         final_survey::FinalSurvey, project_header::ProjectHeader, sample_survey::SampleSurvey,
     },
     controller,
@@ -18,18 +18,16 @@ pub fn ProjectPage(lang: Language, project_id: ReadOnlySignal<i64>) -> Element {
     let comments = ctrl.comment_trees();
     let deliberation = ctrl.summary()?;
     let active_tab = use_signal(|| Tab::BasicInfo);
-    tracing::debug!("deliberation: {:?}", deliberation);
 
     rsx! {
-        // TODO(mobile): tab view implemented to fit mobile size
-        div { class: "flex flex-col w-full justify-center items-center mt-80",
+        div { class: "flex flex-col w-full justify-center items-center",
             ProjectHeader { lang, deliberation, active_tab: active_tab.clone() }
-            div { class: "w-full flex flex-col justify-center items-center",
-                SuspenseBoundary {
-                    fallback: |_| rsx! {
-                        div { class: "w-full h-fit flex items-center justify-center", CubeLoader {} }
-                    },
-                    div { class: "flex flex-col w-full h-fit",
+            div { class: "flex flex-col w-full justify-center items-center bg-box-gray",
+                div { class: "flex flex-col max-w-desktop w-full max-desktop:px-20",
+                    SuspenseBoundary {
+                        fallback: |_| rsx! {
+                            Skeleton {}
+                        },
                         ProjectDetails {
                             lang,
                             active_tab: active_tab.clone(),
@@ -50,6 +48,7 @@ pub fn ProjectPage(lang: Language, project_id: ReadOnlySignal<i64>) -> Element {
                 send_reply: move |(id, reply): (i64, String)| async move {
                     let _ = ctrl.send_reply(id, reply).await;
                 },
+                is_login: ctrl.user.is_login(),
             }
         }
     }
@@ -79,28 +78,26 @@ pub fn ProjectDetails(
     project_id: ReadOnlySignal<i64>,
 ) -> Element {
     rsx! {
-        div { class: "flex flex-col w-full justify-center items-center bg-box-gray",
-            div { class: "flex flex-col max-w-1300 w-full",
-                match active_tab() {
-                    Tab::BasicInfo => rsx! {
-                        BasicInfo { lang, project_id }
-                    },
-                    Tab::SampleSurvey => rsx! {
-                        SampleSurvey { lang, project_id }
-                    },
-                    Tab::Consideration => rsx! {
-                        Deliberation { lang, project_id }
-                    },
-                    Tab::Discussion => rsx! {
-                        DiscussionComponent { lang, project_id }
-                    },
-                    Tab::FinalSurvey => rsx! {
-                        FinalSurvey { lang, project_id }
-                    },
-                    Tab::FinalRecommendation => rsx! {
-                        FinalRecommendation { lang, project_id }
-                    },
-                }
+        div { class: "flex flex-col max-w-desktop w-full max-desktop:px-20",
+            match active_tab() {
+                Tab::BasicInfo => rsx! {
+                    BasicInfo { lang, project_id }
+                },
+                Tab::SampleSurvey => rsx! {
+                    SampleSurvey { lang, project_id }
+                },
+                Tab::Consideration => rsx! {
+                    Consideration { lang, project_id }
+                },
+                Tab::Discussion => rsx! {
+                    DiscussionTab { lang, project_id }
+                },
+                Tab::FinalSurvey => rsx! {
+                    FinalSurvey { lang, project_id }
+                },
+                Tab::FinalRecommendation => rsx! {
+                    FinalRecommendation { lang, project_id }
+                },
             }
         }
     }

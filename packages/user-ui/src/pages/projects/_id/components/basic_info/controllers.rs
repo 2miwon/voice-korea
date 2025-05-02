@@ -1,5 +1,9 @@
 use bdk::prelude::*;
-use models::{DeliberationBasicInfo, DeliberationBasicInfoQuery, DeliberationBasicInfoSummary};
+use indexmap::IndexMap;
+use models::{
+    deliberation_role::DeliberationRole, DeliberationBasicInfo, DeliberationBasicInfoQuery,
+    DeliberationBasicInfoSummary,
+};
 
 #[derive(Debug, Clone, Copy, DioxusController)]
 pub struct Controller {
@@ -9,6 +13,7 @@ pub struct Controller {
     deliberation_id: ReadOnlySignal<i64>,
 
     basic_info: Resource<DeliberationBasicInfoSummary>,
+    committees: Memo<IndexMap<String, Vec<DeliberationRole>>>,
 }
 
 impl Controller {
@@ -38,10 +43,26 @@ impl Controller {
             }
         })?;
 
+        let committees: Memo<IndexMap<String, Vec<DeliberationRole>>> = use_memo(move || {
+            if let Some(basic_info) = basic_info() {
+                let mut committees: IndexMap<String, Vec<DeliberationRole>> = IndexMap::new();
+                for deliberation_role in basic_info.roles.iter() {
+                    let role_name = deliberation_role.role.translate(&lang);
+                    committees
+                        .entry(role_name.to_string())
+                        .or_insert_with(Vec::new)
+                        .push(deliberation_role.clone());
+                }
+                committees
+            } else {
+                IndexMap::new()
+            }
+        });
         let ctrl = Self {
             lang,
             deliberation_id,
             basic_info,
+            committees,
         };
 
         Ok(ctrl)

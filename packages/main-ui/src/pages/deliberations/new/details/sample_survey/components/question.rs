@@ -35,8 +35,14 @@ pub fn QuestionList(
                         QuestionTypeSelector {
                             selected: questions[index].to_type(&lang),
                             lang,
-                            onchange: move |qtype: String| {
-                                update_question.call((index, Question::new(&qtype)));
+                            onchange: {
+                                let question = questions[index].clone();
+                                move |qtype: String| {
+                                    let mut new = Question::new(&qtype);
+                                    new.set_title(&question.title());
+                                    new.set_description(&question.description());
+                                    update_question.call((index, new));
+                                }
                             },
                         }
 

@@ -1,10 +1,11 @@
-use super::super::controller::*;
 use crate::{
     components::{
-        form_field::{Divide, SelectInputField, UnderlineField},
+        form_field::{Divide, SelectInputField},
         section::{AddSection, MainSection},
     },
-    pages::deliberations::new::details::deliberation::i18n::DeliberationTranslate,
+    pages::deliberations::new::details::deliberation::{
+        components::objective_options::ObjectiveOptions, i18n::DeliberationTranslate,
+    },
 };
 use bdk::prelude::*;
 use models::Question;
@@ -12,14 +13,18 @@ use models::Question;
 #[component]
 pub fn Evaluation(
     lang: Language,
-    questions: Vec<Option<Question>>,
+    questions: Vec<Question>,
     set_form: EventHandler<(usize, String)>,
     set_title: EventHandler<(usize, String)>,
     set_description: EventHandler<(usize, String)>,
+    add_question: EventHandler<MouseEvent>,
     removing_question: EventHandler<usize>,
+
+    change_option: EventHandler<(usize, usize, String)>,
+    remove_option: EventHandler<(usize, usize)>,
+    add_option: EventHandler<usize>,
 ) -> Element {
     let tr: DeliberationTranslate = translate(&lang);
-    let mut ctrl = Controller::new(lang)?;
 
     rsx! {
         div { class: "flex flex-col gap-20 w-full",
@@ -33,36 +38,53 @@ pub fn Evaluation(
                     },
                     SelectInputField {
                         name: format!("evaluation-{index}"),
-                        selected_field: if let Some(ref question) = question { Some(question.to_type(&lang).to_string()) } else { None },
+                        selected_field: Some(question.to_type(&lang).to_string()),
                         select_placeholder: tr.select_format.to_string(),
                         placeholder: tr.title_placeholder.to_string(),
-                        text_value: if let Some(ref question) = question { question.title() } else { "".to_string() },
+                        text_value: question.title(),
                         onchange: move |e: Event<FormData>| {
                             set_form.call((index, e.value()));
                         },
                         oninput: move |e: FormEvent| {
                             set_title.call((index, e.value()));
                         },
-                        options: rsx! {
-                            for question_type in Question::types(&lang).iter() {
-                                option { value: question_type.clone(), {question_type.clone()} }
-                            }
-                        },
+                        options: Question::types(&lang),
                     }
                     Divide {}
-                    UnderlineField {
-                        placeholder: tr.content_placeholder.to_string(),
-                        value: if let Some(ref question) = question { question.description() } else { "".to_string() },
-                        oninput: move |e: Event<FormData>| {
-                            set_description.call((index, e.value()));
-                        },
+                    // UnderlineField {
+                    //     placeholder: tr.content_placeholder.to_string(),
+                    //     value: question.description(),
+                    //     oninput: move |e: Event<FormData>| {
+                    //         set_description.call((index, e.value()));
+                    //     },
+                    // }
+
+                    match question {
+                        Question::SingleChoice(_) | Question::MultipleChoice(_) => {
+                            rsx! {
+                                ObjectiveOptions {
+                                    lang,
+                                    options: question.clone().options(),
+                                    change_option: move |(ind, option): (usize, String)| {
+                                        change_option.call((index, ind, option));
+                                    },
+                                    remove_option: move |ind: usize| {
+                                        remove_option.call((index, ind));
+                                    },
+                                    add_option: move |_| {
+                                        add_option.call(index);
+                                    },
+                                }
+                            }
+                        }
+                        _ => rsx! {},
                     }
                 }
             }
             AddSection {
                 lang,
-                onclick: move |_| {
-                    ctrl.add_question();
+                onclick: move |e| {
+                    add_question.call(e);
                 },
             }
         }

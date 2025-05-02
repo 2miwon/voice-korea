@@ -37,11 +37,15 @@ pub fn QuestionListView(
                             lang,
                             onchange: {
                                 move |qtype: String| {
-                                    questions()[index].to_type(&lang);
+                                    let question = questions()[index].clone();
                                     questions
                                         .with_mut(move |q| {
-                                            q[index] = Question::new(&qtype);
+                                            let mut new = Question::new(&qtype);
+                                            new.set_title(&question.title());
+                                            new.set_description(&question.description());
+                                            q[index] = new;
                                         });
+                                    onchange.call(questions());
                                 }
                             },
                         }
@@ -58,6 +62,7 @@ pub fn QuestionListView(
                                     .with_mut(move |q| {
                                         q[index].set_title(&e.value());
                                     });
+                                onchange.call(questions());
                             },
                         }
                     }
@@ -67,9 +72,11 @@ pub fn QuestionListView(
                             lang,
                             onchange: move |v: Question| {
                                 questions.with_mut(move |q| q[index] = v);
+                                onchange.call(questions());
                             },
                             onremove: move |_| {
                                 questions.remove(index);
+                                onchange.call(questions());
                             },
                             question: questions()[index].clone(),
                         }
@@ -78,9 +85,11 @@ pub fn QuestionListView(
                             lang,
                             onchange: move |v: Question| {
                                 questions.with_mut(move |q| q[index] = v);
+                                onchange.call(questions());
                             },
                             onremove: move |_| {
                                 questions.remove(index);
+                                onchange.call(questions());
                             },
                             question: questions()[index].clone(),
                         }
@@ -127,21 +136,21 @@ pub fn Objective(
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
 
-            input {
-                class: format!(
-                    "flex flex-row w-full h-[55px] justify-start items-center bg-[#f7f7f7] focus:outline-none px-[15px] py-[10px] font-medium text-[#b4b4b4] text-[15px] leading-[22px] rounded-[4px] mt-[10px]",
-                ),
-                r#type: "text",
-                placeholder: tr.input_description,
-                value: question.description(),
-                oninput: {
-                    let mut question = question.clone();
-                    move |e: Event<FormData>| {
-                        question.set_description(&e.value());
-                        onchange.call(question.clone());
-                    }
-                },
-            }
+            // input {
+            //     class: format!(
+            //         "flex flex-row w-full h-[55px] justify-start items-center bg-[#f7f7f7] focus:outline-none px-[15px] py-[10px] font-medium text-[#b4b4b4] text-[15px] leading-[22px] rounded-[4px] mt-[10px]",
+            //     ),
+            //     r#type: "text",
+            //     placeholder: tr.input_description,
+            //     value: question.description(),
+            //     oninput: {
+            //         let mut question = question.clone();
+            //         move |e: Event<FormData>| {
+            //             question.set_description(&e.value());
+            //             onchange.call(question.clone());
+            //         }
+            //     },
+            // }
 
             div { class: "flex flex-row w-full h-[1px] bg-[#ebeff5] my-[10px]" }
 
@@ -216,16 +225,16 @@ pub fn Subjective(
         div { class: "flex flex-col w-full justify-start items-start",
             div { class: "flex flex-row w-full h-[1px] bg-[#ebeff5] my-[10px]" }
 
-            input {
-                class: "flex flex-row w-full h-[55px] justify-start items-center bg-white focus:outline-none border-b-[1px] border-[#bfc8d9] px-[15px] py-[15px] font-medium text-[#b4b4b4] text-[15px] leading-[22px] mb-[20px]",
-                r#type: "text",
-                placeholder: tr.input_description_hint,
-                value: question.description(),
-                oninput: move |e: Event<FormData>| {
-                    question.set_description(&e.value());
-                    onchange.call(question.clone());
-                },
-            }
+            // input {
+            //     class: "flex flex-row w-full h-[55px] justify-start items-center bg-white focus:outline-none border-b-[1px] border-[#bfc8d9] px-[15px] py-[15px] font-medium text-[#b4b4b4] text-[15px] leading-[22px] mb-[20px]",
+            //     r#type: "text",
+            //     placeholder: tr.input_description_hint,
+            //     value: question.description(),
+            //     oninput: move |e: Event<FormData>| {
+            //         question.set_description(&e.value());
+            //         onchange.call(question.clone());
+            //     },
+            // }
 
             div { class: "flex flex-row w-full justify-end items-center gap-[5px]",
                 button {

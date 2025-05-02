@@ -1,32 +1,32 @@
 use bdk::prelude::*;
 
 translate! {
-    FinalDraftTranslate;
+    RichTextEditTranslate;
 
     title: {
-        ko: "최종 권고안",
-        en: "Final Recommendation",
-    },
-    result: {
-        ko: "결과 발표",
-        en: "Result Announcement",
+        ko: "제목",
+        en: "Title"
     }
-    necessary: {
-        ko: "[필수]",
-        en: "[Necessary]"
+
+    title_hint: {
+        ko: "제목을 입력하세요.",
+        en: "Please enter a title."
     }
-    plural: {
-        ko: "[복수]",
-        en: "[Plural]"
+
+    description: {
+        ko: "설명",
+        en: "Description"
     }
-    unit: {
-        ko: "명",
-        en: "Unit"
+
+    update: {
+        ko: "업데이트",
+        en: "Update"
     }
-    subjective_answer: {
-        ko: "주관식 답변",
-        en: "Subjective Answer"
-    }
+}
+
+translate! {
+    FinalRecommendationTranslate;
+
     update: {
         ko: "수정하기",
         en: "Update"

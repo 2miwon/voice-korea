@@ -15,22 +15,27 @@ mod public_opinion;
 mod resource;
 pub mod tab;
 // mod public_survey;
+pub mod deliberation_panel_emails;
 
 pub mod areas;
 pub mod deliberation_basic_info_members;
 pub mod deliberation_basic_info_resources;
+pub mod deliberation_basic_info_roles;
 pub mod deliberation_basic_info_surveys;
 pub mod deliberation_basic_infos;
 
 pub mod deliberation_content_members;
+pub mod deliberation_content_roles;
 pub mod deliberation_contents;
 
 pub mod deliberation_sample_survey_members;
+pub mod deliberation_sample_survey_roles;
 pub mod deliberation_sample_survey_surveys;
 pub mod deliberation_sample_surveys;
 
 pub mod deliberation_discussion_members;
 pub mod deliberation_discussion_resources;
+pub mod deliberation_discussion_roles;
 pub mod deliberation_discussions;
 
 pub mod deliberation_draft_members;
@@ -39,6 +44,7 @@ pub mod deliberation_draft_surveys;
 pub mod deliberation_drafts;
 
 pub mod deliberation_final_survey_members;
+pub mod deliberation_final_survey_roles;
 pub mod deliberation_final_survey_surveys;
 pub mod deliberation_final_surveys;
 
@@ -52,11 +58,15 @@ pub mod deliberation_reports;
 pub mod deliberation_resources;
 pub mod deliberation_responses;
 
+pub mod deliberation_roles;
+
 pub mod deliberation_surveys;
 pub mod deliberation_users;
 pub mod deliberation_votes;
 pub mod deliberations;
+pub mod discussion_conversations;
 pub mod discussion_groups;
+pub mod discussion_participants;
 pub mod discussion_resources;
 pub mod discussions;
 pub mod dto;
@@ -97,9 +107,11 @@ pub mod prelude {
     pub use crate::deliberation_final_survey_members::*;
     pub use crate::deliberation_final_survey_surveys::*;
     pub use crate::deliberation_final_surveys::*;
+    pub use crate::deliberation_panel_emails::*;
     pub use crate::deliberation_reports::*;
     pub use crate::deliberation_resources::*;
     pub use crate::deliberation_responses::*;
+    pub use crate::deliberation_roles::*;
     pub use crate::deliberation_sample_survey_members::*;
     pub use crate::deliberation_sample_survey_surveys::*;
     pub use crate::deliberation_sample_surveys::*;

@@ -14,12 +14,16 @@ use crate::deliberation_response::DeliberationResponse;
 use crate::deliberation_sample_surveys::deliberation_sample_survey::DeliberationSampleSurvey;
 use crate::deliberation_sample_surveys::deliberation_sample_survey::DeliberationSampleSurveyCreateRequest;
 
-use crate::deliberation_user::{DeliberationUser, DeliberationUserCreateRequest};
+use crate::deliberation_panel_email::DeliberationPanelEmail;
+
+use crate::deliberation_role::{DeliberationRole, DeliberationRoleCreateRequest};
+use crate::deliberation_user::DeliberationUser;
 
 // #[cfg(feature = "server")]
 // use crate::deliberation_user::DeliberationUserRepositoryQueryBuilder;
 
 use bdk::prelude::*;
+use chrono::Utc;
 use validator::Validate;
 
 use crate::deliberation_report::DeliberationReport;
@@ -36,7 +40,7 @@ use crate::{
 };
 
 #[derive(Validate)]
-#[api_model(base = "/v2/organizations/:org-id/deliberations", action = [create(project_areas = Vec<ProjectArea>, resource_ids = Vec<i64>, survey_ids = Vec<i64>, roles = Vec<DeliberationUserCreateRequest>, panel_ids = Vec<i64>, steps = Vec<StepCreateRequest>, elearning = Vec<i64>, basic_infos = Vec<DeliberationBasicInfoCreateRequest>, sample_surveys = Vec<DeliberationSampleSurveyCreateRequest>, contents = Vec<DeliberationContentCreateRequest>, deliberation_discussions = Vec<DeliberationDiscussionCreateRequest>, final_surveys = Vec<DeliberationFinalSurveyCreateRequest>, drafts = Vec<DeliberationDraftCreateRequest>)], action_by_id = [update(req = DeliberationCreateRequest), start_deliberation, remove_deliberation], table = deliberations)]
+#[api_model(base = "/v2/organizations/:org-id/deliberations", action = [create(project_areas = Vec<ProjectArea>, resource_ids = Vec<i64>, survey_ids = Vec<i64>, roles = Vec<DeliberationRoleCreateRequest>, panel_emails = Vec<String>, panel_ids = Vec<i64>, steps = Vec<StepCreateRequest>, elearning = Vec<i64>, basic_infos = Vec<DeliberationBasicInfoCreateRequest>, sample_surveys = Vec<DeliberationSampleSurveyCreateRequest>, contents = Vec<DeliberationContentCreateRequest>, deliberation_discussions = Vec<DeliberationDiscussionCreateRequest>, final_surveys = Vec<DeliberationFinalSurveyCreateRequest>, drafts = Vec<DeliberationDraftCreateRequest>)], action_by_id = [update(req = DeliberationCreateRequest), start_deliberation, remove_deliberation], table = deliberations)]
 pub struct Deliberation {
     #[api_model(summary, primary_key, read_action = get_draft)]
     pub id: i64,
@@ -71,7 +75,10 @@ pub struct Deliberation {
     #[api_model(action = create)]
     pub description: String,
 
-    // Third page of creating a deliberation
+    // this field will be used instead of members field
+    #[api_model(one_to_many = deliberation_roles, foreign_key = deliberation_id)]
+    pub roles: Vec<DeliberationRole>,
+    // FIXME: this field will be deplicated.
     #[api_model(one_to_many = deliberation_users, foreign_key = deliberation_id)]
     #[serde(default)]
     pub members: Vec<DeliberationUser>,
@@ -81,6 +88,12 @@ pub struct Deliberation {
     #[api_model(one_to_many = deliberation_votes, foreign_key = deliberation_id)]
     #[serde(default)]
     pub votes: Vec<DeliberationVote>,
+
+    #[api_model(summary, one_to_many = deliberation_panel_emails, foreign_key = deliberation_id)]
+    #[serde(default)]
+    pub emails: Vec<DeliberationPanelEmail>,
+
+    // FIXME: this field will be deplicated. use the emails field instead.
     #[api_model(summary, many_to_many = panel_deliberations, foreign_table_name = panels, foreign_primary_key = panel_id, foreign_reference_key = deliberation_id,)]
     #[serde(default)]
     pub panels: Vec<PanelV2>,
@@ -141,6 +154,26 @@ pub struct Deliberation {
     pub creator_id: i64,
 }
 
+impl DeliberationSummary {
+    pub fn deliberation_status(&self) -> DeliberationStatus {
+        match self.status {
+            DeliberationStatus::Draft => DeliberationStatus::Draft,
+            _ => {
+                let now = Utc::now();
+                let timestamp_millis = now.timestamp();
+
+                if timestamp_millis < self.started_at {
+                    DeliberationStatus::Ready
+                } else if timestamp_millis > self.ended_at {
+                    DeliberationStatus::Finish
+                } else {
+                    DeliberationStatus::InProgress
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Copy, Translate, Eq, PartialEq, Default, Debug, ApiModel)]
 #[cfg_attr(feature = "server", derive(JsonSchema, aide::OperationIo))]
 pub enum DeliberationStatus {
@@ -177,11 +210,8 @@ impl Into<DeliberationCreateRequest> for Deliberation {
                 .map(|resource| resource.id)
                 .collect(),
             survey_ids: self.surveys.into_iter().map(|survey| survey.id).collect(),
-            roles: self
-                .members
-                .into_iter()
-                .map(|member| member.into())
-                .collect(),
+            roles: self.roles.into_iter().map(|role| role.into()).collect(),
+            panel_emails: self.emails.into_iter().map(|v| v.email).collect(),
             panel_ids: self.panels.into_iter().map(|panel| panel.id).collect(),
             basic_infos: self
                 .basic_infos

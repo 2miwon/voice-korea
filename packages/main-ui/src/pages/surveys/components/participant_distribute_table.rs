@@ -7,12 +7,17 @@ use crate::{
         pagination::Pagination,
         radio::RadioButton,
     },
-    pages::surveys::models::attribute_group_info::AttributeGroupInfo,
+    pages::surveys::{
+        components::error_box::ErrorBox, models::attribute_group_info::AttributeGroupInfo,
+    },
 };
 
 #[component]
 pub fn ParticipantDistributeTable(
     lang: Language,
+
+    total_counts: i64,
+
     attribute_options: HashMap<String, Vec<AttributeGroupInfo>>,
     selected_attributes: Vec<String>,
     selected_tab: bool,
@@ -25,22 +30,41 @@ pub fn ParticipantDistributeTable(
     let tr: ParticipantDistributeTableTranslate = translate(&lang);
     let mut attribute_groups = use_signal(|| vec![]);
     let mut current_page = use_signal(|| 1);
+    let mut group_error = use_signal(|| false);
 
     let total_page = use_memo(move || {
         let total = attribute_groups().len().max(1);
         (total - 1) / 7 + 1
     });
 
-    use_effect(use_reactive(&(attribute_options, selected_attributes), {
-        move |(attribute_options, selected_attributes)| {
-            let new_groups = attribute_options
-                .iter()
-                .filter(|(key, _)| selected_attributes.contains(key))
-                .flat_map(|(_, groups)| groups.clone())
-                .collect::<Vec<AttributeGroupInfo>>();
+    use_effect(use_reactive(
+        &(attribute_options, selected_attributes.clone()),
+        {
+            move |(attribute_options, selected_attributes)| {
+                let mut error = false;
+                let new_groups = attribute_options
+                    .iter()
+                    .filter(|(key, _)| selected_attributes.contains(key))
+                    .flat_map(|(_, groups)| {
+                        let sum: i64 = groups.clone().iter().map(|g| g.rate).sum();
+                        if !error && sum != 100 {
+                            error = true;
+                        }
+                        groups.clone()
+                    })
+                    .collect::<Vec<AttributeGroupInfo>>();
 
-            attribute_groups.set(new_groups);
-            current_page.set(1);
+                attribute_groups.set(new_groups);
+                group_error.set(error);
+            }
+        },
+    ));
+
+    use_effect(use_reactive(&(total_page(), current_page()), {
+        move |(total, current)| {
+            if current > total {
+                current_page.set(1);
+            }
         }
     }));
 
@@ -63,6 +87,21 @@ pub fn ParticipantDistributeTable(
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start gap-20",
+            ErrorBox {
+                hidden: !group_error(),
+                title: tr.group_error_title,
+                description: tr.group_error_description,
+            }
+            ErrorBox {
+                hidden: total_counts != 0,
+                title: tr.total_error_title,
+                description: tr.total_error_description,
+            }
+            ErrorBox {
+                hidden: !selected_attributes.is_empty(),
+                title: tr.attribute_error_title,
+                description: tr.attribute_error_description,
+            }
             div { class: "flex flex-row w-full justify-start items-center",
                 div { class: "min-w-150 font-medium text-[15px] text-black leading-18",
                     {tr.personnel_distribution}
@@ -130,7 +169,7 @@ pub fn ParticipantDistributeTable(
                             div { class: "flex flex-row flex-1 h-full justify-center items-center",
                                 input {
                                     r#type: "number",
-                                    class: "flex flex-row w-50 bg-transparent text-text-black focus:outline-none",
+                                    class: "flex flex-row w-full h-full bg-background-gray text-text-black focus:outline-none focus:bg-white focus:border focus:border-hover text-center",
                                     value: group.rate,
                                     oninput: {
                                         let name = group.name.clone();
@@ -190,6 +229,33 @@ pub fn AttributeLabel(label: String) -> Element {
 
 translate! {
     ParticipantDistributeTableTranslate;
+
+    group_error_title: {
+        ko: "그룹 비율 설정",
+        en: "Set Group Ratio"
+    }
+    group_error_description: {
+        ko: "속성 비율의 총합은 100%가 되어야 합니다.",
+        en: "The sum of attribute ratios must be 100%."
+    }
+
+    total_error_title: {
+        ko: "총 인원 설정",
+        en: "Total number of people set"
+    }
+    total_error_description: {
+        ko: "1명 이상의 인원이 설정되어야 합니다.",
+        en: "At least 1 person must be set."
+    }
+
+    attribute_error_title: {
+        ko: "속성 선택",
+        en: "Select Attribute"
+    }
+    attribute_error_description: {
+        ko: "1가지 이상의 속성이 선택되어야 합니다.",
+        en: "At least one attribute must be selected."
+    }
 
     number_format_error: {
         ko: "오직 숫자만 입력 가능합니다.",

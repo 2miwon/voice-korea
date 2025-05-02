@@ -9,6 +9,7 @@ use by_components::rich_texts::RichText;
 #[component]
 pub fn IntroductionCard(
     lang: Language,
+    #[props(default = "introduction-rich-text".to_string())] rich_text_id: String,
     #[props(default = "start_date".to_string())] start_date_id: String,
     #[props(default = "end_date".to_string())] end_date_id: String,
     description: String,
@@ -46,7 +47,7 @@ pub fn IntroductionCard(
             }
             Divide {}
             RichText {
-                id: "introduction-rich-text",
+                id: rich_text_id,
                 content,
                 onchange: move |e| {
                     set_description.call(e);

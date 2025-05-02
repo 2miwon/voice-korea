@@ -42,28 +42,16 @@ pub fn MaterialUpload(
         div { class: "flex flex-col w-full justify-start items-start",
             div { class: "flex flex-row w-full",
                 button {
-                    class: format!(
-                        "flex flex-row w-150 h-55 justify-center items-center rounded-t-sm font-semibold text-sm mr-10 {}",
-                        if tab_type() == DocumentTabType::DirectUpload {
-                            "bg-hover text-white "
-                        } else {
-                            "bg-white border border-t-hover border-l-hover border-r-hover border-b-transparent text-hover"
-                        },
-                    ),
+                    class: "flex flex-row w-150 h-55 justify-center items-center rounded-t-sm font-semibold text-sm mr-10 bg-white border border-t-hover border-l-hover border-r-hover border-b-transparent text-hover aria-active:bg-hover aria-active:text-white",
+                    "aria-active": tab_type() == DocumentTabType::DirectUpload,
                     onclick: move |_| {
                         tab_type.set(DocumentTabType::DirectUpload);
                     },
                     "{tr.direct_upload}"
                 }
                 button {
-                    class: format!(
-                        "flex flex-row w-170 h-55 justify-center items-center rounded-t-sm font-semibold text-sm {}",
-                        if tab_type() == DocumentTabType::Import {
-                            "bg-[#2a60d3] text-white "
-                        } else {
-                            "bg-white border border-t-hover border-l-hover border-r-hover border-b-transparent text-hover"
-                        },
-                    ),
+                    class: "flex flex-row w-170 h-55 justify-center items-center rounded-t-sm font-semibold text-sm bg-white border border-t-hover border-l-hover border-r-hover border-b-transparent text-hover aria-active:bg-hover aria-active:text-white",
+                    "aria-active": tab_type() == DocumentTabType::Import,
                     onclick: move |_| {
                         tab_type.set(DocumentTabType::Import);
                     },
@@ -172,9 +160,9 @@ pub fn ImportDocument(
                         }
                     }
 
-                    div { class: "flex flex-col w-full justify-start items-start max-h-300 overflow-y-scroll",
+                    div { class: "flex flex-col w-full justify-start items-start max-h-300 overflow-y-scroll gap-5",
                         for metadata in metadatas.clone() {
-                            div { class: "flex flex-row w-full min-h-55 justify-start items-center ",
+                            div { class: "flex flex-row w-full h-fit justify-start items-center ",
                                 //checkbox
                                 div { class: "flex flex-row w-60 min-w-60 h-full justify-center items-center gap-10",
                                     CustomCheckbox {
@@ -193,7 +181,7 @@ pub fn ImportDocument(
                                     }
                                 }
                                 //title
-                                div { class: "flex flex-row flex-1 h-full justify-start items-center gap-20",
+                                div { class: "flex flex-row flex-1 justify-start items-center gap-20",
                                     div { class: "w-40 h-40",
                                         if metadata.files[0].ext == FileExtension::JPG {
                                             Jpg { width: "40", height: "40" }
@@ -212,7 +200,7 @@ pub fn ImportDocument(
                                         }
                                     }
 
-                                    div { class: "font-medium text-[15px] text-text-black",
+                                    div { class: "font-medium text-[15px] text-text-black break-all whitespace-normal",
                                         "{metadata.files[0].name}"
                                     }
                                 }

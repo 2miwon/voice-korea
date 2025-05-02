@@ -91,6 +91,46 @@ pub fn current_timestamp() -> i64 {
     timestamp_millis
 }
 
+pub fn current_timestamp_with_time(hour: i64, minute: i64, sec: i64) -> i64 {
+    let now = Utc::now();
+    let date = Utc
+        .with_ymd_and_hms(now.year(), now.month(), now.day(), 0, 0, 0)
+        .unwrap();
+
+    let updated = date
+        .with_hour(hour as u32)
+        .and_then(|d| d.with_minute(minute as u32))
+        .and_then(|d| d.with_second(sec as u32))
+        .expect("Invalid time components");
+
+    updated.timestamp()
+}
+
+pub fn parsed_timestamp_with_time(timestamp: i64, hour: i64, minute: i64, sec: i64) -> i64 {
+    let dt = Utc
+        .timestamp_opt(timestamp, 0)
+        .single()
+        .expect("Invalid timestamp");
+
+    let updated = Utc
+        .with_ymd_and_hms(dt.year(), dt.month(), dt.day(), 0, 0, 0)
+        .unwrap()
+        .with_hour(hour as u32)
+        .and_then(|d| d.with_minute(minute as u32))
+        .and_then(|d| d.with_second(sec as u32))
+        .expect("Invalid time components");
+
+    updated.timestamp()
+}
+
+pub fn current_midnight_timestamp() -> i64 {
+    let now = Utc::now();
+    let timestamp_millis = Utc
+        .with_ymd_and_hms(now.year(), now.month(), now.day(), 0, 0, 0)
+        .unwrap();
+    timestamp_millis.timestamp()
+}
+
 pub fn format_range_from_timestamp(started_at: i64, ended_at: i64) -> String {
     let start = Utc
         .timestamp_opt(started_at, 0)

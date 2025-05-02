@@ -107,7 +107,7 @@ pub fn DeliberationNewPage(lang: Language, deliberation_id: Option<i64>) -> Elem
             }
             div { class: "flex flex-row w-full justify-end items-end mb-50",
                 Link {
-                    class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                    class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20 hover:!bg-primary hover:!text-white",
                     to: Route::DeliberationPage { lang },
                     {tr.go_to_deliberation_management_list}
                 }

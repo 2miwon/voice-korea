@@ -1,59 +1,32 @@
+use std::collections::HashSet;
+
 use bdk::prelude::*;
-use models::{
-    deliberation_user::DeliberationUserCreateRequest, OrganizationMember, OrganizationMemberQuery,
-    OrganizationMemberSummary, Role,
-};
+use models::{deliberation_role::DeliberationRoleCreateRequest, Role};
+use regex::Regex;
 
 use super::*;
-use crate::service::login_service::LoginService;
+use crate::pages::deliberations::new::committees::i18n::CompositionCommitteeTranslate;
 
 #[derive(Clone, Copy, DioxusController)]
 pub struct Controller {
     lang: Language,
-    #[allow(dead_code)]
     pub parent_ctrl: ParentController,
     pub roles: Signal<Vec<Role>>,
 
-    pub members: Resource<Vec<OrganizationMemberSummary>>,
-    pub committees: Signal<Vec<DeliberationUserCreateRequest>>,
-
-    pub committee_roles: Signal<Vec<Vec<OrganizationMemberSummary>>>,
+    pub committees: Signal<Vec<DeliberationRoleCreateRequest>>,
+    pub committee_emails: Signal<Vec<String>>,
     pub nav: Navigator,
 }
 
 impl Controller {
     pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
-        let user: LoginService = use_context();
-
-        let members = use_server_future(move || {
-            let page = 1;
-            let size = 20;
-            async move {
-                let org_id = user.get_selected_org();
-                if org_id.is_none() {
-                    tracing::error!("Organization ID is missing");
-                    return vec![];
-                }
-                let endpoint = crate::config::get().api_url;
-                let res = OrganizationMember::get_client(endpoint)
-                    .query(
-                        org_id.unwrap().id,
-                        OrganizationMemberQuery::new(size).with_page(page),
-                    )
-                    .await;
-
-                res.unwrap_or_default().items
-            }
-        })?;
-
         let mut ctrl = Self {
             lang,
-            members,
             parent_ctrl: use_context(),
             nav: use_navigator(),
 
+            committee_emails: use_signal(|| vec![]),
             committees: use_signal(|| vec![]),
-            committee_roles: use_signal(|| vec![]),
             roles: use_signal(|| {
                 vec![
                     Role::Admin,
@@ -68,18 +41,13 @@ impl Controller {
         use_effect({
             let req = ctrl.parent_ctrl.deliberation_requests();
             let roles = ctrl.roles();
-            let members = members().unwrap_or_default();
-
-            let committees = req.roles.clone();
 
             move || {
-                ctrl.committees.set(committees.clone());
-
-                for role in roles.clone() {
-                    let members = ctrl.get_role_list(members.clone(), committees.clone(), role);
-
-                    ctrl.committee_roles.push(members);
+                for _ in roles.clone() {
+                    ctrl.committee_emails.push("".to_string());
                 }
+
+                ctrl.committees.set(req.roles.clone());
             }
         });
 
@@ -88,7 +56,8 @@ impl Controller {
 
     pub fn back(&mut self) {
         self.save_deliberation();
-        self.nav.go_back();
+        self.nav
+            .replace(crate::routes::Route::DeliberationNewPage { lang: self.lang });
     }
 
     pub async fn temp_save(&mut self) {
@@ -97,79 +66,97 @@ impl Controller {
     }
 
     pub fn next(&mut self) {
-        self.save_deliberation();
-        self.nav
-            .push(crate::routes::Route::CompositionPanel { lang: self.lang });
+        if self.validation_check() {
+            self.save_deliberation();
+            self.nav
+                .push(crate::routes::Route::CompositionPanel { lang: self.lang });
+        }
     }
 
     pub fn save_deliberation(&mut self) {
         let mut parent_ctrl = self.parent_ctrl;
-        let roles = self.committees().iter().map(|v| v.clone()).collect();
-        parent_ctrl.save_committees(roles);
+        // let roles = self.committees().iter().map(|v| v.clone()).collect();
+        parent_ctrl.save_committees(self.committees());
     }
 
-    pub fn add_committee(&mut self, committee: DeliberationUserCreateRequest) {
-        self.committees.push(committee);
+    pub fn update_email_by_role(&mut self, index: usize, email: String) {
+        self.committee_emails.with_mut(|emails| {
+            emails[index] = email;
+        });
     }
 
-    pub fn remove_committee(&mut self, user_id: i64, role: Role) {
-        self.committees
-            .retain(|committee| !(committee.user_id == user_id && committee.role == role));
+    pub fn remove_email_by_role(&mut self, index: usize) {
+        self.committees.with_mut(|roles| {
+            roles.remove(index);
+        });
     }
 
-    pub fn clear_committee(&mut self, role: Role) {
-        self.committees
-            .retain(|committee| !(committee.role == role));
-    }
+    pub fn add_email_by_role(&mut self, index: usize, role: Role) {
+        let lang = self.lang;
+        let tr: CompositionCommitteeTranslate = translate(&lang);
+        let input = self.committee_emails()[index].clone();
+        let emails: Vec<String> = input
+            .split(",")
+            .map(|s| s.trim())
+            .map(|v| v.to_string())
+            .collect();
 
-    pub fn add_committee_roles(&mut self, index: usize, user_id: i64) {
-        let mut list = self.committee_roles();
-        let members = self.members().unwrap_or_default();
+        let mut seen = HashSet::new();
 
-        if let Some(role_list) = list.get_mut(index) {
-            let user = members.iter().find(|m| m.user_id == user_id);
-            if let Some(user) = user {
-                if !role_list.iter().any(|m| m.user_id == user_id) {
-                    role_list.push(user.clone());
-                }
+        for email in emails.clone() {
+            let email_regex = Regex::new(r"(?i)^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$").unwrap();
+
+            if !email_regex.is_match(&email) {
+                btracing::error!("{}", tr.email_format_error);
+                return;
+            }
+
+            if self.committees().iter().any(|r| r.email == email) {
+                btracing::error!("{}", tr.role_exist_error);
+                return;
+            }
+
+            if !seen.insert(email.clone()) {
+                btracing::error!("{}", tr.role_exist_error);
+                return;
             }
         }
-        self.committee_roles.set(list);
+
+        self.committees.with_mut(|roles| {
+            for email in emails.clone() {
+                roles.push(DeliberationRoleCreateRequest {
+                    email,
+                    role: role.clone(),
+                });
+            }
+
+            roles.sort_by_key(|r| r.role.clone() as i32);
+        });
+
+        self.committee_emails.with_mut(|e| {
+            e[index] = "".to_string();
+        });
     }
 
-    pub fn remove_committee_roles(&mut self, index: usize, user_id: i64) {
-        let mut list = self.committee_roles();
-        if let Some(role_list) = list.get_mut(index) {
-            role_list.retain(|m| m.user_id != user_id);
+    pub fn is_valid(&self) -> bool {
+        !(self.committees().is_empty())
+    }
+
+    pub fn validation_check(&self) -> bool {
+        if self.committees().is_empty() {
+            btracing::e!(self.lang, ValidationError::CommitteeRequired);
+            return false;
         }
-        self.committee_roles.set(list);
+
+        true
     }
+}
 
-    pub fn clear_committee_roles(&mut self, index: usize) {
-        let mut list = self.committee_roles();
-        if let Some(role_list) = list.get_mut(index) {
-            role_list.clear();
-        }
-        self.committee_roles.set(list);
-    }
-
-    pub fn get_role_list(
-        &mut self,
-        members: Vec<OrganizationMemberSummary>,
-        committees: Vec<DeliberationUserCreateRequest>,
-        role: Role,
-    ) -> Vec<OrganizationMemberSummary> {
-        let user_ids: Vec<i64> = committees
-            .iter()
-            .filter(|committee| committee.role == role)
-            .map(|committee| committee.user_id)
-            .collect();
-
-        let members = members
-            .into_iter()
-            .filter(|member| user_ids.contains(&member.user_id))
-            .collect();
-
-        members
-    }
+#[derive(Debug, PartialEq, Eq, Translate)]
+pub enum ValidationError {
+    #[translate(
+        ko = "공론에 참여할 참여자를 1명 이상 입력해주세요.",
+        en = "Please enter at least one participant who will participate in the public discussion."
+    )]
+    CommitteeRequired,
 }

@@ -1,4 +1,4 @@
-use chrono::{TimeZone, Utc};
+use chrono::{Datelike, Local, TimeZone, Utc};
 use dioxus_translate::Language;
 
 pub fn format_prev_time(timestamp: i64) -> String {
@@ -82,4 +82,37 @@ pub fn current_timestamp() -> i64 {
     let now = Utc::now();
     let timestamp_millis = now.timestamp();
     timestamp_millis
+}
+
+pub fn current_date() -> String {
+    let now = Utc::now();
+
+    let month = now.month();
+    let day = now.day();
+    let year = now.year();
+
+    format!("{}월 {}일 {}년", month, day, year)
+}
+
+pub fn format_timestamp_to_ampm(millis: i64) -> String {
+    let secs = millis / 1000;
+    let dt = Local
+        .timestamp_opt(secs, 0)
+        .single()
+        .unwrap_or_else(Local::now);
+
+    let formatted = dt.format("%H:%M").to_string();
+    let mut parts = formatted.split(':');
+
+    let hour: i32 = parts.next().unwrap_or("0").parse().unwrap_or(0);
+    let minute: i32 = parts.next().unwrap_or("0").parse().unwrap_or(0);
+
+    let ampm = if hour < 12 { "오전" } else { "오후" };
+    let hour12 = match hour {
+        0 => 12,
+        13..=23 => hour - 12,
+        _ => hour,
+    };
+
+    format!("{} {}:{:02}", ampm, hour12, minute)
 }

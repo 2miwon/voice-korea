@@ -1,12 +1,16 @@
 use bdk::prelude::*;
 use models::{
-    deliberation_user::DeliberationUserCreateRequest, DeliberationDiscussionCreateRequest,
-    DiscussionCreateRequest, File, OrganizationMember, OrganizationMemberQuery,
-    OrganizationMemberSummary, ResourceFile, ResourceFileQuery, ResourceFileSummary,
+    DeliberationDiscussionCreateRequest, DiscussionCreateRequest, File, ResourceFile,
+    ResourceFileQuery, ResourceFileSummary,
 };
 
 use crate::{
-    config, routes::Route, service::login_service::LoginService, utils::time::current_timestamp,
+    config,
+    routes::Route,
+    service::login_service::LoginService,
+    utils::time::{
+        current_midnight_timestamp, current_timestamp_with_time, parsed_timestamp_with_time,
+    },
 };
 
 use super::DeliberationNewController;
@@ -20,39 +24,18 @@ pub struct Controller {
     pub parent: DeliberationNewController,
     pub nav: Navigator,
 
-    pub members: Resource<Vec<OrganizationMemberSummary>>,
     pub metadatas: Resource<Vec<ResourceFileSummary>>,
-    pub committee_members: Signal<Vec<DeliberationUserCreateRequest>>,
+    pub committee_members: Signal<Vec<String>>,
 }
 
 impl Controller {
     pub fn new(lang: Language) -> std::result::Result<Self, RenderError> {
         let user: LoginService = use_context();
         let discussion = use_signal(|| DeliberationDiscussionCreateRequest::default());
-        let members = use_server_future(move || {
-            let page = 1;
-            let size = 100;
-            async move {
-                let org_id = user.get_selected_org();
-                if org_id.is_none() {
-                    tracing::error!("Organization ID is missing");
-                    return vec![];
-                }
-                let endpoint = crate::config::get().api_url;
-                let res = OrganizationMember::get_client(endpoint)
-                    .query(
-                        org_id.unwrap().id,
-                        OrganizationMemberQuery::new(size).with_page(page),
-                    )
-                    .await;
-
-                res.unwrap_or_default().items
-            }
-        })?;
 
         let metadatas = use_server_future(move || {
             let page = 1;
-            let size = 100;
+            let size = 300;
             async move {
                 let client = ResourceFile::get_client(&config::get().api_url);
                 let org_id = user.get_selected_org();
@@ -76,7 +59,6 @@ impl Controller {
             nav: use_navigator(),
             discussion,
 
-            members,
             metadatas,
             committee_members: use_signal(|| vec![]),
         };
@@ -88,60 +70,25 @@ impl Controller {
                 .get(0)
                 .unwrap_or(&DeliberationDiscussionCreateRequest::default())
                 .clone();
-            let current_timestamp = current_timestamp();
-            let committees = req.roles.clone();
 
             move || {
+                let committees = req.roles.iter().map(|v| v.email.clone()).collect();
                 let started_at = discussion.clone().started_at;
                 let ended_at = discussion.clone().ended_at;
 
                 if started_at == 0 {
-                    discussion.started_at = current_timestamp;
+                    discussion.started_at = current_timestamp_with_time(0, 0, 0);
                 }
 
                 if ended_at == 0 {
-                    discussion.ended_at = current_timestamp;
+                    discussion.ended_at = current_timestamp_with_time(23, 59, 59);
                 }
 
                 ctrl.discussion.set(discussion.clone());
-                ctrl.committee_members.set(committees.clone());
+                ctrl.committee_members.set(committees);
             }
         });
         Ok(ctrl)
-    }
-
-    pub fn get_committees(&self) -> Vec<OrganizationMemberSummary> {
-        let committees = self.committee_members();
-        let members = self.members().unwrap_or_default();
-
-        let d = members
-            .clone()
-            .into_iter()
-            .filter(|member| {
-                committees
-                    .iter()
-                    .any(|committee| committee.user_id == member.user_id)
-            })
-            .collect();
-
-        d
-    }
-
-    pub fn add_committee(&mut self, user_id: i64) {
-        self.discussion.with_mut(|req| {
-            req.users.push(user_id);
-        });
-    }
-
-    pub fn remove_committee(&mut self, user_id: i64) {
-        self.discussion.with_mut(|req| {
-            req.users
-                .retain(|committee_id| committee_id.clone() != user_id);
-        })
-    }
-
-    pub fn clear_committee(&mut self) {
-        self.discussion.with_mut(|req| req.users = vec![]);
     }
 
     pub fn get_selected_resources(&self) -> Vec<ResourceFile> {
@@ -156,15 +103,10 @@ impl Controller {
             .collect()
     }
 
-    pub fn get_selected_committee(&self) -> Vec<OrganizationMemberSummary> {
-        let total_committees = self.members().unwrap_or_default();
+    pub fn get_selected_committee(&self) -> Vec<String> {
         let discussion = self.discussion();
         let roles = discussion.clone().users;
-        total_committees
-            .clone()
-            .into_iter()
-            .filter(|member| roles.iter().any(|id| id.clone() == member.user_id))
-            .collect()
+        roles
     }
 
     pub fn set_title(&mut self, title: String) {
@@ -181,26 +123,25 @@ impl Controller {
 
     pub fn set_start_date(&mut self, started_at: i64) {
         self.discussion.with_mut(|req| {
-            req.started_at = started_at;
+            req.started_at = parsed_timestamp_with_time(started_at, 0, 0, 0);
         });
     }
 
     pub fn set_end_date(&mut self, ended_at: i64) {
         self.discussion.with_mut(|req| {
-            req.ended_at = ended_at;
+            req.ended_at = parsed_timestamp_with_time(ended_at, 23, 59, 59);
         });
     }
 
-    pub fn add_committee(&mut self, user_id: i64) {
+    pub fn add_committee(&mut self, email: String) {
         self.discussion.with_mut(|req| {
-            req.users.push(user_id);
+            req.users.push(email);
         });
     }
 
-    pub fn remove_committee(&mut self, user_id: i64) {
+    pub fn remove_committee(&mut self, email: String) {
         self.discussion.with_mut(|req| {
-            req.users
-                .retain(|committee_id| !(committee_id.clone() == user_id));
+            req.users.retain(|e| !(e.clone() == email));
         })
     }
 
@@ -210,8 +151,8 @@ impl Controller {
 
     pub fn add_discussion(&mut self) {
         let mut disc = DiscussionCreateRequest::default();
-        disc.started_at = current_timestamp();
-        disc.ended_at = current_timestamp();
+        disc.started_at = current_midnight_timestamp();
+        disc.ended_at = current_midnight_timestamp();
 
         self.discussion.with_mut(|req| {
             req.discussions.push(disc);
@@ -291,8 +232,104 @@ impl Controller {
     }
 
     pub fn next(&mut self) {
-        self.parent.save_discussion(self.discussion());
-        self.nav
-            .push(Route::DeliberationVoteSettingPage { lang: self.lang });
+        if self.validation_check() {
+            self.parent.save_discussion(self.discussion());
+            self.nav
+                .push(Route::DeliberationVoteSettingPage { lang: self.lang });
+        }
     }
+
+    pub fn is_valid(&self) -> bool {
+        let discussion = self.discussion();
+
+        let title = discussion.title;
+        let description = discussion.description;
+        let started_at = discussion.started_at;
+        let ended_at = discussion.ended_at;
+
+        let members = discussion.users;
+        let resources = discussion.resources;
+        let discussions = discussion.discussions;
+
+        !(title.is_empty()
+            || description.is_empty()
+            || started_at >= ended_at
+            || members.is_empty()
+            || resources.is_empty()
+            || discussions.is_empty())
+    }
+
+    pub fn validation_check(&self) -> bool {
+        let discussion = self.discussion();
+
+        let title = discussion.title;
+        let description = discussion.description;
+        let started_at = discussion.started_at;
+        let ended_at = discussion.ended_at;
+
+        let members = discussion.users;
+        let resources = discussion.resources;
+        let discussions = discussion.discussions;
+
+        if title.is_empty() {
+            btracing::e!(self.lang, ValidationError::TitleRequired);
+            return false;
+        }
+        if description.is_empty() {
+            btracing::e!(self.lang, ValidationError::DescriptionRequired);
+            return false;
+        }
+        if started_at >= ended_at {
+            btracing::e!(self.lang, ValidationError::TimeValidationFailed);
+            return false;
+        }
+        if members.is_empty() {
+            btracing::e!(self.lang, ValidationError::MemberRequired);
+            return false;
+        }
+        if resources.is_empty() {
+            btracing::e!(self.lang, ValidationError::ScheduleRequired);
+            return false;
+        }
+        if discussions.is_empty() {
+            btracing::e!(self.lang, ValidationError::DiscussionRequired);
+            return false;
+        }
+
+        true
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Translate)]
+pub enum ValidationError {
+    #[translate(
+        ko = "토론 제목을 입력해주세요.",
+        en = "Please enter the discussion title."
+    )]
+    TitleRequired,
+    #[translate(
+        ko = "토론 설명을 입력해주세요.",
+        en = "Please enter the discussion description."
+    )]
+    DescriptionRequired,
+    #[translate(
+        ko = "시작 날짜는 종료 날짜보다 작아야합니다.",
+        en = "The start date must be less than the end date."
+    )]
+    TimeValidationFailed,
+    #[translate(
+        ko = "1명 이상의 담당자를 선택해주세요.",
+        en = "Please select one or more contact persons."
+    )]
+    MemberRequired,
+    #[translate(
+        ko = "일정표를 업로드해주세요.",
+        en = "Please upload discussion schedule."
+    )]
+    ScheduleRequired,
+    #[translate(
+        ko = "토론 방을 생성해주세요.",
+        en = "Please create a discussion room."
+    )]
+    DiscussionRequired,
 }

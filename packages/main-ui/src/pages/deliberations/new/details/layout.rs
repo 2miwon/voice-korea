@@ -18,9 +18,8 @@ pub fn DeliberationDetailSettingLayout(lang: Language) -> Element {
                     button {
                         class: "border-b-[1px] !px-20 !py-10 min-w-150 aria-active:!border-b-[5px] aria-active:!border-primary hover:!border-b-[5px] hover:!border-primary/10",
                         "aria-active": ctrl.current_step == *n,
-                        onclick: move |_| {
-                            ctrl.goto_step(n);
-                        },
+                        //FIXME: remove to this comment when save issue is resolved.
+                        onclick: move |_| {},
                         {n.translate(&lang)}
                     }
                 }

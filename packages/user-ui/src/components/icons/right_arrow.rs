@@ -4,10 +4,12 @@ use dioxus::prelude::*;
 pub fn RightArrow(
     #[props(default = "24".to_string())] width: String,
     #[props(default = "24".to_string())] height: String,
+    #[props(default = "".to_string())] class: String,
     #[props(default = "#FFFFFF".to_string())] color: String,
 ) -> Element {
     rsx! {
         svg {
+            class,
             height,
             fill: "none",
             view_box: "0 0 24 25",

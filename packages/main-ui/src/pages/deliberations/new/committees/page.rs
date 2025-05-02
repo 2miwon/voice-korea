@@ -4,9 +4,13 @@ use bdk::prelude::*;
 use controller::*;
 use i18n::*;
 
-use models::deliberation_user::DeliberationUserCreateRequest;
-
-use crate::pages::deliberations::new::components::role_dropdown::RoleDropdown;
+use crate::{
+    components::section::MainSection,
+    pages::deliberations::new::{
+        committees::components::role_table::RoleTable,
+        components::role_email_input_form::RoleEmailInputForm,
+    },
+};
 
 #[component]
 pub fn CompositionCommitee(lang: Language) -> Element {
@@ -14,7 +18,6 @@ pub fn CompositionCommitee(lang: Language) -> Element {
     let tr: CompositionCommitteeTranslate = translate(&lang);
 
     let roles = ctrl.roles();
-    let members = ctrl.members()?;
 
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start gap-40",
@@ -23,54 +26,54 @@ pub fn CompositionCommitee(lang: Language) -> Element {
                     {tr.composition_committee_title}
                 }
 
-                div { class: "flex flex-col w-full justify-start items-start rounded-lg bg-white px-40 py-24",
-                    div { class: "font-bold text-text-black text-lg mb-3", {tr.division_roles} }
-                    div { class: "font-normal text-text-gray text-sm mb-20",
-                        {tr.composition_committee_description}
-                    }
-                    // selection box
-                    div { class: "flex flex-col w-full justify-start items-center mb-40",
-                        for (i , committee_role) in ctrl.committee_roles().iter().enumerate() {
-                            RoleDropdown {
-                                id: format!("{}_dropdown", roles[i].to_string()),
-                                label: roles[i].translate(&lang),
-                                hint: tr.enter_charge_person,
-                                total_committees: ctrl.committees(),
-                                members: members.clone(),
-                                committees: committee_role.clone(),
-                                add_committee: {
-                                    let role = roles[i].clone();
-                                    move |user_id: i64| {
-                                        ctrl.add_committee(DeliberationUserCreateRequest {
-                                            user_id,
-                                            role: role.clone(),
-                                        });
-                                        ctrl.add_committee_roles(i, user_id);
-                                    }
-                                },
-                                remove_committee: {
-                                    let role = roles[i].clone();
-                                    move |user_id: i64| {
-                                        ctrl.remove_committee(user_id, role.clone());
-                                        ctrl.remove_committee_roles(i, user_id);
-                                    }
-                                },
-                                clear_committee: {
-                                    let role = roles[i].clone();
-                                    move |_| {
-                                        ctrl.clear_committee(role.clone());
-                                        ctrl.clear_committee_roles(i);
-                                    }
-                                },
+                MainSection {
+                    lang,
+                    required: false,
+                    header: Some(tr.division_roles.to_string()),
+                    description: Some(tr.composition_committee_description.to_string()),
+                    // input box
+                    div { class: "flex flex-col w-full justify-start items-start mt-5 gap-20",
+                        div { class: "text-sm font-medium text-text-gray", {tr.role_input_info} }
+                        div { class: "flex flex-col w-full justify-start items-start mt-5",
+                            for (i , committee_email) in ctrl.committee_emails().iter().enumerate() {
+                                RoleEmailInputForm {
+                                    height: 55,
+                                    label: roles[i].translate(&lang),
+                                    placeholder: tr.enter_charge_person,
+                                    value: committee_email,
+                                    oninput: move |e: FormEvent| {
+                                        ctrl.update_email_by_role(i, e.value());
+                                    },
+                                    onenter: {
+                                        let role = roles[i].clone();
+                                        move |_| {
+                                            ctrl.add_email_by_role(i, role.clone());
+                                        }
+                                    },
+                                }
                             }
                         }
+                    }
+                }
+
+                MainSection {
+                    lang,
+                    required: false,
+                    header: Some(tr.summary_title.to_string()),
+                    description: Some(tr.summary_description.to_string()),
+                    RoleTable {
+                        lang,
+                        members: ctrl.committees(),
+                        onremove: move |index: usize| {
+                            ctrl.remove_email_by_role(index);
+                        },
                     }
                 }
             }
 
             div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
                 button {
-                    class: "flex flex-row w-70 h-55 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                    class: "flex flex-row w-70 h-55 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20 hover:!bg-primary hover:!text-white",
                     onclick: move |_| {
                         ctrl.save_deliberation();
                         ctrl.back();
@@ -78,18 +81,16 @@ pub fn CompositionCommitee(lang: Language) -> Element {
                     {tr.backward}
                 }
                 button {
-                    class: "flex flex-row w-105 h-55 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                    class: "flex flex-row w-105 h-55 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20 hover:!bg-primary hover:!text-white",
                     onclick: move |_| async move {
                         ctrl.temp_save().await;
                     },
                     {tr.temporary_save}
                 }
                 button {
-                    class: "flex flex-row w-110 h-55 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
-                    onclick: move |_| {
-                        ctrl.save_deliberation();
-                        ctrl.next();
-                    },
+                    class: "aria-active:cursor-pointer cursor-not-allowed flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-disabled aria-active:!bg-hover font-semibold text-base text-white",
+                    "aria-active": ctrl.is_valid(),
+                    onclick: move |_| ctrl.next(),
                     {tr.next}
                 }
             }

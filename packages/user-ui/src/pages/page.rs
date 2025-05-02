@@ -53,8 +53,9 @@ pub fn MainPage(lang: Language) -> Element {
                     ctrl.set_page(page as usize);
                 },
             }
+            GuideSection { lang }
+        
         }
-        GuideSection { lang }
     }
 }
 #[component]
@@ -131,7 +132,7 @@ pub fn MainSection(lang: Language) -> Element {
         section {
             id: "service",
             class: "flex flex-col w-full justify-center items-center",
-            div { class: "flex flex-col w-full max-w-1300 items-start justify-start gap-50 px-20 desktop:px-0",
+            div { class: "flex flex-col w-full max-w-desktop items-start justify-start gap-50 px-20 desktop:px-0",
                 div { class: "relative flex flex-col w-full max-[500px]:h-fit h-320 max-[500px]:p-25 p-65 justify-center items-start rounded-2xl gap-10 overflow-hidden",
                     div {
                         class: "absolute inset-0 bg-cover bg-center opacity-80 rounded-2xl",
@@ -354,10 +355,10 @@ pub fn InfoBox(label: String, description: String) -> Element {
 pub fn InstitutionSection(lang: Language, institutions: Vec<OrganizationSummary>) -> Element {
     let tr: OpinionInstitutionTranslate = translate(&lang);
     rsx! {
-        section { class: "flex flex-col w-full justify-center items-center bg-gradient-to-b from-gradient-green to-white px-20 desktop:px-0",
-            div {
-                id: "institution",
-                class: "flex flex-col w-full max-w-1300 justify-center pt-60 desktop:pt-120",
+        section {
+            class: "flex flex-col w-full justify-center items-center bg-gradient-to-b from-gradient-green to-white px-20 desktop:px-0",
+            id: "institution",
+            div { class: "flex flex-col w-full max-w-desktop justify-center pt-60 desktop:pt-120",
                 SectionHeader {
                     title: tr.institution,
                     description: Some(tr.institution_description.to_string()),
@@ -397,7 +398,7 @@ pub fn ProjectSection(lang: Language, deliberations: Vec<DeliberationProject>) -
             id: "project",
             class: "relative flex flex-col w-full justify-center items-center",
             div { class: "absolute w-full bg-primary blur-[250px] h-130" }
-            div { class: "max-w-1300 w-full z-1 px-20 desktop:px-0",
+            div { class: "max-w-desktop w-full z-1 px-20 desktop:px-0",
                 SectionHeader {
                     title: tr.project,
                     description: Some(tr.project_description.to_string()),
@@ -508,7 +509,7 @@ pub fn MainBanner(lang: Language) -> Element {
     let background_url = asset!("/public/images/main_image.jpeg").to_string();
     let tr: MainBannerTranslate = translate(&lang);
     rsx! {
-        div { class: "flex flex-col w-full max-w-1300 px-10",
+        div { class: "flex flex-col w-full max-w-desktop px-10",
             div { class: "relative flex flex-col w-full max-[500px]:h-fit h-320 max-[500px]:p-25 p-65 justify-center items-start rounded-2xl gap-10 overflow-hidden ",
                 div {
                     class: "absolute inset-0  bg-cover bg-center opacity-80 rounded-2xl",

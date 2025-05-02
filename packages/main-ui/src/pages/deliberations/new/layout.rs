@@ -18,8 +18,6 @@ pub fn DeliberationNewLayout(lang: Language) -> Element {
 
     let step = ctrl.get_current_step();
 
-    let _req = ctrl.deliberation_requests();
-
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
             div {

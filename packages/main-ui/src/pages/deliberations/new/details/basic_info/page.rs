@@ -1,4 +1,4 @@
-use super::super::components::{AssignMember, IntroductionCard};
+use super::super::components::introduction_card::IntroductionCard;
 use super::*;
 use crate::pages::deliberations::new::details::basic_info::components::{
     material::Material, member::Member,
@@ -26,6 +26,7 @@ pub fn DeliberationBasicInfoSettingPage(lang: Language) -> Element {
                 div { class: "flex flex-col w-full justify-start items-start gap-20",
                     IntroductionCard {
                         lang,
+                        rich_text_id: "basic_rich_text",
                         start_date_id: "basic_start_date",
                         end_date_id: "basic_end_date",
                         description: tr.introduction_description.to_string(),
@@ -46,15 +47,15 @@ pub fn DeliberationBasicInfoSettingPage(lang: Language) -> Element {
                             ctrl.set_end_date(timestamp);
                         },
                     }
-                    AssignMember {
+                    Member {
                         lang,
-                        committees: ctrl.get_committees(),
+                        total_committees: ctrl.committee_members(),
                         selected_committees: ctrl.get_selected_committee(),
-                        add_committee: move |id: i64| {
-                            ctrl.add_committee(id);
+                        add_committee: move |email: String| {
+                            ctrl.add_committee(email);
                         },
-                        remove_committee: move |id: i64| {
-                            ctrl.remove_committee(id);
+                        remove_committee: move |email: String| {
+                            ctrl.remove_committee(email);
                         },
                         clear_committee: move |_| {
                             ctrl.clear_committee();
@@ -89,24 +90,23 @@ pub fn DeliberationBasicInfoSettingPage(lang: Language) -> Element {
 
                 div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
                     button {
-                        class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                        class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20 hover:!bg-primary hover:!text-white",
                         onclick: move |_| {
                             ctrl.back();
                         },
                         {tr.backward}
                     }
                     button {
-                        class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                        class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20 hover:!bg-primary hover:!text-white",
                         onclick: move |_| async move {
                             ctrl.temp_save().await;
                         },
                         {tr.temporary_save}
                     }
                     button {
-                        class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
-                        onclick: move |_| {
-                            ctrl.next();
-                        },
+                        class: "aria-active:cursor-pointer cursor-not-allowed flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-disabled aria-active:!bg-hover font-semibold text-base text-white",
+                        "aria-active": ctrl.is_valid(),
+                        onclick: move |_| ctrl.next(),
                         {tr.next}
                     }
                 }

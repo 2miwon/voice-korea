@@ -1,6 +1,6 @@
 use bdk::prelude::*;
 use by_macros::DioxusController;
-use models::{deliberation_user::DeliberationUserCreateRequest, DeliberationStatus, *};
+use models::{deliberation_role::DeliberationRoleCreateRequest, DeliberationStatus, *};
 
 use crate::{
     config,
@@ -26,7 +26,9 @@ pub enum DeliberationNewStep {
 impl From<Route> for DeliberationNewStep {
     fn from(route: Route) -> Self {
         match route {
-            Route::DeliberationNewPage { .. } => Self::SettingInfo,
+            Route::DeliberationNewPage { .. } | Route::DeliberationEditPage { .. } => {
+                Self::SettingInfo
+            }
             Route::CompositionCommitee { .. } => Self::CompositionCommittee,
             Route::CompositionPanel { .. } => Self::CompositionPanel,
             Route::Preview { .. } => Self::Preview,
@@ -41,6 +43,7 @@ pub struct Controller {
     lang: Language,
     #[allow(dead_code)]
     popup_service: Signal<PopupService>,
+    current_path: Signal<String>,
     current_step: DeliberationNewStep,
     pub user: LoginService,
     pub nav: Navigator,
@@ -57,10 +60,13 @@ impl Controller {
         let current_step = route.clone().into();
         let deliberation_requests = use_signal(|| DeliberationCreateRequest::default());
 
+        let route: Route = use_route();
+        let current_path = route.to_string();
         let ctrl = Self {
             lang,
             user,
             current_step,
+            current_path: use_signal(|| current_path),
             nav: use_navigator(),
             popup_service: use_signal(|| popup_service),
             deliberation_requests,
@@ -106,13 +112,13 @@ impl Controller {
         }
     }
 
-    pub fn save_panels(&mut self, panel_ids: Vec<i64>) {
+    pub fn save_panels(&mut self, emails: Vec<String>) {
         self.deliberation_requests.with_mut(|req| {
-            req.panel_ids = panel_ids;
+            req.panel_emails = emails;
         });
     }
 
-    pub fn save_committees(&mut self, roles: Vec<DeliberationUserCreateRequest>) {
+    pub fn save_committees(&mut self, roles: Vec<DeliberationRoleCreateRequest>) {
         self.deliberation_requests.with_mut(|req| {
             req.roles = roles;
         });
@@ -217,8 +223,7 @@ impl Controller {
     }
 
     pub async fn temporary_save(&mut self, is_start: bool) {
-        let route: Route = use_route();
-        let current_path = route.to_string();
+        let current_path = self.current_path();
         tracing::debug!("current path: {}", current_path);
         let cli = Deliberation::get_client(config::get().api_url);
 
@@ -248,6 +253,7 @@ impl Controller {
             survey_ids,
             roles,
             panel_ids,
+            panel_emails,
             steps,
             elearning,
             basic_infos,
@@ -320,6 +326,7 @@ impl Controller {
                     resource_ids,
                     survey_ids,
                     roles,
+                    panel_emails,
                     panel_ids,
                     steps,
                     elearning,
@@ -363,6 +370,7 @@ impl Controller {
                         resource_ids,
                         survey_ids,
                         roles,
+                        panel_emails,
                         panel_ids,
                         steps,
                         elearning,

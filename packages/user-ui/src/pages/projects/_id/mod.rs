@@ -1,6 +1,10 @@
 mod components;
 mod controller;
-mod i18n;
 mod page;
 
+mod discussion;
+
+pub(super) mod utils;
+
+pub use discussion::*;
 pub use page::*;

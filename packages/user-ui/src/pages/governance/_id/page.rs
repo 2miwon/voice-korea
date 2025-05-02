@@ -10,7 +10,7 @@ pub fn GovernancePage(lang: Language, governance_id: i64) -> Element {
 
     rsx! {
         div { class: "flex flex-col w-full justify-center items-center mt-80",
-            div { class: "max-w-1300 mt-60 flex flex-col w-full justify-start items-start",
+            div { class: "max-w-desktop mt-60 flex flex-col w-full justify-start items-start",
                 "governance page"
             }
         }

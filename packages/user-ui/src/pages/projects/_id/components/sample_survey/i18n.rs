@@ -5,47 +5,11 @@ translate! {
 
     title: {
         ko: "표본 조사 주제",
-        en: "Sample Survey Title",
-    }
-    see_detail: {
-        ko: "자세히 보기",
-        en: "See Detail"
+        en: "Sample Survey Subject",
     }
     my_answer: {
         ko: "내가 작성한 답변",
         en: "My Answer"
-    }
-    response_per_question: {
-        ko: "질문별 응답",
-        en: "Responses to each question"
-    }
-    necessary: {
-        ko: "[필수]",
-        en: "[Necessary]"
-    }
-    plural: {
-        ko: "[복수]",
-        en: "[Plural]"
-    }
-    unit: {
-        ko: "명",
-        en: "Unit"
-    }
-    subjective_answer: {
-        ko: "주관식 답변",
-        en: "Subjective Answer"
-    }
-    update: {
-        ko: "수정하기",
-        en: "Update"
-    }
-    remove: {
-        ko: "삭제하기",
-        en: "Remove"
-    }
-    submit: {
-        ko: "제출하기",
-        en: "Submit"
     }
 }
 

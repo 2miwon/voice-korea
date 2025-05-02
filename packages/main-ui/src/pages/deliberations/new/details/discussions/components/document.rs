@@ -33,44 +33,53 @@ pub fn Document(
 
     rsx! {
         ExpandableCard { required: false, header: tr.title, description: tr.description,
-            div { class: "flex flex-row w-full justify-start items-center gap-50",
-                div { class: "font-medium text-[15px] text-black w-fit min-w-100", {tr.schedule} }
-
-                div { class: "flex flex-row gap-20 px-15 w-full h-54 bg-background-gray rounded-sm justify-center items-center",
-                    UploadButton {
-                        class: "cursor-pointer flex min-w-130 h-40 border bg-white border-active rounded-sm text-active text-center font-semibold text-sm justify-center items-center",
-                        text: tr.direct_upload,
-                        accept: ".pdf,.xls,.xlsx,.csv".to_string(),
-                        onuploaded: move |event: FormEvent| async move {
-                            #[cfg(feature = "web")]
-                            if let Some(file_engine) = event.files() {
-                                let result = handle_file_upload(file_engine, api).await;
-                                create_metadata.call(result[0].clone());
-                            }
-                        },
+            div { class: "flex flex-col w-full justify-start items-start gap-15",
+                div { class: "text-[12px] font-semibold text-text-gray", {tr.condition} }
+                div { class: "flex flex-row w-full justify-start items-center gap-50",
+                    div { class: "font-medium text-[15px] text-black w-fit min-w-100",
+                        {tr.schedule}
                     }
 
-                    div { class: "flex flex-row w-full justify-between items-center gap-10",
-                        div { class: "flex flex-wrap flex-1 w-full justify-start items-center gap-5",
-                            for document in selected_resources {
-                                CloseLabel {
-                                    label: document.title.clone(),
-                                    onremove: move |event: Event<MouseData>| {
-                                        event.stop_propagation();
-                                        event.prevent_default();
-                                        remove_resource.call(document.id);
-                                    },
+                    div { class: "flex flex-row gap-20 px-15 w-full h-54 bg-background-gray rounded-sm justify-center items-center",
+                        UploadButton {
+                            class: "cursor-pointer flex min-w-130 h-40 border bg-white border-active rounded-sm text-active text-center font-semibold text-sm justify-center items-center",
+                            text: tr.direct_upload,
+                            accept: ".jpg,.png,.pdf,.xls,.xlsx,.csv".to_string(),
+                            onuploaded: move |event: FormEvent| async move {
+                                #[cfg(feature = "web")]
+                                if let Some(file_engine) = event.files() {
+                                    let result = handle_file_upload(file_engine, api).await;
+                                    create_metadata.call(result[0].clone());
+                                }
+                            },
+                        }
+
+                        div { class: "flex flex-row w-full justify-between items-center gap-10",
+                            div { class: "flex flex-wrap flex-1 w-full justify-start items-center gap-5",
+                                for document in selected_resources {
+                                    CloseLabel {
+                                        label: document.title.clone(),
+                                        onremove: move |event: Event<MouseData>| {
+                                            event.stop_propagation();
+                                            event.prevent_default();
+                                            remove_resource.call(document.id);
+                                        },
+                                    }
                                 }
                             }
-                        }
-                        button {
-                            class: "cursor-pointer",
-                            onclick: move |event: Event<MouseData>| {
-                                event.stop_propagation();
-                                event.prevent_default();
-                                clear_resource.call(event);
-                            },
-                            Remove { width: "20", height: "20", fill: "#555462" }
+                            button {
+                                class: "cursor-pointer",
+                                onclick: move |event: Event<MouseData>| {
+                                    event.stop_propagation();
+                                    event.prevent_default();
+                                    clear_resource.call(event);
+                                },
+                                Remove {
+                                    width: "20",
+                                    height: "20",
+                                    fill: "#555462",
+                                }
+                            }
                         }
                     }
                 }

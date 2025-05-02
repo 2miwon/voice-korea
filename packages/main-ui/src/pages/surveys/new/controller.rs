@@ -4,8 +4,8 @@ use std::str::FromStr;
 use crate::pages::surveys::models::attribute_combination::AttributeCombination;
 use crate::pages::surveys::models::attribute_group_info::AttributeGroupInfo;
 use bdk::prelude::btracing;
+use bdk::prelude::*;
 use by_macros::DioxusController;
-use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_translate::translate;
 use models::attribute_v2::AgeV2;
@@ -52,12 +52,13 @@ pub struct Controller {
     total_counts: Signal<i64>,
 
     combination_error: Signal<bool>,
+    attribute_update: Signal<bool>,
 
     attribute_combinations: Signal<Vec<AttributeCombination>>,
 }
 
 impl Controller {
-    pub fn new(lang: dioxus_translate::Language, survey_id: Option<i64>) -> Self {
+    pub fn new(lang: Language, survey_id: Option<i64>) -> Self {
         let tr: SettingAttributeTranslate = translate(&lang);
         let mut attribute_options: HashMap<String, Vec<AttributeGroupInfo>> = HashMap::new();
 
@@ -154,6 +155,7 @@ impl Controller {
             total_counts: use_signal(|| 0),
 
             combination_error: use_signal(|| false),
+            attribute_update: use_signal(|| false),
         };
 
         let survey_resource: Resource<Option<SurveyV2>> = use_resource({
@@ -187,6 +189,7 @@ impl Controller {
                     let quotas = survey.quotas.clone();
                     let mut selected_groups = vec![];
                     let mut attribute_combination = vec![];
+                    let mut attribute_update = false;
 
                     let mut push_group = |name: String, attr_label: String| {
                         if !selected_groups.contains(&name) {
@@ -227,8 +230,10 @@ impl Controller {
 
                         attribute_combination.push(AttributeCombination {
                             group: group_items,
-                            total_rate: ((combination.user_count as f64) * 100.0 / (quotas as f64))
-                                .floor() as i64,
+                            total_rate: ((combination.user_count as f64) * 100.0 / (quotas as f64)
+                                * 100.0)
+                                .round()
+                                / 100.0,
                             total_count: combination.user_count as usize,
                         });
                     }
@@ -274,6 +279,8 @@ impl Controller {
                             }
                             models::response::Attribute::None => {}
                         }
+
+                        attribute_update = true;
                     }
 
                     for (key, list) in attribute_options.iter_mut() {
@@ -299,6 +306,7 @@ impl Controller {
                     ctrl.selected_attributes.set(selected_groups);
                     ctrl.attribute_combinations.set(attribute_combination);
                     ctrl.attribute_options.set(attribute_options.clone());
+                    ctrl.attribute_update.set(attribute_update);
                 }
             }
         });
@@ -314,6 +322,7 @@ impl Controller {
         self.total_counts.set(0);
         self.selected_attributes.set(vec![]);
         self.attribute_combinations.set(vec![]);
+        self.combination_error.set(false);
         self.generate_combinations_with_meta();
     }
 
@@ -365,31 +374,30 @@ impl Controller {
 
         let mut sum_counts: i64 = 0;
 
-        let mut v: Vec<AttributeCombination> = raw_combinations
+        let v: Vec<AttributeCombination> = raw_combinations
             .into_iter()
             .map(|group| {
-                let total_rate = (group.iter().map(|v| v.rate as f64 / 100.0).product::<f64>()
-                    * 100.0)
-                    .floor() as i64;
+                let total_rate =
+                    group.iter().map(|v| v.rate as f64 / 100.0).product::<f64>() * 100.0;
+                let rounded = (total_rate * 100.0).round() / 100.0;
 
                 let total_count: usize =
-                    ((total_counts as f64) * (total_rate as f64 / 100.0)).floor() as usize;
+                    ((total_counts as f64) * (rounded as f64 / 100.0)).floor() as usize;
 
                 sum_counts += total_count as i64;
 
                 AttributeCombination {
                     group,
-                    total_rate,
+                    total_rate: rounded,
                     total_count,
                 }
             })
             .collect();
 
         if (total_counts > sum_counts) && !v.is_empty() {
-            let last_index = v.len() - 1;
-            let last = &mut v[last_index];
-            last.total_count =
-                (last.total_count as usize + (total_counts - sum_counts) as usize) as usize;
+            self.combination_error.set(true);
+        } else {
+            self.combination_error.set(false);
         }
 
         self.attribute_combinations.set(v);
@@ -431,6 +439,10 @@ impl Controller {
     pub fn update_attribute_manual_rate(&mut self) {
         let selected_attributes = self.selected_attributes();
         let mut attribute_options = self.attribute_options();
+
+        if self.attribute_update() {
+            return;
+        }
 
         for key in &selected_attributes {
             if let Some(groups) = attribute_options.get_mut(key) {
@@ -516,6 +528,19 @@ impl Controller {
         self.attribute_combinations.with_mut(|combi| {
             combi[index].total_count = total_count;
         });
+
+        let combinations = self.attribute_combinations();
+        let mut total_count = self.total_counts();
+
+        for combination in combinations {
+            total_count -= combination.total_count as i64;
+        }
+
+        if total_count == 0 {
+            self.combination_error.set(false);
+        } else {
+            self.combination_error.set(true);
+        }
     }
 
     pub fn update_attribute_rate(&mut self, key: String, attribute_name: String, rate: i64) {
@@ -530,6 +555,7 @@ impl Controller {
             }
         });
 
+        self.attribute_update.set(true);
         self.generate_combinations_with_meta();
     }
 

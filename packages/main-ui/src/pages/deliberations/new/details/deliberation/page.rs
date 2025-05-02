@@ -1,9 +1,9 @@
 #![allow(unused_variables)]
-use super::super::components::{AssignMember, IntroductionCard};
+use super::super::components::introduction_card::IntroductionCard;
 use super::*;
 use crate::{
     pages::deliberations::new::details::deliberation::components::{
-        elearning::DeliberationElearning, evaluation::Evaluation,
+        elearning::DeliberationElearning, evaluation::Evaluation, member::DeliberationMember,
     },
     service::metadata_api::MetadataApi,
 };
@@ -17,22 +17,15 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
     let mut ctrl = Controller::new(lang)?;
     let tr: DeliberationTranslate = translate(&lang);
     let api: MetadataApi = use_context();
+
     let deliberation = ctrl.deliberation();
     rsx! {
         div { class: "flex flex-col w-full justify-start items-start",
-            // div { class: "text-header-gray font-medium text-sm mb-10",
-            //     "{tr.organization_management} / {tr.deliberation_management} / {tr.start_deliberation}"
-            // }
-            // div { class: "flex flex-row w-full justify-start items-center mb-25 gap-10",
-            //     div { onclick: move |_| {},
-            //         ArrowLeft { width: "24", height: "24", color: "#3a3a3a" }
-            //     }
-            //     div { class: "text-header-black font-semibold text-[28px] mr-20", "{tr.deliberation}" }
-            // }
             div { class: "flex flex-col w-full justify-start items-start gap-20",
                 div { class: "font-medium text-base text-text-black", {tr.post_setting} }
                 IntroductionCard {
                     lang,
+                    rich_text_id: "deliberation_rich_text",
                     start_date_id: "deliberation_start_date",
                     end_date_id: "deliberation_end_date",
                     description: tr.introduction_description.to_string(),
@@ -54,17 +47,17 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                     },
                 }
 
-                AssignMember {
+                DeliberationMember {
                     lang,
 
-                    committees: ctrl.get_committees(),
+                    total_committees: ctrl.committee_members(),
                     selected_committees: ctrl.get_selected_committee(),
 
-                    add_committee: move |user_id: i64| {
-                        ctrl.add_committee(user_id);
+                    add_committee: move |email: String| {
+                        ctrl.add_committee(email);
                     },
-                    remove_committee: move |user_id: i64| {
-                        ctrl.remove_committee(user_id);
+                    remove_committee: move |email: String| {
+                        ctrl.remove_committee(email);
                     },
                     clear_committee: move |_| {
                         ctrl.clear_committee();
@@ -108,6 +101,9 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                             remove_elearning: move |index: usize| {
                                 ctrl.remove_elearning(index);
                             },
+                            open_load_from_data_modal: move |index: usize| {
+                                ctrl.open_load_from_data_modal(index);
+                            },
                         }
                     }
                     div {
@@ -125,8 +121,21 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
                             set_description: move |(index, content): (usize, String)| {
                                 ctrl.set_question_description(index, content);
                             },
+                            add_question: move |_| {
+                                ctrl.add_question();
+                            },
                             removing_question: move |index: usize| {
                                 ctrl.remove_question(index);
+                            },
+
+                            change_option: move |(index, i, option): (usize, usize, String)| {
+                                ctrl.change_option(index, i, option);
+                            },
+                            remove_option: move |(index, i): (usize, usize)| {
+                                ctrl.remove_option(index, i);
+                            },
+                            add_option: move |index: usize| {
+                                ctrl.add_option(index);
                             },
                         }
                     }
@@ -134,24 +143,23 @@ pub fn DeliberationSettingPage(lang: Language) -> Element {
 
                 div { class: "flex flex-row w-full justify-end items-end mt-40 mb-50",
                     button {
-                        class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                        class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20 hover:!bg-primary hover:!text-white",
                         onclick: move |_| {
                             ctrl.back();
                         },
                         {tr.backward}
                     }
                     button {
-                        class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20",
+                        class: "flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-white border border-label-border-gray font-semibold text-base text-table-text-gray mr-20 hover:!bg-primary hover:!text-white",
                         onclick: move |_| async move {
                             ctrl.temp_save().await;
                         },
                         {tr.temporary_save}
                     }
                     button {
-                        class: "cursor-pointer flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-hover font-semibold text-base text-white",
-                        onclick: move |_| {
-                            ctrl.next();
-                        },
+                        class: "aria-active:cursor-pointer cursor-not-allowed flex flex-row px-20 py-14 rounded-sm justify-center items-center bg-disabled aria-active:!bg-hover font-semibold text-base text-white",
+                        "aria-active": ctrl.is_valid(),
+                        onclick: move |_| ctrl.next(),
                         {tr.next}
                     }
                 }

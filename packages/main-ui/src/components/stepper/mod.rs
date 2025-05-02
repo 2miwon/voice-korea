@@ -15,26 +15,24 @@ pub fn Stepper(props: StepperProps) -> Element {
                     .steps
                     .iter()
                     .enumerate()
-                    .map(|(index, label)| rsx! {
-                        if index < props.current_step {
-                            div { class: "relative flex flex-col flex-1 justify-center items-center",
-                                li { class: "flex w-full items-center text-blue-600 dark:text-blue-500 after:content-[''] after:w-full after:h-1 after:border-b after:border-[#2a60d3] after:border-4 after:inline-block dark:after:border-blue-800",
-                                    span { class: get_step_circle_styles(true), "{index + 1}" }
-                                    label_text { label }
-                                }
-                            }
-                        } else if index >= props.current_step && index != props.steps.len() - 1 {
-                            div { class: "relative flex flex-col flex-1 justify-center items-center",
-                                li { class: "flex w-full items-center text-blue-600 dark:text-blue-500 after:content-[''] after:w-full after:h-1 after:border-b after:border-[#bfc8d9] after:border-4 after:inline-block dark:after:border-blue-800",
-                                    span { class: get_step_circle_styles(false), "{index + 1}" }
-                                    label_text { label }
-                                }
-                            }
-                        } else {
-                            div { class: "relative flex flex-col w-[100px] justify-center items-center",
-                                li { class: "flex items-center w-full",
-                                    span { class: get_step_circle_styles(false), "{index + 1}" }
-                                    label_text { label }
+                    .map(|(index, label)| {
+                        let is_completed = index < props.current_step;
+                        let is_last = index == props.steps.len() - 1;
+                        rsx! {
+                            div { class: if is_last { "relative flex flex-col w-[100px] justify-center items-center" } else { "relative flex flex-col flex-1 justify-center items-center" },
+                                li {
+                                    class: format!(
+                                        "flex items-center w-full {}",
+                                        if is_last {
+                                            ""
+                                        } else if is_completed {
+                                            "text-blue-600 dark:text-blue-500 after:content-[''] after:w-full after:h-1 after:border-b after:border-[#2a60d3] after:border-4 after:inline-block dark:after:border-blue-800"
+                                        } else {
+                                            "text-blue-600 dark:text-blue-500 after:content-[''] after:w-full after:h-1 after:border-b after:border-[#bfc8d9] after:border-4 after:inline-block dark:after:border-blue-800"
+                                        },
+                                    ),
+                                    span { class: get_step_circle_styles(is_completed), "{index + 1}" }
+                                    label_text { label: label.clone() }
                                 }
                             }
                         }

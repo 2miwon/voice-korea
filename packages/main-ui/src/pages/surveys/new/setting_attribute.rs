@@ -122,6 +122,8 @@ pub fn SettingAttribute(
 
                         ParticipantDistributeTable {
                             lang,
+
+                            total_counts,
                             attribute_options,
                             selected_attributes,
                             selected_tab,

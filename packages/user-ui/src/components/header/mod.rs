@@ -1,5 +1,7 @@
 use bdk::prelude::*;
-use by_components::icons as by_components_icon;
+use by_components::icons::{
+    self as by_components_icon, alignments::AlignJustify, arrows::ArrowRight,
+};
 use dioxus_translate::{translate, Language};
 
 mod controller;
@@ -207,40 +209,75 @@ pub fn GoogleLoginPopup(lang: Language, onclose: EventHandler<MouseEvent>) -> El
 }
 
 #[component]
-pub fn Header(lang: Language, children: Element) -> Element {
+pub fn Header(lang: Language, children: Element, expanded: Signal<bool>) -> Element {
     let translates: Translate = translate(&lang);
 
     let mut ctrl = controller::Controller::new(lang)?;
 
+    // let mut expanded = use_signal(|| false);
+
+    let mobile_menu = use_memo(move || {
+        let expanded = expanded();
+
+        if expanded {
+            "max-desktop:right-0"
+        } else {
+            "max-desktop:-right-full"
+        }
+    });
+
     rsx! {
-        header { class: "fixed top-0 left-0 w-screen h-(--header-height) overflow-hidden flex items-center justify-center z-100 bg-white",
-            div { class: "flex justify-between my-25 h-30 items-center w-full max-w-desktop  gap-45",
+        header { class: "fixed top-0 left-0 w-screen h-(--mobile-header-height) tablet:h-(--header-height) overflow-hidden flex items-center justify-center z-100 bg-white",
+            div { class: "flex justify-between my-25 h-30 items-center w-full max-w-desktop max-desktop:px-20",
                 Link {
                     class: "flex flex-row items-center justify-around gap-4 h-full",
                     to: Route::MainPage { lang },
                     icons::Logo {}
                     div { class: "font-extrabold text-base text-logo", "VOICE KOREA" }
                 }
-                //Menu Area
-                div { class: "flex-1", {children} }
-                //Login Area
-                if !ctrl.user.is_login() {
-                    div {
+                div { class: "block desktop:hidden",
+                    button {
+                        class: "desktop:hidden",
+                        display: if expanded() { "none" },
                         onclick: move |_| {
-                            ctrl.google_login();
+                            expanded.set(true);
                         },
-                        {translates.login}
+                        AlignJustify { width: 32, height: 32 }
+                    }
+                    button {
+                        display: if !expanded() { "none" },
+                        onclick: move |_| {
+                            expanded.set(false);
+                        },
+                        ArrowRight { width: 32, height: 32 }
                     }
                 }
-                Button {
-                    class: "flex flex-row w-fit h-fit justify-center items-center rounded-lg p-5 bg-white border border-key-gray",
-                    onclick: move |_| {
-                        ctrl.move_to_console();
-                    },
-                    {translates.deliberation_design}
-                }
-                if ctrl.user.is_login() {
-                    Profile { name: ctrl.user.get_nicename() }
+
+                //Deskto1
+                div { class: "flex-1 flex fixed transition-all max-desktop:w-screen max-desktop:h-[calc(100vh_-_var(--mobile-header-height))] max-desktop:top-(--mobile-header-height) desktop:static bg-white overflow-y-scroll z-10 {mobile_menu}",
+                    div { class: "flex-1 flex font-bold justify-start desktop:justify-end items-center text-key-gray text-[15px]/19 gap-30 desktop:gap-45 flex-col desktop:flex-row h-fit",
+
+                        {children}
+
+                        if !ctrl.user.is_login() {
+                            div {
+                                onclick: move |_| {
+                                    ctrl.google_login();
+                                },
+                                {translates.login}
+                            }
+                        }
+                        Button {
+                            class: "flex flex-row w-fit h-fit justify-center items-center rounded-lg p-5 bg-transparent border border-key-gray",
+                            onclick: move |_| {
+                                ctrl.move_to_console();
+                            },
+                            {translates.deliberation_design}
+                        }
+                        if ctrl.user.is_login() {
+                            Profile { lang, name: ctrl.user.get_nicename() }
+                        }
+                    }
                 }
             }
         }
@@ -248,10 +285,13 @@ pub fn Header(lang: Language, children: Element) -> Element {
 }
 
 #[component]
-fn Profile(name: String, image_url: Option<String>) -> Element {
+fn Profile(lang: Language, name: String, image_url: Option<String>) -> Element {
     rsx! {
-        div { class: "gap-10 flex flex-row justify-center items-center",
+        Link {
+            class: "gap-10 flex flex-row justify-center items-center",
+            to: Route::ProfilePage { lang },
             div { class: "w-28 h-28 rounded-full bg-profile-gray overflow-hidden",
+
                 if image_url.is_some() {
                     img { src: image_url }
                 }

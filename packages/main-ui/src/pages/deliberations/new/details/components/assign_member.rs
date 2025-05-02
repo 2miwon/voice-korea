@@ -1,37 +1,40 @@
-use super::i18n::AssignMemberTranslate;
+use bdk::prelude::*;
+
 use crate::{
     components::expandable_card::ExpandableCard,
-    pages::deliberations::new::components::committee_dropdown::CommitteeDropdown,
+    pages::deliberations::new::{
+        components::email_dropdown::EmailDropdown, details::votes::i18n::FinalSurveyMemberTranslate,
+    },
 };
-use bdk::prelude::*;
-use models::OrganizationMemberSummary;
 
 #[component]
-pub fn AssignMember(
+pub fn Member(
     lang: Language,
-    committees: Vec<OrganizationMemberSummary>,
-    selected_committees: Vec<OrganizationMemberSummary>,
 
-    add_committee: EventHandler<i64>,
-    remove_committee: EventHandler<i64>,
+    total_committees: Vec<String>,
+    selected_committees: Vec<String>,
+
+    add_committee: EventHandler<String>,
+    remove_committee: EventHandler<String>,
     clear_committee: EventHandler<MouseEvent>,
 ) -> Element {
-    let tr: AssignMemberTranslate = translate(&lang);
+    let tr: FinalSurveyMemberTranslate = translate(&lang);
 
     rsx! {
         ExpandableCard { required: false, header: tr.title, description: tr.description,
-            CommitteeDropdown {
-                id: "assign-committee",
+            EmailDropdown {
+                lang,
+                id: "final-committee",
                 hint: tr.search_committee,
 
                 selected_committees,
-                committees,
+                committees: total_committees,
 
-                add_committee: move |member: OrganizationMemberSummary| {
-                    add_committee.call(member.user_id);
+                add_committee: move |email: String| {
+                    add_committee.call(email);
                 },
-                remove_committee: move |id: i64| {
-                    remove_committee.call(id);
+                remove_committee: move |email: String| {
+                    remove_committee.call(email);
                 },
                 clear_committee: move |e| {
                     clear_committee.call(e);

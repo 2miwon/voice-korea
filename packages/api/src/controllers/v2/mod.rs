@@ -1,4 +1,5 @@
 pub mod comments;
+pub mod contents;
 pub mod inquiries;
 pub mod landing;
 pub mod metadata;
@@ -19,6 +20,7 @@ pub mod deliberations {
     pub mod _id {
         pub mod comments;
         pub mod discussions;
+        pub mod meeting;
         pub mod responses;
 
         pub mod areas;
@@ -48,6 +50,10 @@ impl Version2Controller {
             .nest(
                 "/profile",
                 profile::ProfileController::new(pool.clone()).route()?,
+            )
+            .nest(
+                "/contents",
+                contents::ContentController::new(pool.clone()).route()?,
             )
             .nest(
                 "/projects",
@@ -110,6 +116,10 @@ impl Version2Controller {
             .nest(
                 "/inquiries",
                 inquiries::InquiryController::new(pool.clone()).route(),
+            )
+            .nest(
+                "/deliberations/:deliberation-id/meeting",
+                deliberations::_id::meeting::MeetingController::new(pool.clone()).route()?,
             )
             .nest(
                 "/comments",

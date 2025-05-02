@@ -1,5 +1,7 @@
 mod divide;
+mod enter_text_field;
 mod input_date_field;
+mod input_enter_field;
 mod input_field;
 mod select_input_date_field;
 mod select_input_field;
@@ -8,7 +10,9 @@ mod underline_field;
 mod upload_field;
 
 pub use divide::*;
+pub use enter_text_field::*;
 pub use input_date_field::*;
+pub use input_enter_field::*;
 pub use input_field::*;
 pub use select_input_date_field::*;
 pub use select_input_field::*;

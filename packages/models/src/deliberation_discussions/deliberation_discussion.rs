@@ -2,6 +2,8 @@
 use bdk::prelude::*;
 use validator::Validate;
 
+use crate::deliberation_panel_email::DeliberationPanelEmail;
+use crate::deliberation_role::DeliberationRole;
 use crate::deliberation_user::DeliberationUser;
 use crate::discussions::Discussion;
 use crate::discussions::DiscussionCreateRequest;
@@ -10,7 +12,7 @@ use crate::User;
 
 //FIXME: fix to wording when discussion function is implemented
 #[derive(Validate)]
-#[api_model(base = "/v2/deliberations/:deliberation-id/ideas", table = deliberation_discussions, action = [create(users = Vec<i64>, resources = Vec<i64>, discussions = Vec<DiscussionCreateRequest>)])]
+#[api_model(base = "/v2/deliberations/:deliberation-id/ideas", table = deliberation_discussions, action = [create(users = Vec<String>, resources = Vec<i64>, discussions = Vec<DiscussionCreateRequest>)])]
 pub struct DeliberationDiscussion {
     #[api_model(summary, primary_key)]
     pub id: i64,
@@ -34,6 +36,15 @@ pub struct DeliberationDiscussion {
     #[api_model(summary, many_to_one = deliberations)]
     pub deliberation_id: i64,
 
+    #[api_model(summary, one_to_many = deliberation_panel_emails, foreign_key = deliberation_id, reference_key = deliberation_id)]
+    #[serde(default)]
+    pub emails: Vec<DeliberationPanelEmail>,
+
+    #[api_model(summary, many_to_many = deliberation_discussion_roles, foreign_table_name = deliberation_roles, foreign_primary_key = role_id, foreign_reference_key = discussion_id)]
+    #[serde(default)]
+    pub roles: Vec<DeliberationRole>,
+
+    //FIXME: this field will be deprecated. use roles field instead.
     #[api_model(summary, many_to_many = deliberation_discussion_members, foreign_table_name = users, foreign_primary_key = user_id, foreign_reference_key = discussion_id)]
     #[serde(default)]
     pub members: Vec<User>,
@@ -50,7 +61,7 @@ pub struct DeliberationDiscussion {
 impl Into<DeliberationDiscussionCreateRequest> for DeliberationDiscussion {
     fn into(self) -> DeliberationDiscussionCreateRequest {
         DeliberationDiscussionCreateRequest {
-            users: self.members.into_iter().map(|u| u.id).collect(),
+            users: self.roles.into_iter().map(|u| u.email).collect(),
             resources: self.resources.into_iter().map(|r| r.id).collect(),
             discussions: self.discussions.into_iter().map(|d| d.into()).collect(),
             started_at: self.started_at,

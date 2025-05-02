@@ -13,9 +13,13 @@ use models::{
         DeliberationFinalSurveyGetResponse, DeliberationFinalSurveyParam,
         DeliberationFinalSurveyQuery, DeliberationFinalSurveySummary,
     },
+    deliberation_panel_email::DeliberationPanelEmail,
+    deliberation_response::{DeliberationResponse, DeliberationType},
     *,
 };
 use sqlx::postgres::PgRow;
+
+use crate::utils::app_claims::AppClaims;
 
 #[derive(
     Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema, aide::OperationIo,
@@ -58,6 +62,12 @@ impl DeliberationFinalSurveyController {
                 };
                 DeliberationFinalSurveyGetResponse::Query(res)
             }
+            DeliberationFinalSurveyParam::Read(action) => match action.action {
+                Some(DeliberationFinalSurveyReadActionType::GetById) => {
+                    ctrl.read(deliberation_id, auth).await?
+                }
+                _ => return Err(ApiError::InvalidAction),
+            },
         };
 
         Ok(Json(res))
@@ -88,5 +98,66 @@ impl DeliberationFinalSurveyController {
                 .await?;
 
         Ok(QueryResponse { total_count, items })
+    }
+
+    async fn read(
+        &self,
+        deliberation_id: i64,
+        auth: Option<Authorization>,
+    ) -> Result<DeliberationFinalSurveyGetResponse> {
+        let (user_id, email): (i64, String) = match auth {
+            Some(Authorization::Bearer { ref claims }) => (
+                AppClaims(claims).get_user_id(),
+                AppClaims(claims).get_email(),
+            ),
+            _ => (0, "".to_string()),
+        };
+
+        let mut is_member = false;
+
+        if user_id != 0 {
+            let res: Option<DeliberationPanelEmail> = DeliberationPanelEmail::query_builder()
+                .deliberation_id_equals(deliberation_id)
+                .email_equals(email)
+                .query()
+                .map(Into::into)
+                .fetch_optional(&self.pool)
+                .await?;
+
+            is_member = res.is_some();
+        }
+
+        let responses = DeliberationResponse::query_builder()
+            .deliberation_id_equals(deliberation_id)
+            .deliberation_type_equals(DeliberationType::Survey)
+            .query()
+            .map(Into::into)
+            .fetch_all(&self.pool)
+            .await?;
+
+        let user_response = if user_id != 0 {
+            DeliberationResponse::query_builder()
+                .deliberation_id_equals(deliberation_id)
+                .user_id_equals(user_id)
+                .deliberation_type_equals(DeliberationType::Survey)
+                .query()
+                .map(Into::into)
+                .fetch_optional(&self.pool)
+                .await?
+                .map_or_else(Vec::new, |res| vec![res])
+        } else {
+            Vec::new()
+        };
+
+        let mut res: DeliberationFinalSurvey = DeliberationFinalSurvey::query_builder()
+            .deliberation_id_equals(deliberation_id)
+            .query()
+            .map(Into::into)
+            .fetch_one(&self.pool)
+            .await?;
+        res.user_response = user_response;
+        res.responses = responses;
+        res.is_member = is_member;
+        Ok(DeliberationFinalSurveyGetResponse::Read(res))
     }
 }
