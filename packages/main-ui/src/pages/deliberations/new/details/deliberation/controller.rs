@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use bdk::prelude::*;
 use models::{elearning::ElearningCreateRequest, *};
 
@@ -72,7 +74,13 @@ impl Controller {
         let req = ctrl.parent.deliberation_requests();
 
         use_effect(move || {
-            let committees = req.roles.iter().map(|v| v.email.clone()).collect();
+            let committees = req
+                .roles
+                .iter()
+                .map(|v| v.email.clone())
+                .collect::<HashSet<_>>()
+                .into_iter()
+                .collect();
             let mut deliberation = req
                 .contents
                 .get(0)

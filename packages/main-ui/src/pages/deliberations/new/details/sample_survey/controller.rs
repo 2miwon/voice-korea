@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use bdk::prelude::*;
 
 use models::{
@@ -45,7 +47,13 @@ impl Controller {
                 .clone();
 
             move || {
-                let committees = req.roles.iter().map(|v| v.email.clone()).collect();
+                let committees = req
+                    .roles
+                    .iter()
+                    .map(|v| v.email.clone())
+                    .collect::<HashSet<_>>()
+                    .into_iter()
+                    .collect();
                 let started_at = sample_surveys.clone().started_at;
                 let ended_at = sample_surveys.clone().ended_at;
 
