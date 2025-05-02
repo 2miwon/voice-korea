@@ -464,23 +464,30 @@ pub fn DeliberationFeature(lang: Language) -> Element {
     rsx! {
         div { class: "flex flex-col w-full justify-center items-center gap-32",
             SectionHeader { title: tr.title }
-            div { class: "flex flex-col desktop:flex-row w-full justify-center items-center gap-20",
-                FeatureBox {
-                    title: tr.sub_title_1,
-                    description: tr.sub_description_1,
-                    asset: decentralized,
+            div { class: "flex flex-col desktop:flex-row w-full justify-center items-stretch gap-20",
+                div { class: "flex-1 max-w-[310px] w-full",
+                    FeatureBox {
+                        title: tr.sub_title_1,
+                        description: tr.sub_description_1,
+                        asset: decentralized,
+                    }
                 }
-                FeatureBox {
-                    title: tr.sub_title_2,
-                    description: tr.sub_description_2,
-                    asset: shield,
+                div { class: "flex-1 max-w-[310px] w-full",
+                    FeatureBox {
+                        title: tr.sub_title_2,
+                        description: tr.sub_description_2,
+                        asset: shield,
+                    }
                 }
-                FeatureBox {
-                    title: tr.sub_title_3,
-                    description: tr.sub_description_3,
-                    asset: sound,
+                div { class: "flex-1 max-w-[310px] w-full",
+                    FeatureBox {
+                        title: tr.sub_title_3,
+                        description: tr.sub_description_3,
+                        asset: sound,
+                    }
                 }
             }
+
             div { class: "font-semibold text-[15px] text-text-gray leading-22 text-left px-10 break-keep desktop:px-0 desktop:text-center desktop:whitespace-pre-line",
                 "{tr.description}"
             }
@@ -492,7 +499,7 @@ pub fn DeliberationFeature(lang: Language) -> Element {
 pub fn FeatureBox(title: String, description: String, asset: Asset) -> Element {
     rsx! {
         div {
-            class: "flex flex-col w-full desktop:w-310 min-h-355 justify-start items-start px-24 py-34 rounded-xl gap-20",
+            class: "flex flex-col w-full h-full desktop:w-310 justify-start items-start px-24 py-34 rounded-xl gap-20",
             style: "box-shadow: 0px 8px 20px rgba(148, 128, 214, 0.5);",
             div { class: "font-bold text-lg text-text-black", "{title}" }
             div { class: "font-normal text-[15px] text-text-gray", "{description}" }
