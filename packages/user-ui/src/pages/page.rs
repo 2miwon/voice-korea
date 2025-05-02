@@ -492,7 +492,7 @@ pub fn DeliberationFeature(lang: Language) -> Element {
 pub fn FeatureBox(title: String, description: String, asset: Asset) -> Element {
     rsx! {
         div {
-            class: "flex flex-col w-full desktop:w-310 justify-start items-start px-24 py-34 rounded-xl gap-20",
+            class: "flex flex-col w-full desktop:w-310 min-h-355 justify-start items-start px-24 py-34 rounded-xl gap-20",
             style: "box-shadow: 0px 8px 20px rgba(148, 128, 214, 0.5);",
             div { class: "font-bold text-lg text-text-black", "{title}" }
             div { class: "font-normal text-[15px] text-text-gray", "{description}" }
