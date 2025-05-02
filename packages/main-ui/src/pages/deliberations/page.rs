@@ -210,14 +210,20 @@ pub fn DeliberationPage(lang: Language) -> Element {
                                 }
                                 button {
                                     class: "cursor-pointer flex flex-row w-120 max-w-[120px] h-full justify-center items-center",
-                                    onclick: move |_| {
+                                    onclick: move |_| async move {
                                         if deliberation.status != DeliberationStatus::Draft {
                                             ctrl.move_user_page(deliberation.id);
+                                        } else {
+                                            ctrl.start_deliberation(deliberation.id).await;
                                         }
                                     },
                                     if deliberation.status != DeliberationStatus::Draft {
                                         div { class: "font-semibold text-sm text-active text-center",
                                             {translates.move_to_user_page}
+                                        }
+                                    } else {
+                                        div { class: "font-semibold text-sm text-active text-center",
+                                            {translates.start_deliberation}
                                         }
                                     }
                                 }
