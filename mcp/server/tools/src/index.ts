@@ -8,6 +8,8 @@ import {
 import { Container } from "typedi";
 import ProjectService from "./services/ProjectService.js";
 import { projectTools } from "./tools/ProjectTools.js";
+import SurveyService from "./services/SurveyService.js";
+import { surveyTools } from "./tools/SurveyTools.js";
 
 const server = new Server({
   name: "voice-korea-mcp-tool",
@@ -19,7 +21,7 @@ const server = new Server({
 });
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
-  const tools = [...projectTools];
+  const tools = [...projectTools, ...surveyTools];
     return {
         tools
       };
@@ -37,8 +39,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // Find the surveys in a project
       else if (name === "get_surveys_in_a_project") {
         const { question, id } = args;
-        const projectService = Container.get(ProjectService);
-        return await projectService.getProjectSurveys(id, question);
+        const surveyService = Container.get(SurveyService);
+        return await surveyService.getProjectSurveys(id, question);
+      }
+
+      else if (name === "get_final_surveys_in_a_project") {
+        const { question, id } = args;
+        const surveyService = Container.get(SurveyService);
+        return await surveyService.getProjectFinalSurveys(id, question);
       }
 
       // Find projects by their title

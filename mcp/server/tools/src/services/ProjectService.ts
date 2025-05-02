@@ -31,31 +31,6 @@ export default class ProjectService {
           }
     }
 
-    public async getProjectSurveys(id: number, question: string)
-    {
-        try {
-            const project = await makeApiCall(`/projects/deliberations/${id}/sample-surveys?param-type=read&action=get-by-id`, { method: 'GET' })
-            if (!project) {
-              return {
-                content: [{ type: "text", text: `No project found with ID ${id}` }]
-              };
-            }
-    
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `question asked is: ${question}, matching data project data is: ${JSON.stringify(project, null, 2)}`
-                }
-              ]
-            };
-        } catch (error: any) {
-            return {
-              content: [{ type: "text", text: `Error fetching project: ${error.message}` }]
-            };
-          }
-    }
-
     public async searchProjects(title: string, question: string)
     {
         try {
