@@ -82,4 +82,32 @@ export default class ProjectService {
             };
           }
     }
+
+    
+    public async fetchProjectDeliberations(id: number, question: string)
+    {
+        try {
+            const project = await makeApiCall(`/deliberations/${id}/contents?param-type=query&size=1`, { method: 'GET' })
+            if (!project) {
+              return {
+                content: [{ type: "text", text: `No project's deliberations found with project ID ${id}` }]
+              };
+            }
+    
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `question asked is: ${question}, matching project's deliberations' data is: ${JSON.stringify(project, null, 2)}`
+                }
+              ]
+            };
+        } catch (error: any) {
+            return {
+              content: [{ type: "text", text: `Error fetching project: ${error.message}` }]
+            };
+          }
+    }
+
+    
 }

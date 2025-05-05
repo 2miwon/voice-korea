@@ -20,7 +20,7 @@ export const projectTools: Tool[] = [
           type: "object",
           properties: {
             question: { type: "string" },
-            title: { type: "number" }
+            title: { type: "string" }
           },
           required: ["question","title"]
         }
@@ -34,6 +34,18 @@ export const projectTools: Tool[] = [
             question: { type: "string" },
           },
           required: ["question"]
+        }
+      },
+      {
+        name: "fetch_project_deliberations",
+        description: "Fetch the deliberations under a Voice Korea's Project using the projects ID",
+        inputSchema: {
+          type: "object",
+          properties: {
+            question: { type: "string" },
+            id: { type: "number" }
+          },
+          required: ["question","id"]
         }
       },
 ];

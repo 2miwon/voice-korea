@@ -17,5 +17,10 @@ export const projectController: Record<string, ControllerFn> = {
   fetch_latest_projects: async ({ question }) => {
     const service = Container.get(ProjectService);
     return await service.fetchLatestProjects(question);
+  },
+
+  fetch_project_deliberations: async ({ id, question }) => {
+    const service = Container.get(ProjectService);
+    return await service.fetchProjectDeliberations(id, question);
   }
 };
