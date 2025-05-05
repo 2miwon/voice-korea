@@ -110,4 +110,28 @@ export default class ProjectService {
     }
 
     
+    public async fetchProjectDiscussions(id: number, question: string)
+    {
+        try {
+            const project = await makeApiCall(`/deliberations/${id}/ideas?param-type=query&size=1`, { method: 'GET' })
+            if (!project) {
+              return {
+                content: [{ type: "text", text: `No project's discussions found with project ID ${id}` }]
+              };
+            }
+    
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `question asked is: ${question}, matching project's discussions' data is: ${JSON.stringify(project, null, 2)}`
+                }
+              ]
+            };
+        } catch (error: any) {
+            return {
+              content: [{ type: "text", text: `Error fetching project's discussions: ${error.message}` }]
+            };
+          }
+    }
 }

@@ -48,4 +48,16 @@ export const projectTools: Tool[] = [
           required: ["question","id"]
         }
       },
+      {
+        name: "fetch_project_discussions",
+        description: "Fetch the discussions under a Voice Korea's Project using the projects ID",
+        inputSchema: {
+          type: "object",
+          properties: {
+            question: { type: "string" },
+            id: { type: "number" }
+          },
+          required: ["question","id"]
+        }
+      },
 ];
