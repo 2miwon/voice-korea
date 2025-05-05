@@ -1,0 +1,31 @@
+{
+    "name": "voice-korea-mcp-tool",
+    "version": "0.1.0",
+    "description": "A Model Context Protocol server that uses Voice Korea API",
+    "private": true,
+    "type": "module",
+    "bin": {
+        "mcp-server": "./build/index.js"
+    },
+    "files": [
+        "build"
+    ],
+    "scripts": {
+        "build": "rimraf build && tsc",
+        "watch": "tsc --watch",
+        "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+    },
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "0.6.0",
+        "axios": "^1.9.0",
+        "dotenv": "^16.5.0",
+        "reflect-metadata": "^0.2.2",
+        "rimraf": "^6.0.1"
+    },
+    "devDependencies": {
+        "@types/dotenv": "^8.2.3",
+        "@types/node": "^20.11.24",
+        "typedi": "^0.10.0",
+        "typescript": "^5.3.3"
+    }
+}
