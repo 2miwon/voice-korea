@@ -4,7 +4,7 @@ WORKSPACE_ROOT ?= ../..
 VERSION ?= $(shell toml get Cargo.toml package.version | tr -d \")
 COMMIT ?= $(shell git rev-parse --short HEAD)
 
-BASE_DOMAIN ?= biyard.co
+BASE_DOMAIN ?= voice-korea.com
 LOG_LEVEL ?= info
 
 API_DOMAIN ?= https://voice-korea-api.$(ENV).$(BASE_DOMAIN)

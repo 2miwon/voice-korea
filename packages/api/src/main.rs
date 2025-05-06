@@ -3,7 +3,9 @@ use by_axum::{
     axum::Router,
 };
 use by_types::DatabaseConfig;
-use controllers::{institutions::m1::InstitutionControllerM1, v2::Version2Controller};
+use controllers::{
+    institutions::m1::InstitutionControllerM1, m1::M1Controller, v2::Version2Controller,
+};
 use deliberation_comment::DeliberationComment;
 use deliberation_resources::deliberation_resource::DeliberationResource;
 use discussions::Discussion;
@@ -69,6 +71,8 @@ use tokio::net::TcpListener;
 mod controllers {
     pub mod v1;
     pub mod v2;
+
+    pub mod m1;
 
     pub mod institutions {
         pub mod m1;
@@ -178,6 +182,7 @@ async fn make_app() -> Result<Router> {
     migration(&pool).await?;
 
     let app = app
+        .nest("/m1", M1Controller::route(pool.clone())?)
         .nest("/v2", Version2Controller::route(pool.clone())?)
         .nest(
             "/v1/users",

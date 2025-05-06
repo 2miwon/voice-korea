@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use bdk::prelude::*;
 use models::{
     DeliberationDiscussionCreateRequest, DiscussionCreateRequest, File, ResourceFile,
@@ -72,7 +74,13 @@ impl Controller {
                 .clone();
 
             move || {
-                let committees = req.roles.iter().map(|v| v.email.clone()).collect();
+                let committees = req
+                    .roles
+                    .iter()
+                    .map(|v| v.email.clone())
+                    .collect::<HashSet<_>>()
+                    .into_iter()
+                    .collect();
                 let started_at = discussion.clone().started_at;
                 let ended_at = discussion.clone().ended_at;
 

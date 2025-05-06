@@ -55,6 +55,10 @@ translate! {
         ko: "이동하기",
         en: "Move"
     }
+    start_deliberation: {
+        ko: "공론 시작하기",
+        en: "Start Deliberation"
+    }
     view_result: {
         ko: "결과 보기",
         en: "View Result"

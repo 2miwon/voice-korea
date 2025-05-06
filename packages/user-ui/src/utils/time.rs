@@ -12,19 +12,27 @@ pub fn format_prev_time(timestamp: i64) -> String {
     let duration = now.signed_duration_since(target_time);
 
     if duration.num_seconds() < 60 {
-        return format!("{}초 전", duration.num_seconds());
+        return format!("{}초 전", check_date(duration.num_seconds()));
     } else if duration.num_minutes() < 60 {
-        return format!("{}분 전", duration.num_minutes());
+        return format!("{}분 전", check_date(duration.num_minutes()));
     } else if duration.num_hours() < 24 {
-        return format!("{}시간 전", duration.num_hours());
+        return format!("{}시간 전", check_date(duration.num_hours()));
     } else if duration.num_days() < 30 {
-        return format!("{}일 전", duration.num_days());
+        return format!("{}일 전", check_date(duration.num_days()));
     } else if duration.num_days() < 365 {
         let months = duration.num_days() / 30;
-        return format!("{}개월 전", months);
+        return format!("{}개월 전", check_date(months));
     } else {
         let years = duration.num_days() / 365;
-        return format!("{}년 전", years);
+        return format!("{}년 전", check_date(years));
+    }
+}
+
+fn check_date(date: i64) -> i64 {
+    if date >= 0 {
+        date
+    } else {
+        0
     }
 }
 

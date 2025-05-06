@@ -71,7 +71,7 @@ translate! {
     }
     public_opinion_designer: {
         ko: "공론 설계자",
-        en: "Public Opinion Designer"
+        en: "Deliberation Designer"
     }
     number_of_participants: {
         ko: "참여 수",

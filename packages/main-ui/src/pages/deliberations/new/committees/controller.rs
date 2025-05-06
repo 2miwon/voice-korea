@@ -111,7 +111,11 @@ impl Controller {
                 return;
             }
 
-            if self.committees().iter().any(|r| r.email == email) {
+            if self
+                .committees()
+                .iter()
+                .any(|r| r.email == email && r.role == role)
+            {
                 btracing::error!("{}", tr.role_exist_error);
                 return;
             }

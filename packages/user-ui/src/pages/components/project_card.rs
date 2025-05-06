@@ -28,7 +28,7 @@ pub fn ProjectCard(lang: Language, deliberation: DeliberationProjectSummary) -> 
                 class: "h-260 bg-cover bg-center",
             }
             // Overlay
-            div { class: "flex flex-col transition-all duration-400 ease-[cubic-bezier(.17,.67,.5,1.03)] absolute bottom-0 w-full bg-white rounded-[12px] px-16 py-20 min-h-170 max-h-170 group-hover:max-h-400 group-focus-within:max-h-400",
+            div { class: "flex flex-col transition-all duration-1000 ease-[cubic-bezier(.17,.67,.5,1.03)] absolute bottom-0 w-full bg-white rounded-[12px] px-16 py-20 group-hover:h-300 group-focus-within:h-300 group-hover:overflow-y-auto group-focus-within:overflow-y-auto",
                 div { class: "font-bold text-[16px] leading-normal text-text-black line-clamp-1 group-hover:line-clamp-none group-focus-within:line-clamp-none",
                     {deliberation.title}
                 }
