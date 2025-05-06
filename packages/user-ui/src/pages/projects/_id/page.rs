@@ -61,7 +61,7 @@ pub enum Tab {
     BasicInfo = 0,
     #[translate(ko = "표본 조사", en = "Sample Survey")]
     SampleSurvey = 1,
-    #[translate(ko = "숙의", en = "Consideration")]
+    #[translate(ko = "숙의", en = "Deliberation")]
     Consideration = 2,
     #[translate(ko = "토론", en = "Discussion")]
     Discussion = 3,
