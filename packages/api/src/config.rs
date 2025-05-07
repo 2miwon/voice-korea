@@ -12,6 +12,7 @@ pub struct Config {
     pub server_key: &'static str,
     pub bucket_name: &'static str,
     pub chime_bucket_name: &'static str,
+    pub slack_channel_inquiry: &'static str,
     pub presigned_url_expiration: u64,
 }
 
@@ -38,6 +39,8 @@ impl Default for Config {
                     .expect("NONCE_LAB_API_ENDPOINT required"),
                 token: option_env!("NONCE_LAB_API_TOKEN").expect("NONCE_LAB_API_TOKEN required"),
             },
+            slack_channel_inquiry: option_env!("SLACK_CHANNEL_INQUIRY")
+                .expect("SLACK_CHANNEL_INQUIRY required"),
             server_key: option_env!("SERVER_KEY").expect("SERVER_KEY required"),
             bucket_name: option_env!("BUCKET_NAME").expect("BUCKET_NAME required"),
             chime_bucket_name: option_env!("CHIME_BUCKET").expect("CHIME_BUCKET required"),

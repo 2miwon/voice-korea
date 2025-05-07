@@ -597,6 +597,20 @@ impl DiscussionController {
         }): Path<DiscussionPath>,
     ) -> Result<Json<Discussion>> {
         tracing::debug!("get_discussion {} {:?}", deliberation_id, id);
+
+        // INFO: Since I couldn't find the location where the user id goes into 0, I implemented it in the direction of deleting it during query.
+        // INFO: Later, when I find the location where 0 goes into, I remove it and then remove the code.
+        let participants = DiscussionParticipant::query_builder()
+            .user_id_equals(0)
+            .query()
+            .map(DiscussionParticipant::from)
+            .fetch_all(&ctrl.pool)
+            .await?;
+
+        for participant in participants {
+            let _ = ctrl.participation_repo.delete(participant.id).await;
+        }
+
         Ok(Json(
             Discussion::query_builder()
                 .id_equals(id)

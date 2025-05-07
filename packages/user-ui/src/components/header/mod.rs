@@ -254,13 +254,13 @@ pub fn Header(lang: Language, children: Element, expanded: Signal<bool>) -> Elem
                 }
 
                 //Deskto1
-                div { class: "flex-1 flex fixed transition-all max-desktop:w-screen max-desktop:h-[calc(100vh_-_var(--mobile-header-height))] max-desktop:top-(--mobile-header-height) desktop:static bg-white overflow-y-scroll z-10 {mobile_menu}",
+                div { class: "flex-1 flex fixed transition-all max-desktop:w-screen max-desktop:h-[calc(100vh_-_var(--mobile-header-height))] max-desktop:top-(--mobile-header-height) desktop:static bg-white overflow-hidden z-10 {mobile_menu}",
                     div { class: "flex-1 flex font-bold justify-start desktop:justify-end items-center text-key-gray text-[15px]/19 gap-30 desktop:gap-45 flex-col desktop:flex-row h-fit",
 
                         {children}
 
                         if !ctrl.user.is_login() {
-                            div {
+                            button {
                                 onclick: move |_| {
                                     ctrl.google_login();
                                 },

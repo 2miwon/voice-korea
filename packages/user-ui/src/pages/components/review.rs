@@ -30,7 +30,7 @@ pub fn ReviewSection(
             class: "flex flex-col w-full justify-center items-center",
             div { class: "flex flex-col w-full bg-gradient-to-b from-[#f1f3fa] to-[#a6e0d3]/30 gap-30 px-20 desktop:px-0 py-60 desktop:py-100",
                 div { class: "font-bold text-[28px] leading-32 text-text-gray self-center",
-                    "{tr.participation_review}"
+                    {tr.participation_review}
                 }
                 div { class: "flex flex-row w-full justify-center items-center gap-20 max-w-desktop self-center",
                     Button {
@@ -77,15 +77,13 @@ pub fn ReviewItem(lang: Language, comment: CommentSummary) -> Element {
             div { class: "flex flex-row gap-8 justify-start items-center mb-20",
                 div { class: "w-40 h-40 bg-profile-gray rounded-[100px]" }
                 div { class: "flex flex-col gap-4",
-                    div { class: "font-semibold text-text-black text-[15px]", "{tr.anonymity}" }
-                    div { class: "font-semibold text-review-gray text-xs", "{prev_date}" }
+                    div { class: "font-semibold text-text-black text-[15px]", {tr.anonymity} }
+                    div { class: "font-semibold text-review-gray text-xs", {prev_date} }
                 }
             }
 
-            div {
-                class: "font-normal text-[15px] text-review-gray min-h-80 desktop:min-h-100",
-                style: "overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;",
-                "{comment.comment.clone()}"
+            div { class: "font-normal text-[15px] text-review-gray h-80 desktop:h-100 overflow-hidden overflow-y-auto",
+                {comment.comment}
             }
         }
     }

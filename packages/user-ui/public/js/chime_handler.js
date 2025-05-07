@@ -3,8 +3,11 @@ let videoTileMap = {};
 let isVideoOn = true;
 let isAudioMuted = false;
 let isScreenSharing = false;
+let isRestartingSession = false;
 let attendeeStatusInterval = null;
 let chimeObserver = null;
+let currentMeetingInfo = null;
+let currentAttendeeInfo = null;
 
 // function startSendingAttendeeStatus() {
 //   stopSendingAttendeeStatus();
@@ -21,8 +24,53 @@ let chimeObserver = null;
 //   }
 // }
 
+async function requestMediaAccess() {
+  try {
+    await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    console.log("Media access granted");
+  } catch (e) {
+    console.warn("Media access denied or not yet granted");
+  }
+}
+
+function monitorPermissionsAndRestart() {
+  ["camera", "microphone"].forEach((permName) => {
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: permName }).then((permStatus) => {
+        permStatus.onchange = async () => {
+          if (
+            permStatus.state === "granted" &&
+            currentMeetingInfo &&
+            currentAttendeeInfo &&
+            !isRestartingSession
+          ) {
+            console.log(
+              `Permission granted for ${permName}, restarting session`
+            );
+            isRestartingSession = true;
+
+            await cleanupChimeSession();
+            await new Promise((r) => setTimeout(r, 1000));
+
+            await startChimeSession(currentMeetingInfo, currentAttendeeInfo);
+            isRestartingSession = false;
+          }
+        };
+      });
+    }
+  });
+}
+
 async function startChimeSession(meetingInfo, attendeeInfo) {
+  if (chimeSession) {
+    console.warn("An existing session is active. Cleaning up first...");
+    await cleanupChimeSession();
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+
   console.log("startChimeSession called");
+  currentMeetingInfo = meetingInfo;
+  currentAttendeeInfo = attendeeInfo;
 
   const logger = new window.chime.ConsoleLogger(
     "log",
@@ -42,7 +90,11 @@ async function startChimeSession(meetingInfo, attendeeInfo) {
   chimeSession = session;
 
   try {
-    await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: true,
+    });
+    stream.getTracks().forEach((track) => track.stop());
 
     const videoInputs = await session.audioVideo.listVideoInputDevices();
     console.log("Available video inputs:", videoInputs);
@@ -52,6 +104,7 @@ async function startChimeSession(meetingInfo, attendeeInfo) {
       console.log("Started video input:", videoInputs[0].label);
     } else {
       console.warn("No video input devices found.");
+      return;
     }
 
     console.log("Chime session started successfully.");
@@ -59,8 +112,12 @@ async function startChimeSession(meetingInfo, attendeeInfo) {
     console.error("Failed to start Chime session:", e);
   }
 
-  await session.audioVideo.start();
-  session.audioVideo.startLocalVideoTile();
+  try {
+    await session.audioVideo.start();
+    session.audioVideo.startLocalVideoTile();
+  } catch (e) {
+    console.error("audioVideo.start() failed:", e);
+  }
 
   chimeObserver = {
     videoTileDidUpdate: (tileState) => {
@@ -133,6 +190,19 @@ async function startChimeSession(meetingInfo, attendeeInfo) {
 
   session.audioVideo.addObserver(chimeObserver);
 
+  session.audioVideo.addObserver({
+    audioVideoDidStop: (sessionStatus) => {
+      if (sessionStatus.statusCode === "AudioJoinedFromAnotherDevice") {
+        console.warn("Audio joined from another device. Cleaning up...");
+        alert(
+          "다른 기기 또는 탭에서 오디오에 접속 중입니다. 이 탭에서 오디오는 연결되지 않습니다."
+        );
+      } else {
+        console.warn("Chime stopped with status:", sessionStatus.statusCode);
+      }
+    },
+  });
+
   session.audioVideo.realtimeSubscribeToReceiveDataMessage(
     "chat",
     (dataMessage) => {
@@ -179,6 +249,8 @@ async function startChimeSession(meetingInfo, attendeeInfo) {
       }
     }
   );
+
+  monitorPermissionsAndRestart();
 }
 
 function sendChimeMessage(text) {
@@ -351,7 +423,7 @@ async function toggleScreenShare() {
   }
 }
 
-function cleanupChimeSession() {
+async function cleanupChimeSession() {
   if (!chimeSession || !chimeSession.audioVideo) {
     console.warn("chimeSession is null in videoTileDidUpdate");
     return;
@@ -360,9 +432,9 @@ function cleanupChimeSession() {
   try {
     console.log("Cleaning up Chime session...");
 
-    chimeSession.audioVideo.stopLocalVideoTile();
-    chimeSession.audioVideo.stopContentShare();
-    chimeSession.audioVideo.stop();
+    await chimeSession.audioVideo.stopLocalVideoTile();
+    await chimeSession.audioVideo.stopContentShare();
+    await chimeSession.audioVideo.stop();
 
     const videoGrid = document.getElementById("video-grid");
     if (videoGrid) {
@@ -387,6 +459,8 @@ function cleanupChimeSession() {
 
 window.startChimeSession = startChimeSession;
 window.sendChimeMessage = sendChimeMessage;
+window.requestMediaAccess = requestMediaAccess;
+window.monitorPermissionsAndRestart = monitorPermissionsAndRestart;
 window.focusVideo = focusVideo;
 window.toggleVideo = toggleVideo;
 window.toggleAudio = toggleAudio;

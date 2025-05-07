@@ -1,0 +1,20 @@
+{
+    "entryFile": "src/server.ts",
+    "noImplicitAdditionalProperties": "silently-remove-extras",
+    "controllerPathGlobs": [
+        "src/controllers/**/*.ts"
+    ],
+    "spec": {
+        "outputDirectory": "src/swagger",
+        "specVersion": 3,
+        "basePath": "/",
+        "specFileBaseName": "swagger",
+        "schemes": ["http"],
+        "servers":["localhost:2025"]
+    },
+    "routes": {
+        "routesDir": "src/swagger",
+        "iocModule": "src/ioc.ts",
+        "esModuleInterop": true
+    }
+}

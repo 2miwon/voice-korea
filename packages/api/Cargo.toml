@@ -1,6 +1,6 @@
 [package]
 name = "api"
-version = "0.3.39"
+version = "0.3.40"
 authors.workspace = true
 description.workspace = true
 edition.workspace = true
@@ -19,6 +19,7 @@ slog.workspace = true
 sqlx.workspace = true
 rest-api.workspace = true
 
+bdk = { workspace = true, features = ["be"] }
 tokio = { version = "1.41.1", features = ["full"] }
 jsonwebtoken = "9.3.0"
 sha3 = "0.10.8"
@@ -39,7 +40,7 @@ aws-sdk-chimesdkmediapipelines = "1.64.0"
 
 [features]
 default = []
-lambda = ["by-axum/lambda"]
+lambda = ["bdk/lambda"]
 full-test = []
 
 [dev-dependencies]

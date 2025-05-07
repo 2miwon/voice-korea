@@ -4,6 +4,7 @@ pub mod header;
 pub mod icons;
 pub mod input;
 pub mod label;
+pub mod outside_hook;
 pub mod popup_zone;
 pub mod search;
 pub mod textarea;

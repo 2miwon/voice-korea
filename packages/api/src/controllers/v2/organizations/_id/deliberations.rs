@@ -479,13 +479,15 @@ impl DeliberationController {
             let mut roles = vec![];
 
             for email in users {
-                let d = deliberation_roles
+                let rs: Vec<DeliberationRole> = deliberation_roles
                     .iter()
-                    .find(|v| v.email == email)
-                    .unwrap_or(&DeliberationRole::default())
-                    .clone();
+                    .filter(|v| v.email == email)
+                    .map(|v| v.clone())
+                    .collect();
 
-                roles.push(d);
+                for r in rs {
+                    roles.push(r);
+                }
             }
 
             for role in roles {
@@ -604,13 +606,15 @@ impl DeliberationController {
             let mut roles = vec![];
 
             for email in users {
-                let d = deliberation_roles
+                let rs: Vec<DeliberationRole> = deliberation_roles
                     .iter()
-                    .find(|v| v.email == email)
-                    .unwrap_or(&DeliberationRole::default())
-                    .clone();
+                    .filter(|v| v.email == email)
+                    .map(|v| v.clone())
+                    .collect();
 
-                roles.push(d);
+                for r in rs {
+                    roles.push(r);
+                }
             }
 
             for role in roles {
@@ -719,13 +723,15 @@ impl DeliberationController {
         let mut roles = vec![];
 
         for email in users {
-            let d = deliberation_roles
+            let rs: Vec<DeliberationRole> = deliberation_roles
                 .iter()
-                .find(|v| v.email == email)
-                .unwrap_or(&DeliberationRole::default())
-                .clone();
+                .filter(|v| v.email == email)
+                .map(|v| v.clone())
+                .collect();
 
-            roles.push(d);
+            for r in rs {
+                roles.push(r);
+            }
         }
 
         for role in roles {
@@ -870,13 +876,15 @@ impl DeliberationController {
             let mut roles = vec![];
 
             for email in users {
-                let d = deliberation_roles
+                let rs: Vec<DeliberationRole> = deliberation_roles
                     .iter()
-                    .find(|v| v.email == email)
-                    .unwrap_or(&DeliberationRole::default())
-                    .clone();
+                    .filter(|v| v.email == email)
+                    .map(|v| v.clone())
+                    .collect();
 
-                roles.push(d);
+                for r in rs {
+                    roles.push(r);
+                }
             }
 
             for role in roles {
@@ -984,13 +992,15 @@ impl DeliberationController {
             let mut roles = vec![];
 
             for email in users {
-                let d = deliberation_roles
+                let rs: Vec<DeliberationRole> = deliberation_roles
                     .iter()
-                    .find(|v| v.email == email)
-                    .unwrap_or(&DeliberationRole::default())
-                    .clone();
+                    .filter(|v| v.email == email)
+                    .map(|v| v.clone())
+                    .collect();
 
-                roles.push(d);
+                for r in rs {
+                    roles.push(r);
+                }
             }
 
             for role in roles {
@@ -1122,13 +1132,15 @@ impl DeliberationController {
             let mut roles = vec![];
 
             for email in users {
-                let d = deliberation_roles
+                let rs: Vec<DeliberationRole> = deliberation_roles
                     .iter()
-                    .find(|v| v.email == email)
-                    .unwrap_or(&DeliberationRole::default())
-                    .clone();
+                    .filter(|v| v.email == email)
+                    .map(|v| v.clone())
+                    .collect();
 
-                roles.push(d);
+                for r in rs {
+                    roles.push(r);
+                }
             }
 
             for role in roles {
@@ -1207,13 +1219,15 @@ impl DeliberationController {
             let mut roles = vec![];
 
             for email in users {
-                let d = deliberation_roles
+                let rs: Vec<DeliberationRole> = deliberation_roles
                     .iter()
-                    .find(|v| v.email == email)
-                    .unwrap_or(&DeliberationRole::default())
-                    .clone();
+                    .filter(|v| v.email == email)
+                    .map(|v| v.clone())
+                    .collect();
 
-                roles.push(d);
+                for r in rs {
+                    roles.push(r);
+                }
             }
 
             for role in roles {
@@ -1358,13 +1372,15 @@ impl DeliberationController {
             let mut roles = vec![];
 
             for email in users {
-                let d = deliberation_roles
+                let rs: Vec<DeliberationRole> = deliberation_roles
                     .iter()
-                    .find(|v| v.email == email)
-                    .unwrap_or(&DeliberationRole::default())
-                    .clone();
+                    .filter(|v| v.email == email)
+                    .map(|v| v.clone())
+                    .collect();
 
-                roles.push(d);
+                for r in rs {
+                    roles.push(r);
+                }
             }
 
             for role in roles {
@@ -1516,13 +1532,15 @@ impl DeliberationController {
         let mut roles = vec![];
 
         for email in users {
-            let d = deliberation_roles
+            let rs: Vec<DeliberationRole> = deliberation_roles
                 .iter()
-                .find(|v| v.email == email)
-                .unwrap_or(&DeliberationRole::default())
-                .clone();
+                .filter(|v| v.email == email)
+                .map(|v| v.clone())
+                .collect();
 
-            roles.push(d);
+            for r in rs {
+                roles.push(r);
+            }
         }
 
         for role in roles {
@@ -1665,13 +1683,15 @@ impl DeliberationController {
             let mut roles = vec![];
 
             for email in users {
-                let d = deliberation_roles
+                let rs: Vec<DeliberationRole> = deliberation_roles
                     .iter()
-                    .find(|v| v.email == email)
-                    .unwrap_or(&DeliberationRole::default())
-                    .clone();
+                    .filter(|v| v.email == email)
+                    .map(|v| v.clone())
+                    .collect();
 
-                roles.push(d);
+                for r in rs {
+                    roles.push(r);
+                }
             }
 
             for role in roles {

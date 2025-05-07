@@ -1,0 +1,120 @@
+{
+	"openapi": "3.0.0",
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"CustomApiResponse": {
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"data": {},
+					"status_code": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"status_code"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ContextDTO": {
+				"properties": {
+					"user": {
+						"type": "string"
+					},
+					"session": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"user",
+					"session"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ProjectListReqDTO": {
+				"properties": {
+					"prompt": {
+						"type": "string",
+						"example": "What is the most recent project"
+					},
+					"context": {
+						"$ref": "#/components/schemas/ContextDTO",
+						"example": {
+							"user": "Boniface",
+							"session": "session_239kidk"
+						}
+					},
+					"temperature": {
+						"type": "number",
+						"format": "double",
+						"example": 1.5
+					}
+				},
+				"required": [
+					"prompt",
+					"temperature"
+				],
+				"type": "object",
+				"additionalProperties": false
+			}
+		},
+		"securitySchemes": {}
+	},
+	"info": {
+		"title": "mcp_service",
+		"version": "1.0.0",
+		"description": "This is the mcp service for Voice Korea",
+		"license": {
+			"name": "ISC"
+		},
+		"contact": {}
+	},
+	"paths": {
+		"/projects": {
+			"post": {
+				"operationId": "CreateNewWithdrawalAccount",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CustomApiResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Projects"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ProjectListReqDTO"
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "http://localhost:2025/"
+		}
+	]
+}

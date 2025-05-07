@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use bdk::prelude::*;
 
 use crate::{
@@ -20,6 +22,8 @@ pub fn BasicInfo(lang: Language, project_id: ReadOnlySignal<i64>, children: Elem
 
     let tr: BasicInfoTranslate = translate(&lang);
     let tab_title: &str = Tab::BasicInfo.translate(&lang);
+
+    let mut emails: HashSet<String> = HashSet::new();
 
     rsx! {
         Section { id: "basic-info",
@@ -45,10 +49,8 @@ pub fn BasicInfo(lang: Language, project_id: ReadOnlySignal<i64>, children: Elem
                         }
                         div { class: "w-full flex flex-row justify-start gap-20",
                             for role in basic_info.roles {
-                                AvatarLabel {
-                                    label: role.email,
-                                    //FIXME: use organization name
-                                    sub: "DAO",
+                                if emails.insert(role.email.clone()) {
+                                    AvatarLabel { label: role.email.clone(), sub: "DAO" }
                                 }
                             }
                         }
@@ -67,7 +69,6 @@ pub fn BasicInfo(lang: Language, project_id: ReadOnlySignal<i64>, children: Elem
                     title: tr.related_materials_title,
                     resources: basic_info.resources.clone(),
                 }
-            
             }
         }
     }

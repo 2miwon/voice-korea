@@ -7,7 +7,7 @@ use crate::{
     pages::projects::_id::components::{
         accordion::Accordion, rich_text_viewer::RichTextViewer, tab_title::TabTitle,
     },
-    utils::time::{current_timestamp, formatted_timestamp},
+    utils::time::formatted_timestamp,
 };
 
 use super::i18n::SurveyInfoTranslate;
@@ -72,28 +72,17 @@ pub fn SurveyInfo(
                 }
             }
 
-            // FIXME: implement with project status value when complete implementing status fetcher code
-            // disabled: data.status != ProjectStatus::InProgress || !is_login || !is_member,
             Button {
                 class: "flex flex-row px-15 py-13 disabled:bg-hint-gray disabled:cursor-not-allowed rounded-lg text-white text-base",
-                disabled: !(data.start_date <= current_timestamp() && data.end_date >= current_timestamp())
-                    || !is_login || !is_member,
+                disabled: data.status != ProjectStatus::InProgress || !is_login || !is_member,
                 onclick: move |e| {
                     on_process_survey.call(e);
                 },
-
-                if data.start_date > current_timestamp() {
-                    {tr.status_ready}
-                } else if data.end_date < current_timestamp() {
-                    {tr.status_finish}
-                } else {
-                    {tr.status_progress}
+                match data.status {
+                    ProjectStatus::Ready => tr.status_ready,
+                    ProjectStatus::InProgress => tr.status_progress,
+                    ProjectStatus::Finish => tr.status_finish,
                 }
-                        // match data.status {
-            //     ProjectStatus::Ready => tr.status_ready,
-            //     ProjectStatus::InProgress => tr.status_progress,
-            //     ProjectStatus::Finish => tr.status_finish,
-            // }
             }
         }
     }

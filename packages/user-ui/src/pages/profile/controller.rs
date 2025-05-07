@@ -8,7 +8,7 @@ use models::{
     profile::{DesignProject, ParticipantProject, ProfileSummary},
 };
 
-use crate::service::user_service::UserService;
+use crate::{routes::Route, service::user_service::UserService};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ProjectType {
@@ -27,16 +27,24 @@ pub struct Controller {
 
 impl Controller {
     pub fn init(lang: Language) -> std::result::Result<Self, RenderError> {
+        let nav = use_navigator();
         let user_service: UserService = use_context();
+        let user_id = (user_service.user_id)();
+
+        if user_id == 0 {
+            nav.replace(Route::MainPage { lang });
+        }
 
         let projects = use_server_future(move || async move {
+            if user_id == 0 {
+                return ProfileData::default();
+            }
+
             ProfileData::get_client(&crate::config::get().api_url)
                 .find()
                 .await
                 .unwrap_or_default()
         })?;
-
-        let user_id = (user_service.user_id)();
 
         let ctrl = Self {
             lang,
