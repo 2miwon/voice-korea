@@ -3,19 +3,6 @@ use bdk::prelude::*;
 translate! {
     SampleSurveyTranslate;
 
-    backward: {
-        ko: "뒤로",
-        en: "Backward"
-    }
-    temporary_save: {
-        ko: "임시저장",
-        en: "Temporary Save"
-    }
-    next: {
-        ko: "다음으로",
-        en: "Next"
-    }
-
     organization_management: {
         ko: "조직 관리",
         en: "Organization Management"
