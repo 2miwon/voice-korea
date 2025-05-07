@@ -1,10 +1,11 @@
 use bdk::prelude::*;
-use by_components::icons::{arrows::ChevronDown, edit::Search};
 use models::deliberation_project::{DeliberationProjectSummary, ProjectSorter};
 
 use crate::pages::{
     components::project_card::ProjectCard,
     projects::{controller::Controller, i18n::ProjectListTranslate},
+    search_project::SearchProject,
+    sorter::Sorter,
 };
 
 #[component]
@@ -25,63 +26,17 @@ pub fn ProjectListPage(lang: Language) -> Element {
                     }
 
                     div { class: " w-full flex flex-row justify-end items-center",
-                        details { class: "dropdown w-fit",
-                            summary { class: "btn text-text-black w-150 bg-transparent border border-input-border-gray flex flex-row justify-between items-center hover:bg-input-border-gray rounded-lg px-15 py-10",
-
-                                {ctrl.sorter().translate(&lang)}
-                                ChevronDown {
-                                    color: "#555462",
-                                    width: "18",
-                                    height: "18",
-                                }
-                            }
-                            ul {
-                                class: "menu dropdown-content bg-white rounded-xl z-[1] shadow overflow-hidden w-full",
-                                padding: "0px",
-                                for option in ProjectSorter::VARIANTS {
-                                    li {
-                                        class: "hover:bg-input-border-gray px-20 py-15 cursor-pointer overflow-hidden",
-                                        role: "button",
-                                        onclick: move |_| {
-                                            ctrl.sorter.set(*option);
-                                        },
-                                        "{option.translate(&lang)}"
-                                    }
-                                }
-                            }
+                        Sorter {
+                            id: "project_sorter_dropdown",
+                            lang,
+                            sorter: ctrl.sorter(),
+                            on_sorter_changed: move |sorter: ProjectSorter| {
+                                ctrl.sorter.set(sorter);
+                            },
                         }
                     }
                 }
                 DeliberationList { lang, projects }
-            }
-        }
-    }
-}
-
-#[component]
-pub fn SearchProject(lang: Language, onsearch: EventHandler<String>) -> Element {
-    let tr: ProjectListTranslate = translate(&lang);
-    let mut keyword = use_signal(|| "".to_string());
-
-    rsx! {
-        // text write area
-        div { class: "max-w-desktop min-h-48 w-full relative border-1 border-input-border-gray rounded-lg flex justify-start items-center px-10",
-            Search { class: "[&>path]:stroke-icon-gray [&>circle]:stroke-icon-gray" }
-            // text input area
-            input {
-                class: "w-full h-48 p-10 font-semibold text-[15px] leading-normal outline-none",
-                placeholder: tr.search,
-                value: "{keyword()}",
-                oninput: move |e| {
-                    keyword.set(e.value());
-                    onsearch.call(keyword());
-                },
-                onkeypress: move |e| {
-                    if e.key() == Key::Enter {
-                        e.prevent_default();
-                        onsearch.call(keyword());
-                    }
-                },
             }
         }
     }
@@ -102,7 +57,6 @@ pub fn DeliberationList(lang: Language, projects: Vec<DeliberationProjectSummary
                     ProjectCard { lang, deliberation: deliberation.into() }
                 }
             }
-        
         }
     }
 }
