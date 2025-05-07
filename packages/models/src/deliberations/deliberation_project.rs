@@ -107,9 +107,9 @@ pub enum ProjectStatusValue {
 #[cfg_attr(feature = "server", derive(schemars::JsonSchema, aide::OperationIo))]
 pub enum ProjectSorter {
     #[default]
-    #[translate(ko => "오래된순")]
+    #[translate(ko = "오래된순")]
     Oldest,
-    #[translate(ko => "최신순")]
+    #[translate(ko = "최신순")]
     Newest,
 }
 
