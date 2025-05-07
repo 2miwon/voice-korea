@@ -49,7 +49,7 @@ translate! {
     }
 
     watch: {
-        ko: "시청하기"
+        ko: "시청하기",
         en: "Watch"
     }
 }

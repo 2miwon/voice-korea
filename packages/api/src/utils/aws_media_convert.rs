@@ -23,6 +23,24 @@ pub async fn merge_recording_chunks(meeting_id: &str) -> Option<String> {
     let bucket_name = config.chime_bucket_name.to_string();
     let meeting_prefix = format!("{}/video/", meeting_id);
 
+    // Check if merged file already exists
+    let merged_key = format!("merged/{}_merged.mp4", meeting_id);
+    match s3_cli
+        .head_object()
+        .bucket(&bucket_name)
+        .key(&merged_key)
+        .send()
+        .await
+    {
+        Ok(_) => {
+            // File already exists, return its URI
+            return Some(format!("s3://{}/{}", bucket_name, merged_key));
+        }
+        Err(_) => {
+            // File doesn't exist, continue with merge process
+        }
+    }
+
     let list_objects_output = match s3_cli
         .list_objects_v2()
         .bucket(&bucket_name)
